@@ -1,6 +1,11 @@
-# canetas-que-mudam-o-mundo
-Repositório para trabalho de Engenharia de Software II
+# Canetas que Mudam o Mundo
 
+Repositório para trabalho de Engenharia de Software II - Full Stack com FastAPI + React.
+
+## Estrutura do Projeto
+
+### Backend (FastAPI)
+```
 backend/
   app/
     main.py        # ponto de entrada
@@ -11,12 +16,15 @@ backend/
     database/      # conexão com banco
     core/          # configs (env, segurança)
   requirements.txt
+```
 
-  frontend/
+### Frontend (React + Vite)
+```
+frontend/
   src/
     components/   # UI reutilizável (botões, inputs)
     pages/        # telas (Home, Login, etc)
-    services/     # chamadas API (FastAPI)
+    services/     # chamadas API
     hooks/        # lógica reutilizável
     context/      # estado global
     utils/        # funções auxiliares
@@ -25,3 +33,29 @@ backend/
     main.jsx
   public/
   package.json
+  vite.config.js
+```
+
+## Quick Start
+
+### Backend
+```bash
+cd backend
+pip install -r requirements.txt
+python -m uvicorn app.main:app --reload
+```
+
+O backend roda em `http://localhost:8000`
+
+### Frontend
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+O frontend roda em `http://localhost:5173`
+
+## Documentação
+- [Backend](./backend/README.md)
+- [Frontend](./frontend/README.md)
