@@ -1,6 +1,6 @@
 # Backend - Canetas que Mudam o Mundo
 
-API REST com FastAPI + SQLAlchemy.
+API REST com FastAPI + PostgreSQL (psycopg2).
 
 ## Setup
 
@@ -36,7 +36,7 @@ A API roda em `http://localhost:8000` com docs em `http://localhost:8000/docs`.
 app/
 ├── main.py          # Ponto de entrada
 ├── routes/          # Endpoints da API
-├── models/          # Models SQLAlchemy
+├── models/          # Modelos de dominio
 ├── schemas/         # Schemas Pydantic
 ├── services/        # Lógica de negócio
 ├── database/        # Configuração do banco
@@ -47,6 +47,6 @@ app/
 
 - **fastapi**: Framework web
 - **uvicorn**: Servidor ASGI
-- **sqlalchemy**: ORM
+- **psycopg2**: Driver PostgreSQL
 - **pydantic**: Validação de dados
 - **python-dotenv**: Variáveis de ambiente
