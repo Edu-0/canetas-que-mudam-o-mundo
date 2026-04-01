@@ -1,0 +1,100 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600&family=Potta+One&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primario-5: #FFFDF3;
+  --primario-10: #FFF9DD;
+  --primario-20: #FFF4BB;
+  --primario-30: #FFEF9A;
+  --primario-40: #FFE978;
+  --primario-50: #FFE356;
+  --primario-60: #FFD93D;
+  --primario-70: #FFD228;
+  --primario-80: #FFCC14;
+  --primario-90: #FFC800;
+  --primario-100: #FFC800;
+
+  --base-0: #FFFFFF;
+  --base-5: #F9FAF0;
+  --base-10: #F2F7E2;
+  --base-20: #E4EEBF;
+  --base-40: #C4D86E;
+  --base-60: #838513;
+  --base-80: #383B08;
+  --base-100: #000000;
+
+  --secundario-10: #FFFEF5;
+  --secundario-20: #FFFDE9;
+  --secundario-60: #FFF9A8;
+  --secundario-80: #FFF798;
+  --secundario-100: #FFF09C;
+}
+
+:root {
+  --font-header: 'Potta One', cursive;
+  --font-body: 'Nunito', sans-serif;
+}
+
+.header-grande {
+  font-family: var(--font-header);
+  font-size: 96px;
+  line-height: 100%;
+}
+
+.header-medio {
+  font-family: var(--font-header);
+  font-size: 48px;
+  line-height: 125%;
+  font-weight: 700;
+}
+
+.header-pequeno {
+  font-family: var(--font-header);
+  font-size: 40px;
+  line-height: 125%;
+}
+
+.body-grande {
+  font-family: var(--font-body);
+  font-size: 40px;
+  line-height: 150%;
+  font-weight: 400;
+}
+
+.body-medio {
+  font-family: var(--font-body);
+  font-size: 24px;
+  line-height: 150%;
+  font-weight: 400;
+}
+
+.body-pequeno {
+  font-family: var(--font-body);
+  font-size: 20px;
+  line-height: 150%;
+  font-weight: 400;
+}
+
+.body-semibold-grande {
+  font-family: var(--font-body);
+  font-size: 40px;
+  line-height: 150%;
+  font-weight: 600;
+}
+
+.body-semibold-medio {
+  font-family: var(--font-body);
+  font-size: 24px;
+  line-height: 150%;
+  font-weight: 600;
+}
+
+.body-semibold-pequeno {
+  font-family: var(--font-body);
+  font-size: 20px;
+  line-height: 150%;
+  font-weight: 600;
+}
