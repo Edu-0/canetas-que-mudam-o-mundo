@@ -29,6 +29,9 @@ function Header() {
         <button
           onClick={() => setMenuOpen(!menuOpen)}
           className="md:hidden text-2xl"
+          aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}
+          aria-expanded={menuOpen}
+          aria-controls="mobile-menu"
         >
           ☰
         </button>
@@ -36,7 +39,7 @@ function Header() {
 
       {/* botoes no mobile */}
       {menuOpen && (
-        <div className="md:hidden flex flex-col items-center gap-3 pb-4">
+        <div id="mobile-menu" className="md:hidden flex flex-col items-center gap-3 pb-4">
           
           <button className="w-[90%] py-2 rounded-lg bg-gradient-to-r from-[var(--primario-100)] to-[var(--secundario-100)] body-semibold-pequeno">
             Início
