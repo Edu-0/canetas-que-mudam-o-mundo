@@ -9,6 +9,7 @@ type PropriedadesBotao = {
 export default function Botao({children, ativo = false, aoClicar}: PropriedadesBotao) {
   return (
     <button
+      type="button"
       onClick={aoClicar}
       className={`
         btn-base 

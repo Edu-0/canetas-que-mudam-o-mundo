@@ -20,10 +20,18 @@ function Header() {
       }
     }
 
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setMenuAberto(false);
+      }
+    }
+
     window.addEventListener("resize", handleResize);
+    window.addEventListener("keydown", handleKeyDown);
 
     return () => {
       window.removeEventListener("resize", handleResize);
+      window.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
 
@@ -46,10 +54,14 @@ function Header() {
           ))}
         </div>
 
-        {/* menu harburgue para o mobile */}
+        {/* menu hamburguer para o mobile */}
         <button
+          type="button"
           onClick={() => setMenuAberto(!menuAberto)}
           className="md:hidden text-2xl hover:scale-125 transition"
+          aria-label={menuAberto ? "Fechar menu" : "Abrir menu"}
+          aria-expanded={menuAberto}
+          aria-controls="menu-lateral"
         >
           ☰
         </button>
@@ -69,8 +81,10 @@ function Header() {
             <div className="flex justify-between px-4 py-[14px] border-b border-[var(--primario-40)]">
               <span className="body-semibold-medio">Menu</span>
               <button
+                type="button"
                 onClick={() => setMenuAberto(false)}
                 className="text-xl hover:scale-125 transition"
+                aria-label="Fechar menu"
               >
                 ✕
               </button>
