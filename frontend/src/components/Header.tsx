@@ -1,17 +1,38 @@
+import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { useUsuario } from "../context/UserContext";
 import logo_titulo from "../assets/logo_titulo.png";
 import Botao from "./Botao";
 
 function Header() {
   
-  const [menuAberto, setMenuAberto] = useState(false); // controla abertura do menu mobile
-  const [botaoAtivo, setBotaoAtivo] = useState("inicio"); // controla qual botão está selecionado
+  const navigate = useNavigate();
+  const location = useLocation(); // para saber qual página estamos e assim deixar o botão correspondente selecionado
 
-  const listaDeBotoes = [ 
-    { id: "inicio", texto: "Início" },
-    { id: "login", texto: "Logar" },
-    { id: "cadastro", texto: "Cadastrar" },
-  ];
+  const [menuAberto, setMenuAberto] = useState(false); // controla abertura do menu mobile
+
+  const { usuario } = useUsuario();
+
+  let listaDeBotoes: { id: string; texto: string; rota: string }[] = [];
+
+  if (!usuario) {
+    listaDeBotoes = [
+      { id: "inicio", texto: "Início", rota: "/" },
+      { id: "logar", texto: "Logar", rota: "/logar" },
+      { id: "cadastro", texto: "Cadastro", rota: "/cadastro" },
+    ];
+  } else if (usuario.tipo === "generico") {
+    listaDeBotoes = [
+      { id: "inicio", texto: "Início", rota: "/" },
+      { id: "conta", texto: "Conta", rota: "/conta" },
+    ];
+  } else if (usuario.tipo === "doador") {
+    listaDeBotoes = [
+      { id: "inicio", texto: "Início", rota: "/" },
+      { id: "doar", texto: "Doar", rota: "/doar" },
+      { id: "conta", texto: "Conta", rota: "/conta" },
+    ];
+  }
 
   useEffect(() => {
     function handleResize() {
@@ -46,8 +67,8 @@ function Header() {
           {listaDeBotoes.map((botao) => (
             <Botao
               key={botao.id}
-              ativo={botaoAtivo === botao.id}
-              aoClicar={() => setBotaoAtivo(botao.id)}
+              ativo={location.pathname === botao.rota}
+              aoClicar={() => navigate(botao.rota)}
             >
               {botao.texto}
             </Botao>
@@ -94,11 +115,8 @@ function Header() {
               {listaDeBotoes.map((botao) => (
                 <Botao
                   key={botao.id}
-                  ativo={botaoAtivo === botao.id}
-                  aoClicar={() => {
-                    setBotaoAtivo(botao.id);
-                    setMenuAberto(false); // fecha ao clicar
-                  }}
+                  ativo={location.pathname === botao.rota}
+                  aoClicar={() => {setMenuAberto(false); navigate(botao.rota);}}
                 >
                   {botao.texto}
                 </Botao>
