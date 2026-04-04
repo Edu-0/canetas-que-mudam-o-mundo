@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, Float ,String, Text,Boolean, Date, DateTime, Enum, ForeignKey
 from sqlalchemy.orm import declarative_base, relationship
 import datetime
-from app.core.enums import BeneficiosUsuario, TipoUsuario, TipoEndereco
+from app.core.enums import BeneficiosUsuario, TipoUsuario
 
 # Traduz as classes para SQL
 Base = declarative_base()
