@@ -2,7 +2,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import logo from "../assets/logo.svg";
 
-function App() {
+function Inicio() {
   return (
     <div className="min-h-screen flex flex-col bg-[var(--base-5)]">
       
@@ -61,4 +61,4 @@ function App() {
   );
 }
 
-export default App;
+export default Inicio;

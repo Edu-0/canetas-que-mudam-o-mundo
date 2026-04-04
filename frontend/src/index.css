@@ -28,9 +28,14 @@
 
   --secundario-10: #FFFEF5;
   --secundario-20: #FFFDE9;
+  --secundario-50: #FFFCD6;
   --secundario-60: #FFF9A8;
   --secundario-80: #FFF798;
   --secundario-100: #FFF09C;
+
+  --cor-resposta-obrigatoria: #ef4444;
+
+  --cor-botao-editar: #BBE4FF;
 }
 
 :root {
@@ -123,5 +128,44 @@
   /* hover do botão selecionado */
   .btn-ativado:hover {
     @apply from-[var(--primario-80)] to-[var(--primario-30)];
+  }
+
+  /* estilo base para os inputs */
+  .input-padrao {
+    @apply w-full px-3 py-2 rounded-md border border-black bg-[var(--primario-5)] text-sm outline-none focus:ring-2 focus:ring-[var(--primario-60)];
+  }
+
+  /* estilo base para os botões dos formulários de confirmar */
+  .btn-confirmar {
+    @apply bg-[var(--base-20)] border-black;
+  }
+
+  .btn-confirmar:hover {
+    @apply bg-[var(--base-40)] border-black;
+  }
+
+  /* estilo base para os botões dos formulários de cancelar */
+  .btn-cancelar {
+    @apply bg-red-200 border-black;
+  }
+
+  .btn-cancelar:hover {
+    @apply bg-red-300 border-black;
+  }
+
+  .btn-editar {
+    @apply bg-[var(--cor-botao-editar)] border-black;
+  }
+
+  .btn-editar:hover {
+    @apply bg-blue-300 border-black;
+  }
+
+  .btn-sair {
+    @apply bg-[var(--secundario-50)] border-black;
+  }
+
+  .btn-sair:hover {
+    @apply bg-[var(--secundario-100)] border-black;
   }
 }
