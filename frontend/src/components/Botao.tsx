@@ -6,9 +6,10 @@ type PropriedadesBotao = {
   aoClicar?: () => void;
   variante?: "padrao" | "confirmar" | "cancelar" | "editar" | "sair";
   tipo?: "button" | "submit";
+  desabilitado?: boolean;
 };
 
-export default function Botao({children, ativo = false, aoClicar, variante = "padrao", tipo = "button"}: PropriedadesBotao) {
+export default function Botao({children, ativo = false, aoClicar, variante = "padrao", tipo = "button", desabilitado = false}: PropriedadesBotao) {
   
   let estilo = "btn-padrao";
 
@@ -21,9 +22,11 @@ export default function Botao({children, ativo = false, aoClicar, variante = "pa
   return (
     <button
       type={tipo}
-      onClick={aoClicar}
+      disabled={desabilitado}
+      onClick={desabilitado ? undefined : aoClicar}
       className={`
         btn-base ${estilo} w-full
+        ${desabilitado ? "cursor-not-allowed opacity-50" : "hover:brightness-95"}
       `}
     >
       {children}

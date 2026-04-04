@@ -10,18 +10,14 @@ function Cadastro() {
   const { definirUsuario } = useUsuario();
   const navigate = useNavigate();
 
-  function handleSubmit(e: React.FormEvent) { // psso colocar o nome dess funcao para portugues?
-    e.preventDefault();
-
-    // simulação de cadastro
+  function handleCadastro(dados: { email: string; senha: string }) {
     const usuarioCriado: Usuario = {
-      email: "teste@email.com",
+      email: dados.email,
       tipo: "generico",
     };
 
-    definirUsuario(usuarioCriado); // salva o usuário no contexto global
-
-    navigate("/conta"); // vai para próxima etapa
+    definirUsuario(usuarioCriado);
+    navigate("/conta");
   }
 
   return (
@@ -52,11 +48,7 @@ function Cadastro() {
                 CADASTRO
               </h2>
 
-              <FormCadastroBase aoEnviar={(dados) => { definirUsuario({
-                email: dados.email, tipo: "generico",});
-                navigate("/conta");
-                }}
-               />
+              <FormCadastroBase aoEnviar={handleCadastro} />
 
             </div>
           </div>

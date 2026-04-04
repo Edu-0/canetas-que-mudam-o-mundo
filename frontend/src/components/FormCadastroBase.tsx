@@ -15,6 +15,9 @@ function FormCadastroBase({ aoEnviar }: Props) {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    if (carregando) return; // evita múltiplos envios
+
     setErro("");
 
     if (!email || !senha || !confirmarSenha) {
@@ -39,30 +42,30 @@ function FormCadastroBase({ aoEnviar }: Props) {
 
     setCarregando(true);
 
-    setTimeout(() => {setCarregando(false); aoEnviar({ email, senha });}, 1000);
+    setTimeout(() => {aoEnviar({ email, senha });setCarregando(false);}, 1000);
   }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
 
       <div>
-        <label className="body-semibold-pequeno">Email <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
-        <input type="email" className="input-padrao" placeholder="Digite aqui o seu email" value={email} onChange={(e) => setEmail(e.target.value)}/>
+        <label className="body-semibold-pequeno" htmlFor="email">Email <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
+        <input id="email" type="email" className="input-padrao" placeholder="Digite aqui o seu email" value={email} onChange={(e) => setEmail(e.target.value)} aria-invalid={!!erro} aria-describedby={erro ? "cadastro-erro" : undefined}/>
       </div>
 
       <div>
-        <label className="body-semibold-pequeno">Senha <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
-        <input type="password" className="input-padrao" placeholder="Digite aqui a sua senha" value={senha} onChange={(e) => setSenha(e.target.value)}/>
+        <label className="body-semibold-pequeno" htmlFor="senha">Senha <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
+        <input id="senha" type="password" className="input-padrao" placeholder="Digite aqui a sua senha" value={senha} onChange={(e) => setSenha(e.target.value)} aria-invalid={!!erro} aria-describedby={erro ? "cadastro-erro" : undefined}/>
       </div>
 
       <div>
-        <label className="body-semibold-pequeno">Confirmar senha <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
-        <input type="password" className="input-padrao" placeholder="Confirme aqui a sua senha" value={confirmarSenha} onChange={(e) => setConfirmarSenha(e.target.value)}/>
+        <label className="body-semibold-pequeno" htmlFor="confirmar-senha">Confirmar senha <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
+        <input id="confirmar-senha" type="password" className="input-padrao" placeholder="Confirme aqui a sua senha" value={confirmarSenha} onChange={(e) => setConfirmarSenha(e.target.value)} aria-invalid={!!erro} aria-describedby={erro ? "cadastro-erro" : undefined}/>
       </div>
 
-      {erro && <p className="text-[var(--cor-resposta-obrigatoria)] text-sm">{erro}</p>}
+      {erro && <p id="cadastro-erro" className="text-[var(--cor-resposta-obrigatoria)] text-sm">{erro}</p>}
 
-      <Botao tipo="submit" variante="confirmar">
+      <Botao tipo="submit" variante="confirmar" desabilitado={carregando}>
         {carregando ? "Enviando..." : "Cadastrar"}
       </Botao>
 
