@@ -28,19 +28,19 @@ class UsuarioBeneficiario(Base):
     auxilio = Column(Enum(BeneficiosUsuario), default = BeneficiosUsuario.NENHUM, nullable= False)
     concordou_termos = Column(Boolean, default=False, nullable= False)
     data_preenchimento = Column(DateTime, default=datetime.datetime.now)
-    familia = relationship("FamiliaBeneficiario", back_populates = "usuario_beneficiario")
+    familia = relationship("FamiliaBeneficiario", back_populates = "perfil")
     usuario = relationship("Usuario", back_populates="perfil_beneficiario")
 
 
 class FamiliaBeneficiario(Base):
     __tablename__ = 'familia_beneficiario'
     id = Column(Integer, primary_key= True)
-    usuario_id = Column(Integer, ForeignKey('usuario_beneficiario.id'), nullable= False)
+    perfil_id = Column(Integer, ForeignKey('usuario_beneficiario.id'), nullable= False)
     nome = Column(String(255), nullable= False)
     parentesco = Column(String(100), nullable= False)
     data_nascimento = Column(Date, nullable= False)
     renda = Column(Float, nullable = False)
-    usuario_beneficiario = relationship("UsuarioBeneficiario", back_populates="familia")
+    perfil = relationship("UsuarioBeneficiario", back_populates="familia")
 
 
 class DocumentoUsuario(Base):
