@@ -1,7 +1,7 @@
 import enum
 
 class TipoUsuario(enum.Enum):
-    GENERICO = "Comum"
+    GENERICO = "Genérico"
     COORDENADOR_PROCESSOS = "Coordenador de Processos"
     RESPONSAVEL_BENEFICIARIO = "Responsável pelo beneficiário"
     DOADOR = "Doador"

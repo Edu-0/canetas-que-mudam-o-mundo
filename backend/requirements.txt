@@ -1,8 +1,11 @@
 fastapi
-uvicorn
+uvicorn[standard]
+sqlalchemy
+psycopg2-binary
+passlib[bcrypt]
+bcrypt==4.3.0
 pydantic
+pydantic[email]
 python-dotenv
-greenlet==3.3.2
-python-dotenv==1.2.2
-SQLAlchemy==2.0.48
-typing_extensions==4.15.0
+greenlet
+typing_extensions

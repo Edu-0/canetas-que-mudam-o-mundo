@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr,Field, field_validator, ConfigDict
-from datetime import date
+from datetime import date, datetime
 from app.core.enums import BeneficiosUsuario, TipoUsuario
-from typing import Optional
+from typing import List, Optional
 
 
 class usuarioBase(BaseModel):
@@ -27,19 +27,38 @@ class usuarioBase(BaseModel):
         return v
     
 class criarUsuario(usuarioBase):
-    senha: str = Field(min_length=8, pattern=r"^(?=.*[A-Z])(?=.*\d).+$")
+    senha: str 
 
+    @field_validator('senha')
+    @classmethod
+    def validar_forca_da_senha(cls, senha: str) -> str:
+        if len(senha) < 8:
+            raise ValueError('A senha deve ter pelo menos 8 caracteres.')
+        
+        if not any(char.isupper() for char in senha):
+            raise ValueError('A senha deve conter pelo menos uma letra maiúscula.')
+        
+        if not any(char.isdigit() for char in senha):
+            raise ValueError('A senha deve conter pelo menos um número.')
+            
+        return senha
+
+
+class respostaFuncao(BaseModel):
+    tipo_usuario:TipoUsuario
+    model_config = ConfigDict(from_attributes=True)
 
 class respostaUsuario(usuarioBase):
     model_config = ConfigDict(from_attributes=True)
     id:int
+    funcao: List[respostaFuncao] = []
     
 
-class criarUsuarioBeneficiario(usuarioBase):
+class criarUsuarioBeneficiario(BaseModel):
     qtd_familiares : int = Field(default=0, ge = 0)
     auxilio: BeneficiosUsuario = BeneficiosUsuario.NENHUM
     concordou_termos: bool = False
-    data_preenchimento: date = Field(default_factory=date.today)
+    data_preenchimento: datetime = Field(default_factory=date.today)
 
     @field_validator('concordou_termos')
     @classmethod
