@@ -19,7 +19,7 @@ function Conta() {
 
       <Header />
 
-      <main className="flex-1 pt-24 flex flex-col items-center gap-6">
+      <main className="flex-1 pt-24 pb-10 flex flex-col items-center gap-6">
         <div className="w-full px-6 md:px-20 flex flex-col gap-10">
 
           {/* título e logo da caneta */}
@@ -34,7 +34,7 @@ function Conta() {
           <div className="flex flex-col items-center px-4">
 
             <div className="w-full max-w-4xl bg-[var(--primario-5)] shadow-[2px_10px_40px_rgba(0,0,0,0.1)] rounded-lg p-6">
-              <h2 className="header-medio text-center mb-6">
+              <h2 className="header-pequeno text-center mb-6">
                 CONTA
               </h2>
 

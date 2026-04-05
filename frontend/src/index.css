@@ -83,6 +83,12 @@
   font-weight: 400;
 }
 
+.letra-footer {
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 150%;
+}
+
 .body-semibold-grande {
   font-family: var(--font-body);
   font-size: 40px;
