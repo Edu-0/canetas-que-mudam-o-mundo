@@ -15,11 +15,11 @@ def get_engine(user, passwd, host, port, db):
     return engine
 
 
-USUARIO = "postgres" 
-SENHA = "admin"
-HOST = "localhost"
-PORTA = "5432"
-NOME_BANCO = "postgres"
+USUARIO = "" 
+SENHA = ""
+HOST = ""
+PORTA = ""
+NOME_BANCO = ""
 
 engine = get_engine(USUARIO, SENHA, HOST, PORTA, NOME_BANCO)
 

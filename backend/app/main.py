@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from app.routes import users
-from app.database.connection import engine  # Importe o motor que você criou
-from app.models.user import Base      # Importe a Base declarativa dos seus modelos
+from app.database.connection import engine  
+from app.models.user import Base      
 
 Base.metadata.create_all(bind=engine)
 
