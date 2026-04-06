@@ -40,6 +40,8 @@ class criarUsuario(usuarioBase):
         
         if not any(char.isdigit() for char in senha):
             raise ValueError('A senha deve conter pelo menos um número.')
+        
+        #caractere especial
             
         return senha
 
