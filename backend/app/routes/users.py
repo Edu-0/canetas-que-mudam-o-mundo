@@ -57,12 +57,12 @@ def criar_usuario_beneficiario(usuario_id, dados:s.criarUsuarioBeneficiario, db:
     db.refresh(usuario)
     return usuario
 
-@router.post("/{usuario_id}/familia-beneficiario", response_model=List[s.respostaFamiliaBeneficiario])
-def cadastrar_familia_beneficiario(usuario_id, dados:List[s.cadastrarFamiliaBeneficiario], db:SessionDep):
+@router.post("/{perfil_id}/familia-beneficiario", response_model=List[s.respostaFamiliaBeneficiario])
+def cadastrar_familia_beneficiario(perfil_id, dados:List[s.cadastrarFamiliaBeneficiario], db:SessionDep):
     familiares = []
     for membro in dados:
         novo_familiar = m.FamiliaBeneficiario(
-            usuario_id = usuario_id,
+            perfil_id = perfil_id, #id do usuario na tab usuario_beneficiario
             nome = membro.nome,
             parentesco = membro.parentesco,
             data_nascimento = membro.data_nascimento,
