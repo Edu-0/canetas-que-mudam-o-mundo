@@ -4,27 +4,31 @@ import { useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import logo from "../assets/logo.svg";
+import Toast from "../components/Toast";
 import FormCadastroBase from "../components/FormCadastroBase";
 import { useAvisoAlteracoesNaoSalvas } from "../hooks/useAvisoAlteracoesNaoSalvas";
-import Toast from "../components/Toast";
 import ModalConfirmacao from "../components/ModalConfirmacao";
 
-function Cadastro() {
-  const { definirUsuario } = useUsuario();
+function EditarConta() {
+  const { usuario, definirUsuario } = useUsuario();
   const navigate = useNavigate();
   const [mensagem, setMensagem] = useState("");
-  const { alterou, setAlterou } = useAvisoAlteracoesNaoSalvas({ mensagem: "Você começou o cadastro. Deseja sair mesmo?" });
+  const { alterou, setAlterou } = useAvisoAlteracoesNaoSalvas({ mensagem: "Você tem alterações não salvas. Deseja sair mesmo?" });
   const [mostrarModal, setMostrarModal] = useState(false);
-  const [rotaDestino, setRotaDestino] = useState<string | null>(null);
+  const [rotaDestino, setRotaDestino] = useState<string | null>(null)
+
+  if (!usuario) {
+    return <p>Nenhum usuário</p>;
+  }
 
   function tentarSair(rota: string) {
     if (alterou) {
-      setRotaDestino(rota);
-      setMostrarModal(true);
+        setRotaDestino(rota);
+        setMostrarModal(true);
     } else {
-      navigate(rota);
+        navigate(rota);
     }
-  }
+    }
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--base-5)]">
@@ -52,41 +56,39 @@ function Cadastro() {
             <div className="w-full max-w-4xl bg-[var(--primario-5)] shadow-[2px_10px_40px_rgba(0,0,0,0.1)] rounded-lg p-6">
 
               <h2 className="header-pequeno text-center mb-6">
-                CADASTRO
+                EDITAR CONTA
               </h2>
 
-              <FormCadastroBase 
-                modo="cadastro"
-
+              <FormCadastroBase
+                modo="edicao"
+                valoresIniciais={usuario}
                 mudouDados={(dados) => {
                   const mudou =
-                    dados.nome !== "" ||
-                    dados.dataNascimento !== "" ||
-                    dados.cpf !== "" ||
-                    dados.cep !== "" ||
-                    dados.telefone !== "" ||
-                    dados.email !== "" ||
-                    dados.senha !== "" ||
-                    dados.confirmarSenha !== "";
+                    dados.nome !== usuario.nome ||
+                    dados.dataNascimento !== usuario.dataNascimento ||
+                    dados.cpf !== usuario.cpf ||
+                    dados.cep !== usuario.cep ||
+                    dados.telefone !== usuario.telefone ||
+                    dados.email !== usuario.email ||
+                    dados.senha !== ""; // só se digitou senha
 
                   setAlterou(mudou);
                 }}
 
-                textoBotaoCancelar="Cancelar cadastro"
-                textoBotaoEnviar="Cadastrar"
+                textoBotaoCancelar="Cancelar edição"
+                textoBotaoEnviar="Salvar alterações"
                 mostrarCancelar={true}
 
-                aoCancelar={() => tentarSair("/")}
+                aoCancelar={() => tentarSair("/conta")}
 
                 aoEnviar={(dados) => {
                   definirUsuario({
+                    ...usuario, // mantém dataCadastro e tipo
                     ...dados,
-                    dataCadastro: new Date().toISOString(),
-                    tipo: "generico",
                   });
 
-                  setAlterou(false); // reseta o estado de alteração para evitar alerta ao sair depois de cadastrar
-                  setMensagem("Cadastro realizado com sucesso!");
+                  setAlterou(false);
+                  setMensagem("Alterações salvas com sucesso!");
 
                   setTimeout(() => {
                     setMensagem(""); // some o toast
@@ -98,9 +100,9 @@ function Cadastro() {
               <ModalConfirmacao
                 aberto={mostrarModal}
                 titulo="Alterações não salvas"
-                descricao="Você começou o cadastro. Deseja sair mesmo?"
-                botaoCancelar="Continuar cadastro"
-                botaoConfirmar="Sair sem salvar o cadastro"
+                descricao="Você tem alterações não salvas. Deseja sair mesmo?"
+                botaoCancelar="Continuar editando"
+                botaoConfirmar="Sair sem salvar"
                 onCancelar={() => setMostrarModal(false)}
                 onConfirmar={() => {
                     setMostrarModal(false);
@@ -118,5 +120,4 @@ function Cadastro() {
     </div>
   );
 }
-
-export default Cadastro;
+export default EditarConta;

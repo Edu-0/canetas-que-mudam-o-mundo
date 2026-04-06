@@ -4,22 +4,44 @@ import { createContext, useContext, useState, ReactNode } from "react";
 type TipoUsuario = "generico" | "doador" | "voluntario" | "responsavel";
 
 export type Usuario = {
+  nome: string;
+  dataNascimento: string;
+  cpf: string;
+  cep: string;
+  telefone: string;
   email: string;
   tipo?: TipoUsuario;
+  dataCadastro: string;
 };
 
 // o que o contexto fornece
-type ContextoUsuario = {
+type ContextoUsuarioType = {
   usuario: Usuario | null;
   definirUsuario: (usuario: Usuario | null) => void;
 };
 
 // cria o contexto
-const ContextoUsuario = createContext<ContextoUsuario | undefined>(undefined);
+const ContextoUsuario = createContext<ContextoUsuarioType | undefined>(undefined);
 
 // provider
 export function ProvedorUsuario({ children }: { children: ReactNode }) {
-  const [usuario, definirUsuario] = useState<Usuario | null>(null);
+
+  // pega do localStorage ao iniciar
+  const [usuario, setUsuario] = useState<Usuario | null>(() => {
+    const salvo = localStorage.getItem("usuario");
+    return salvo ? JSON.parse(salvo) : null;
+  });
+
+  // função para salvar
+  function definirUsuario(usuario: Usuario | null) {
+    setUsuario(usuario);
+
+    if (usuario) {
+      localStorage.setItem("usuario", JSON.stringify(usuario));
+    } else {
+      localStorage.removeItem("usuario");
+    }
+  }
 
   return (
     <ContextoUsuario.Provider value={{ usuario, definirUsuario }}>
