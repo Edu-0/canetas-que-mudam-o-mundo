@@ -60,14 +60,14 @@ function Cadastro() {
 
                 mudouDados={(dados) => {
                   const mudou =
-                    dados.nome !== "" ||
-                    dados.dataNascimento !== "" ||
-                    dados.cpf !== "" ||
-                    dados.cep !== "" ||
-                    dados.telefone !== "" ||
-                    dados.email !== "" ||
-                    dados.senha !== "" ||
-                    dados.confirmarSenha !== "";
+                    dados.nome.trim() !== "" ||
+                    dados.dataNascimento.trim() !== "" ||
+                    dados.cpf.trim() !== "" ||
+                    dados.cep.trim() !== "" ||
+                    dados.telefone.trim() !== "" ||
+                    dados.email.trim() !== "" ||
+                    dados.senha.trim() !== "" ||
+                    dados.confirmarSenha.trim() !== ""; 
 
                   setAlterou(mudou);
                 }}
@@ -79,8 +79,10 @@ function Cadastro() {
                 aoCancelar={() => tentarSair("/")}
 
                 aoEnviar={(dados) => {
+                  const { senha, confirmarSenha, ...dadosSemSenha } = dados;
+
                   definirUsuario({
-                    ...dados,
+                    ...dadosSemSenha,
                     dataCadastro: new Date().toISOString(),
                     tipo: "generico",
                   });

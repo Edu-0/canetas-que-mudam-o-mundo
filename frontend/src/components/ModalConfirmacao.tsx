@@ -21,9 +21,9 @@ function ModalConfirmacao({
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-[var(--secundario-10)] rounded-lg border border-[var(--secundario-20)] p-6 w-full max-w-md shadow-lg">
-        <h2 className="text-lg font-semibold mb-2">{titulo}</h2>
-        <p className="text-sm mb-6">{descricao}</p>
+      <div role="dialog" aria-modal="true" aria-labelledby="modal-titulo" aria-describedby="modal-descricao" className="bg-[var(--secundario-10)] rounded-lg border border-[var(--secundario-20)] p-6 w-full max-w-md shadow-lg">
+        <h2 id="modal-titulo" className="text-lg font-semibold mb-2">{titulo}</h2>
+        <p id="modal-descricao" className="text-sm mb-6">{descricao}</p>
 
         <div className="flex justify-between gap-3">
           <button

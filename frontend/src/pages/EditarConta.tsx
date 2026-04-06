@@ -64,13 +64,13 @@ function EditarConta() {
                 valoresIniciais={usuario}
                 mudouDados={(dados) => {
                   const mudou =
-                    dados.nome !== usuario.nome ||
-                    dados.dataNascimento !== usuario.dataNascimento ||
-                    dados.cpf !== usuario.cpf ||
-                    dados.cep !== usuario.cep ||
-                    dados.telefone !== usuario.telefone ||
-                    dados.email !== usuario.email ||
-                    dados.senha !== ""; // só se digitou senha
+                    dados.nome.trim() !== usuario.nome ||
+                    dados.dataNascimento.trim() !== usuario.dataNascimento ||
+                    dados.cpf.trim() !== usuario.cpf ||
+                    dados.cep.trim() !== usuario.cep ||
+                    dados.telefone.trim() !== usuario.telefone ||
+                    dados.email.trim() !== usuario.email ||
+                    dados.senha.trim() !== ""; // só se digitou senha
 
                   setAlterou(mudou);
                 }}
@@ -82,9 +82,11 @@ function EditarConta() {
                 aoCancelar={() => tentarSair("/conta")}
 
                 aoEnviar={(dados) => {
+                  const { senha, ...dadosSemSenha } = dados;
+
                   definirUsuario({
                     ...usuario, // mantém dataCadastro e tipo
-                    ...dados,
+                    ...dadosSemSenha,
                   });
 
                   setAlterou(false);

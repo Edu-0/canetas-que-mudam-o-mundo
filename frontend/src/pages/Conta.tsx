@@ -17,6 +17,14 @@ function Conta() {
     navigate("/");
   }
 
+  let dataNascimentoFormatada = "";
+
+  if (usuario?.dataNascimento) {
+    const [ano, mes, dia] = usuario.dataNascimento.split("-");
+    const data = new Date(Number(ano), Number(mes) - 1, Number(dia));
+    dataNascimentoFormatada = data.toLocaleDateString("pt-BR");
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-[var(--base-5)]">
 
@@ -52,7 +60,7 @@ function Conta() {
 
                     <p>
                       <span className="body-semibold-pequeno">Data de nascimento:</span>{" "}
-                      <span className="body-pequeno">{new Date(usuario.dataNascimento).toLocaleDateString("pt-BR")}</span>
+                      <span className="body-pequeno">{dataNascimentoFormatada}</span>
                     </p>
 
                     <p>
@@ -98,7 +106,6 @@ function Conta() {
                   </p>
                 )}
               </div>
-
 
               {/* Editar, Excluir e Sair */}
               {usuario && (

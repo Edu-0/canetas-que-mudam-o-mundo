@@ -15,6 +15,7 @@ type Props = {
     telefone: string;
     email: string; 
     senha?: string;
+    confirmarSenha?: string;
   }) => void;
 
   valoresIniciais?: {
@@ -90,7 +91,7 @@ function FormCadastroBase({ aoEnviar, valoresIniciais, modo = "cadastro",textoBo
 
   useEffect(() => {
     mudouDados?.(dados);
-  }, [nome, dataNascimento, cpf, cep, telefone, email, senha, confirmarSenha]);
+  }, [dados]);
 
   function validarUmCampo(campo: keyof typeof erros) {
     const mensagem = validarCampo(campo, dados);
@@ -147,17 +148,29 @@ function FormCadastroBase({ aoEnviar, valoresIniciais, modo = "cadastro",textoBo
         cep,
         telefone,
         email,
-        ...(deveMostrarSenha && senha ? { senha } : {})
+        // não enviar a senha no frontend
       });
       setCarregando(false);
     }, 1000);
   }
 
-  const hoje = new Date().toISOString().split("T")[0];
+  const hoje = new Date();
+  const hojeFormatado = hoje.getFullYear() + "-" + String(hoje.getMonth() + 1).padStart(2, "0") + "-" + String(hoje.getDate()).padStart(2, "0"); // data máxima para o input de data (hoje)
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4" onKeyDown={(e) => {if (e.key === "Enter") {e.preventDefault();
-    const campoAtual = (e.target as any).id as keyof typeof erros; marcarComoTocado(campoAtual); validarUmCampo(campoAtual);}}}>
+    <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4" 
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          const target = e.target as HTMLElement;
+
+          if (!target.id || !(target.id in erros)) return;
+
+          e.preventDefault();
+          marcarComoTocado(target.id as keyof typeof erros);
+          validarUmCampo(target.id as keyof typeof erros);
+        }
+      }}
+    >
 
       <div>
         <label className="body-semibold-pequeno" htmlFor="nome">Nome completo <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
@@ -168,7 +181,7 @@ function FormCadastroBase({ aoEnviar, valoresIniciais, modo = "cadastro",textoBo
 
       <div>
         <label className="body-semibold-pequeno" htmlFor="data-nascimento">Data de nascimento <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
-        <input id="data-nascimento" type="date" max={hoje} required className={`input-padrao ${tocados.dataNascimento && dataNascimento.trim() ? erros.dataNascimento ? "border-[var(--cor-resposta-errada)] focus:ring-[var(--cor-resposta-errada)]" : "border-[var(--cor-resposta-correta)] focus:ring-[var(--cor-resposta-correta)]" : ""}`} 
+        <input id="data-nascimento" type="date" max={hojeFormatado} required className={`input-padrao ${tocados.dataNascimento && dataNascimento.trim() ? erros.dataNascimento ? "border-[var(--cor-resposta-errada)] focus:ring-[var(--cor-resposta-errada)]" : "border-[var(--cor-resposta-correta)] focus:ring-[var(--cor-resposta-correta)]" : ""}`} 
         autoComplete="off" value={dataNascimento} onChange={(e) => setDataNascimento(e.target.value)} aria-invalid={!!erros.dataNascimento} aria-describedby={erros.dataNascimento ? "erro-data-nascimento" : undefined} onBlur={() => {marcarComoTocado("dataNascimento"), validarUmCampo("dataNascimento");}}/>
       </div>
       {erros.dataNascimento && tocados.dataNascimento && <p id="erro-data-nascimento" className="text-[var(--cor-resposta-errada)] text-sm">{erros.dataNascimento}</p>}

@@ -29,7 +29,15 @@ export function ProvedorUsuario({ children }: { children: ReactNode }) {
   // pega do localStorage ao iniciar
   const [usuario, setUsuario] = useState<Usuario | null>(() => {
     const salvo = localStorage.getItem("usuario");
-    return salvo ? JSON.parse(salvo) : null;
+
+    if (!salvo) return null;
+
+    try {
+      return JSON.parse(salvo);
+    } catch {
+      localStorage.removeItem("usuario");
+      return null;
+    }
   });
 
   // função para salvar
