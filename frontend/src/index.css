@@ -33,7 +33,9 @@
   --secundario-80: #FFF798;
   --secundario-100: #FFF09C;
 
-  --cor-resposta-obrigatoria: #ef4444;
+  --cor-resposta-obrigatoria: #ea2b2b;
+  --cor-resposta-correta: #16a34a; 
+  --cor-resposta-errada: #ef4444;
 
   --cor-botao-editar: #BBE4FF;
 }

@@ -4,6 +4,7 @@ import Cadastro from "./pages/Cadastro";
 //import Logar from "./pages/Logar"; // descomentar quando Logar estiver pronta
 import Conta from "./pages/Conta";
 // import CadastroDoador from "./pages/CadastroDoador"; // descomentar quando CadastroDoador estiver pronta
+import EditarConta from "./pages/EditarConta";
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/cadastro" element={<Cadastro />} />
         <Route path="/conta" element={<Conta />} />
         {/* <Route path="/cadastro/doador" element={<CadastroDoador />} /> */} {/* descomentar quando CadastroDoador estiver pronta */}
+        <Route path="/conta/editar" element={<EditarConta />} />
       </Routes>
     </BrowserRouter>
   );

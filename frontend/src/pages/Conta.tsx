@@ -1,17 +1,28 @@
 import { useNavigate } from "react-router-dom";
 import { useUsuario } from "../context/UserContext";
+import { useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Botao from "../components/Botao";
 import logo from "../assets/logo.svg";
+import ModalConfirmacao from "../components/ModalConfirmacao";
 
 function Conta() {
   const { usuario, definirUsuario } = useUsuario();
+  const [mostrarModal, setMostrarModal] = useState(false);
   const navigate = useNavigate();
 
   function sair() {
     definirUsuario(null);
     navigate("/");
+  }
+
+  let dataNascimentoFormatada = "";
+
+  if (usuario?.dataNascimento) {
+    const [ano, mes, dia] = usuario.dataNascimento.split("-");
+    const data = new Date(Number(ano), Number(mes) - 1, Number(dia));
+    dataNascimentoFormatada = data.toLocaleDateString("pt-BR");
   }
 
   return (
@@ -43,8 +54,43 @@ function Conta() {
                 {usuario ? (
                   <>
                     <p>
+                      <span className="body-semibold-pequeno">Nome:</span>{" "}
+                      <span className="body-pequeno">{usuario.nome}</span>
+                    </p>
+
+                    <p>
+                      <span className="body-semibold-pequeno">Data de nascimento:</span>{" "}
+                      <span className="body-pequeno">{dataNascimentoFormatada}</span>
+                    </p>
+
+                    <p>
+                      <span className="body-semibold-pequeno">CPF:</span>{" "}
+                      <span className="body-pequeno">{usuario.cpf}</span>
+                    </p>
+
+                    <p>
+                      <span className="body-semibold-pequeno">CEP:</span>{" "}
+                      <span className="body-pequeno">{usuario.cep}</span>
+                    </p>
+
+                    <p>
+                      <span className="body-semibold-pequeno">Telefone:</span>{" "}
+                      <span className="body-pequeno">{usuario.telefone || "Não informado"}</span>
+                    </p>
+
+                    <p>
                       <span className="body-semibold-pequeno">Email:</span>{" "}
                       <span className="body-pequeno">{usuario.email}</span>
+                    </p>
+
+                    <p>
+                      <span className="body-semibold-pequeno">Senha:</span>{" "}
+                      <span className="body-pequeno">••••••••</span>
+                    </p>
+
+                    <p>
+                      <span className="body-semibold-pequeno">Data de cadastro:</span>{" "}
+                      <span className="body-pequeno">{new Date(usuario.dataCadastro).toLocaleDateString("pt-BR")}</span>
                     </p>
 
                     {usuario.tipo && (
@@ -61,21 +107,34 @@ function Conta() {
                 )}
               </div>
 
-
               {/* Editar, Excluir e Sair */}
               {usuario && (
                 <div className="flex flex-col md:flex-row gap-4 mb-6">
                   <div className="flex-1">
-                    <Botao variante="editar" aoClicar={() => alert("Editar futuramente")}>Editar dados</Botao>
+                    <Botao variante="editar" aoClicar={() => navigate("/conta/editar")}>Editar conta</Botao>
                   </div>
 
                   <div className="flex-1">
-                    <Botao variante="cancelar" aoClicar={() => alert("Excluir futuramente")}>Excluir conta</Botao>
+                    <Botao variante="cancelar" aoClicar={() => setMostrarModal(true)}>Excluir conta</Botao>
                   </div>
   
                   <div className="flex-1">
                     <Botao variante="sair" aoClicar={sair}>Sair</Botao>
                   </div>
+
+                  <ModalConfirmacao
+                    aberto={mostrarModal}
+                    titulo="Excluir conta"
+                    descricao="Tem certeza que deseja excluir sua conta? Essa ação não pode ser desfeita."
+                    botaoCancelar="Cancelar exclusão da conta"
+                    botaoConfirmar="Excluir conta"
+                    onCancelar={() => setMostrarModal(false)}
+                    onConfirmar={() => {
+                      setMostrarModal(false);
+                      definirUsuario(null);
+                      navigate("/");
+                    }}
+                  />
                 </div>
               )}
 
