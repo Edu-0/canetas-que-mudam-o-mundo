@@ -160,7 +160,15 @@ function FormCadastroBase({ aoEnviar, valoresIniciais, modo = "cadastro",textoBo
 
       } else if (modo === "edicao") {
         
-        // colocar a logica de edicao outro momento aoEnviar(dados);
+        // Na edição, a senha é opcional e só é enviada se o usuário optar por alterar a senha (alterarSenha = true)
+        aoEnviar({
+          nome,
+          dataNascimento,
+          cpf,
+          cep,
+          telefone,
+          email,
+        });
       }
 
     } catch (error: any) {

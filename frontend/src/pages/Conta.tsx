@@ -145,7 +145,7 @@ function Conta() {
                     {(dados?.tipo || dados?.funcao) && (
                       <p>
                         <span className="body-semibold-pequeno">Tipo de conta:</span>{" "}
-                        <span className="body-pequeno">{dados.tipo || dados.funcao}</span>
+                        <span className="body-pequeno">{dados.tipo || dados.funcao?.[0]?.tipo_usuario || "Não informado"}</span>
                       </p>
                     )}
                   </>

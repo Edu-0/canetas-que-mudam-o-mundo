@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios from "axios"; // para chamadas HTTP, mas pode ser substituído por fetch ou outra biblioteca, ver se necessário
 import api from "./api";
 
 export type DadosUsuario = {
@@ -36,8 +36,8 @@ export async function criarUsuarioBeneficiario(usuario_id: number, dados: DadosB
 }
 
 // Criar familiar para beneficiário
-export async function criarFamiliar(usuario_id: number, dados: DadosFamilia) {
-  const response = await api.post(`/usuario/${usuario_id}/beneficiario/familiar`, dados);
+export async function criarFamiliar(perfil_id: number, dados: DadosFamilia) {
+  const response = await api.post(`/usuario/${perfil_id}/familia-beneficiario`, dados);
   return response.data;
 }
 
