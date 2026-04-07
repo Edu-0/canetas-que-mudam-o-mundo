@@ -1,17 +1,26 @@
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
 from app.schemas import user as s
 from app.core.security import gerar_hash_senha
 from app.models import user as m
 from app.database.connection import SessionDep
 from typing import List
+from fastapi import HTTPException
 
 router = APIRouter(prefix="/usuario", tags=["usuario"])
 
 
-@router.get("/")
-def get_users():
-    return {"message": "ok"}
+@router.get("/", response_model=List[s.respostaUsuario])
+def get_usuarios(db:SessionDep):
+    usuarios = db.query(m.Usuario).all()
+    return usuarios
+
+@router.get("/{id}", response_model=s.respostaUsuario)
+def get_usuario(usuario_id,db:SessionDep):
+    usuario = db.get(m.Usuario,usuario_id)
+    if not usuario:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado.")
+    return usuario
+    
 
 @router.post("/generico", response_model=s.respostaUsuario)
 def criar_usuario_base(dados:s.criarUsuario, db:SessionDep):

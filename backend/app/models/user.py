@@ -18,7 +18,7 @@ class Usuario(Base):
     senha = Column(String(255), nullable= False)
     funcao = relationship("UsuarioFuncao", back_populates="usuario")
     documento = relationship("DocumentoUsuario", back_populates="usuario")
-    perfil_beneficiario = relationship("UsuarioBeneficiario", back_populates="usuario")
+    perfil_beneficiario = relationship("UsuarioBeneficiario", back_populates="usuario", uselist=False)
 
 class UsuarioBeneficiario(Base):
     __tablename__ = 'usuario_beneficiario'
