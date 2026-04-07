@@ -10,3 +10,6 @@ pydantic[email]
 python-dotenv
 greenlet
 typing_extensions
+python-jose[cryptography]
+firebase-admin
+python-multipart

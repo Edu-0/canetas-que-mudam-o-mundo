@@ -84,3 +84,47 @@ def cadastrar_familia_beneficiario(perfil_id, dados:List[s.cadastrarFamiliaBenef
     for familiar in familiares:
         db.refresh(familiar)
     return familiares
+
+@router.put("/{usuario_id}", response_model=s.respostaUsuario)
+def atualizar_usuario(usuario_id, dados:s.atualizarUsuario, db:SessionDep):
+    usuario = db.get(m.Usuario, usuario_id)
+    if not usuario:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado.")
+    for key, value in dados.model_dump(exclude_unset=True).items():
+        setattr(usuario, key, value)
+    db.commit()
+    db.refresh(usuario)
+    return usuario
+
+@router.put("/{perfil_id}/beneficiario", response_model=s.respostaUsuarioBeneficiario)
+def atualizar_usuario_beneficiario(perfil_id, dados:s.atualizarUsuarioBeneficiario, db:SessionDep):
+    perfil = db.get(m.UsuarioBeneficiario, perfil_id)
+    if not perfil:
+        raise HTTPException(status_code=404, detail="Perfil de beneficiário não encontrado.")
+    for key, value in dados.model_dump(exclude_unset=True).items():
+        setattr(perfil, key, value)
+    db.commit()
+    db.refresh(perfil)
+    return perfil
+
+@router.put("/{familia_id}/familia-beneficiario", response_model=s.respostaFamiliaBeneficiario)
+def atualizar_familia_beneficiario(familia_id, dados:s.atualizarFamiliaBeneficiario, db:SessionDep):
+    familiar = db.get(m.FamiliaBeneficiario, familia_id)
+    if not familiar:
+        raise HTTPException(status_code=404, detail="Familiar beneficiário não encontrado.")
+    for key, value in dados.model_dump(exclude_unset=True).items():
+        setattr(familiar, key, value)
+    db.commit()
+    db.refresh(familiar)
+    return familiar
+
+@router.put("/{documento_id}/documento", response_model=s.respostaDocumento)
+def atualizar_documento(documento_id, dados:s.atualizarDocumento, db:SessionDep):
+    documento = db.get(m.DocumentoUsuario, documento_id)
+    if not documento:
+        raise HTTPException(status_code=404, detail="Documento não encontrado.")
+    for key, value in dados.model_dump(exclude_unset=True).items():
+        setattr(documento, key, value)
+    db.commit()
+    db.refresh(documento)
+    return documento
