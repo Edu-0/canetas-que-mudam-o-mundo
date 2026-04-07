@@ -9,7 +9,7 @@ class usuarioBase(BaseModel):
     data_nascimento : date 
     cep : str = Field (pattern=r"^\d{8}$")
     cpf: str = Field (pattern=r"^\d{11}$")
-    telefone: str = Field(pattern=r"^\d{10,11}$")
+    telefone: Optional[str] = Field(default=None, pattern=r"^\d{10,11}$")
     email: EmailStr
     funcao: Optional[TipoUsuario] = TipoUsuario.GENERICO
     
@@ -40,19 +40,12 @@ class criarUsuario(usuarioBase):
         
         if not any(char.isdigit() for char in senha):
             raise ValueError('A senha deve conter pelo menos um número.')
-            
+        
+        caracteres_especiais = "!@#$%^&*()-+_=[]{};:'\"\\|,.<>/?~"
+        if not any(char in caracteres_especiais for char in senha):
+            raise ValueError('A senha deve conter pelo menos um caractere especial (ex: ! @ # $ %).')
+  
         return senha
-
-
-class respostaFuncao(BaseModel):
-    tipo_usuario:TipoUsuario
-    model_config = ConfigDict(from_attributes=True)
-
-class respostaUsuario(usuarioBase):
-    model_config = ConfigDict(from_attributes=True)
-    id:int
-    funcao: List[respostaFuncao] = []
-    
 
 class criarUsuarioBeneficiario(BaseModel):
     qtd_familiares : int = Field(default=0, ge = 0)
@@ -71,7 +64,16 @@ class respostaUsuarioBeneficiario(criarUsuarioBeneficiario):
     model_config = ConfigDict(from_attributes=True)
     id:int
 
+class respostaFuncao(BaseModel):
+    tipo_usuario:TipoUsuario
+    model_config = ConfigDict(from_attributes=True)
 
+class respostaUsuario(usuarioBase):
+    model_config = ConfigDict(from_attributes=True)
+    id:int
+    funcao: List[respostaFuncao] = []
+    perfil_beneficiario: Optional[respostaUsuarioBeneficiario] = None
+    
 class cadastrarFamiliaBeneficiario(BaseModel):
     nome: str = Field(min_length=2, max_length=255)
     parentesco: str = Field(min_length=2, max_length=100)
