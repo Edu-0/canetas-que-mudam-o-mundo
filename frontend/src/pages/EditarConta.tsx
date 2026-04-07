@@ -64,13 +64,13 @@ function EditarConta() {
                 valoresIniciais={usuario}
                 mudouDados={(dados) => {
                   const mudou =
-                    dados.nome.trim() !== usuario.nome ||
-                    dados.dataNascimento.trim() !== usuario.dataNascimento ||
-                    dados.cpf.trim() !== usuario.cpf ||
-                    dados.cep.trim() !== usuario.cep ||
-                    dados.telefone.trim() !== usuario.telefone ||
-                    dados.email.trim() !== usuario.email ||
-                    dados.senha.trim() !== ""; // só se digitou senha
+                    dados.nome.trim() !== (usuario.nome || "") ||
+                    dados.dataNascimento.trim() !== (usuario.dataNascimento || "") ||
+                    dados.cpf.trim() !== (usuario.cpf || "") ||
+                    dados.cep.trim() !== (usuario.cep || "") ||
+                    dados.telefone.trim() !== (usuario.telefone || "") ||
+                    dados.email.trim() !== (usuario.email || "") ||
+                    dados.senha.trim() !== ""; // só se digitou senha nova
 
                   setAlterou(mudou);
                 }}
