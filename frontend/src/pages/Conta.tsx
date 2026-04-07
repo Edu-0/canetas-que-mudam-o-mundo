@@ -1,18 +1,19 @@
 import { useNavigate } from "react-router-dom";
 import { useUsuario } from "../context/UserContext";
 import { useEffect, useState } from "react";
-import { obterPerfil } from "../services/usuarioService";
+import { obterUsuario } from "../services/usuarioService";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Botao from "../components/Botao";
 import logo from "../assets/logo.svg";
 import ModalConfirmacao from "../components/ModalConfirmacao";
+import { DadosUsuario } from "../services/usuarioService";
 
 function Conta() {
   const { usuario, definirUsuario } = useUsuario();
   const [mostrarModal, setMostrarModal] = useState(false);
   const navigate = useNavigate();
-  const [perfil, setPerfil] = useState<any>(null);
+  const [perfil, setPerfil] = useState<DadosUsuario | null>(null);
   const [carregandoPerfil, setCarregandoPerfil] = useState(true);
 
   const dados = perfil || usuario;
@@ -22,7 +23,7 @@ function Conta() {
     navigate("/");
   }
 
-  const dataNascimentoRaw = dados?.dataNascimento || dados?.data_nascimento;
+  const dataNascimentoRaw = dados?.data_nascimento;
 
   let dataNascimentoFormatada = "Data de nascimento não informada";
 
@@ -36,7 +37,7 @@ function Conta() {
     }
   }
 
-  const dataCadastroRaw = dados?.dataCadastro || dados?.data_cadastro;
+  const dataCadastroRaw = dados?.data_cadastro;
 
   const dataCadastroFormatada = dataCadastroRaw
     ? new Date(dataCadastroRaw).toLocaleDateString("pt-BR")
@@ -50,7 +51,7 @@ function Conta() {
 
     async function carregarPerfil() {
       try {
-        const dados = await obterPerfil(usuario!.id); // o ! é para dizer que tenho certeza que usuario existe nesse ponto, porque já verifiquei no if acima. Assim evito erro de tipo do TS.
+        const dados = await obterUsuario(usuario!.id); // o ! é para dizer que tenho certeza que usuario existe nesse ponto, porque já verifiquei no if acima. Assim evito erro de tipo do TS.
         setPerfil(dados);
 
       } catch (error) {
@@ -104,7 +105,7 @@ function Conta() {
                   <>
                     <p>
                       <span className="body-semibold-pequeno">Nome:</span>{" "}
-                      <span className="body-pequeno">{dados?.nome || dados?.nome_completo || "Nome não informado"}</span>
+                      <span className="body-pequeno">{dados?.nome_completo || "Nome não informado"}</span>
                     </p>
 
                     <p>
@@ -142,10 +143,10 @@ function Conta() {
                       <span className="body-pequeno">{dataCadastroFormatada}</span>
                     </p>
 
-                    {(dados?.tipo || dados?.funcao) && (
+                    {"tipo" in dados && dados.tipo && (
                       <p>
                         <span className="body-semibold-pequeno">Tipo de conta:</span>{" "}
-                        <span className="body-pequeno">{dados.tipo || dados.funcao?.[0]?.tipo_usuario || "Não informado"}</span>
+                        <span className="body-pequeno">{dados?.tipo || "Não informado"}</span> {/* a pesso pode ter mais de uma função e quero pegar todas elas*/}
                       </p>
                     )}
                   </>

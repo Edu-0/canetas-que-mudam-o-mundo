@@ -64,8 +64,8 @@ function EditarConta() {
                 valoresIniciais={usuario}
                 mudouDados={(dados) => {
                   const mudou =
-                    dados.nome.trim() !== (usuario.nome || "") ||
-                    dados.dataNascimento.trim() !== (usuario.dataNascimento || "") ||
+                    dados.nome_completo.trim() !== (usuario.nome_completo || "") ||
+                    dados.data_nascimento.trim() !== (usuario.data_nascimento || "") ||
                     dados.cpf.trim() !== (usuario.cpf || "") ||
                     dados.cep.trim() !== (usuario.cep || "") ||
                     dados.telefone.trim() !== (usuario.telefone || "") ||
@@ -87,6 +87,7 @@ function EditarConta() {
                   definirUsuario({
                     ...usuario, // mantém dataCadastro e tipo
                     ...dadosSemSenha,
+                    tipo: usuario.tipo, // mantém o tipo do usuário, porque o backend não permite alterar o tipo e se eu não enviar ele pode apagar o tipo do usuário
                   });
 
                   setAlterou(false);
