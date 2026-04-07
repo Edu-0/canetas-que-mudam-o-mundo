@@ -78,15 +78,7 @@ function Cadastro() {
 
                 aoCancelar={() => tentarSair("/")}
 
-                aoEnviar={(dados) => {
-                  const { senha, confirmarSenha, ...dadosSemSenha } = dados;
-
-                  definirUsuario({
-                    ...dadosSemSenha,
-                    dataCadastro: new Date().toISOString(),
-                    tipo: "generico",
-                  });
-
+                aoEnviar={() => {
                   setAlterou(false); // reseta o estado de alteração para evitar alerta ao sair depois de cadastrar
                   setMensagem("Cadastro realizado com sucesso!");
 

@@ -4,11 +4,12 @@ import { createContext, useContext, useState, ReactNode } from "react";
 type TipoUsuario = "generico" | "doador" | "voluntario" | "responsavel";
 
 export type Usuario = {
+  id: number;
   nome: string;
   dataNascimento: string;
   cpf: string;
   cep: string;
-  telefone: string;
+  telefone?: string;
   email: string;
   tipo?: TipoUsuario;
   dataCadastro: string;

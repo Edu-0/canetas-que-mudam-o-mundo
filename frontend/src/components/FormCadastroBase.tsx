@@ -5,6 +5,7 @@ import { validarCampo } from "../utils/validacoesFormulario";
 import { verificarRequisitosSenha } from "../utils/validacoes";
 import olho_visivel from "../assets/olho_visivel.png";
 import olho_bloqueado from "../assets/olho_bloqueado.png";
+import { criarUsuario } from "../services/usuarioService";
 
 type Props = {
   aoEnviar: (dados: { 
@@ -106,11 +107,12 @@ function FormCadastroBase({ aoEnviar, valoresIniciais, modo = "cadastro",textoBo
     setTocados((prev) => ({ ...prev, [campo]: true }));
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
     if (carregando) return; // evita múltiplos envios
 
+    // validação de todos os campos
     const novosErros = {
       nome: validarCampo("nome", dados),
       dataNascimento: validarCampo("dataNascimento", dados),
@@ -140,18 +142,64 @@ function FormCadastroBase({ aoEnviar, valoresIniciais, modo = "cadastro",textoBo
 
     setCarregando(true);
 
-    setTimeout(() => {
-      aoEnviar({
-        nome,
-        dataNascimento,
-        cpf,
-        cep,
-        telefone,
-        email,
-        // não enviar a senha no frontend
-      });
+    try {
+      if (modo === "cadastro") {
+        // chama API do backend
+        const usuarioCadastrado = await criarUsuario({
+          nome_completo: nome,
+          data_nascimento: dataNascimento,
+          cpf: cpf.replace(/\D/g, ""),
+          cep: cep.replace(/\D/g, ""),
+          telefone: telefone.replace(/\D/g, ""),
+          email,
+          senha,
+          funcao: "Genérico"
+        });
+
+        aoEnviar(usuarioCadastrado); // envia para o Cadastro.tsx
+
+      } else if (modo === "edicao") {
+        
+        // Na edição, a senha é opcional e só é enviada se o usuário optar por alterar a senha (alterarSenha = true)
+        aoEnviar({
+          nome,
+          dataNascimento,
+          cpf,
+          cep,
+          telefone,
+          email,
+        });
+      }
+
+    } catch (error: any) {
+      console.error(error);
+
+      if (modo === "cadastro") {
+        if (error.response?.data?.detail) {
+          const mensagens = error.response.data.detail
+            .map((err: any) => `${err.loc.join(".")}: ${err.msg}`)
+            .join("\n");
+
+          alert("Erro ao criar usuário:\n" + mensagens);
+        } else {
+          alert("Erro ao criar usuário: " + error.message);
+        }
+
+      } else if (modo === "edicao") {
+        if (error.response?.data?.detail) {
+          const mensagens = error.response.data.detail
+            .map((err: any) => `${err.loc.join(".")}: ${err.msg}`)
+            .join("\n");
+
+          alert("Erro ao atualizar usuário:\n" + mensagens);
+        } else {
+          alert("Erro ao atualizar usuário: " + error.message);
+        }
+      }
+
+    } finally {
       setCarregando(false);
-    }, 1000);
+    }
   }
 
   const hoje = new Date();
