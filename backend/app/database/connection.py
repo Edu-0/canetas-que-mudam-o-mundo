@@ -1,11 +1,28 @@
+import os
+
+from dotenv import load_dotenv
 from sqlalchemy import create_engine
+from sqlalchemy.engine import URL
 from sqlalchemy.orm import Session
 from sqlalchemy_utils import database_exists, create_database
 from typing import Annotated
 from fastapi import Depends
 
-def get_engine(user, passwd, host, port, db):
-    url = f"postgresql://{user}:{passwd}@{host}:{port}/{db}"
+load_dotenv()
+
+
+def get_engine(database_url=None, user=None, passwd=None, host=None, port=None, db=None):
+    if database_url:
+        url = database_url
+    else:
+        url = URL.create(
+            drivername="postgresql+psycopg2",
+            username=user,
+            password=passwd,
+            host=host,
+            port=int(port) if port else 5432,
+            database=db,
+        )
     
     if not database_exists(url):
         create_database(url)
@@ -15,13 +32,21 @@ def get_engine(user, passwd, host, port, db):
     return engine
 
 
-USUARIO = "" 
-SENHA = ""
-HOST = ""
-PORTA = ""
-NOME_BANCO = ""
+DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
+USUARIO = os.getenv("DB_USER", "").strip()
+SENHA = os.getenv("DB_PASSWORD", "").strip()
+HOST = os.getenv("DB_HOST", "localhost").strip()
+PORTA = os.getenv("DB_PORT", "5432").strip()
+NOME_BANCO = os.getenv("DB_NAME", "").strip()
 
-engine = get_engine(USUARIO, SENHA, HOST, PORTA, NOME_BANCO)
+engine = get_engine(
+    database_url=DATABASE_URL if DATABASE_URL else None,
+    user=USUARIO if not DATABASE_URL else None,
+    passwd=SENHA if not DATABASE_URL else None,
+    host=HOST if not DATABASE_URL else None,
+    port=PORTA if not DATABASE_URL else None,
+    db=NOME_BANCO if not DATABASE_URL else None,
+)
 
 def get_session():
     #A Session is what stores the objects in memory and keeps track of any changes needed in the data, 
