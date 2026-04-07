@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useUsuario } from "../context/UserContext";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { obterPerfil } from "../services/usuarioService";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Botao from "../components/Botao";
@@ -11,18 +12,66 @@ function Conta() {
   const { usuario, definirUsuario } = useUsuario();
   const [mostrarModal, setMostrarModal] = useState(false);
   const navigate = useNavigate();
+  const [perfil, setPerfil] = useState<any>(null);
+  const [carregandoPerfil, setCarregandoPerfil] = useState(true);
+
+  const dados = perfil || usuario;
 
   function sair() {
     definirUsuario(null);
     navigate("/");
   }
 
-  let dataNascimentoFormatada = "";
+  const dataNascimentoRaw = dados?.dataNascimento || dados?.data_nascimento;
 
-  if (usuario?.dataNascimento) {
-    const [ano, mes, dia] = usuario.dataNascimento.split("-");
-    const data = new Date(Number(ano), Number(mes) - 1, Number(dia));
-    dataNascimentoFormatada = data.toLocaleDateString("pt-BR");
+  let dataNascimentoFormatada = "Data de nascimento não informada";
+
+  if (dataNascimentoRaw) {
+    try {
+      const [ano, mes, dia] = dataNascimentoRaw.split("-");
+      const data = new Date(Number(ano), Number(mes) - 1, Number(dia));
+      dataNascimentoFormatada = data.toLocaleDateString("pt-BR");
+    } catch {
+      dataNascimentoFormatada = "Data de nascimento não informada";
+    }
+  }
+
+  const dataCadastroRaw = dados?.dataCadastro || dados?.data_cadastro;
+
+  const dataCadastroFormatada = dataCadastroRaw
+    ? new Date(dataCadastroRaw).toLocaleDateString("pt-BR")
+    : "Data de cadastro não informada";
+
+  useEffect(() => {
+    if (!usuario || !usuario.id) {
+      setCarregandoPerfil(false);
+      return;
+    }
+
+    async function carregarPerfil() {
+      try {
+        const dados = await obterPerfil(usuario!.id); // o ! é para dizer que tenho certeza que usuario existe nesse ponto, porque já verifiquei no if acima. Assim evito erro de tipo do TS.
+        setPerfil(dados);
+
+      } catch (error) {
+        console.error("Erro ao carregar perfil:", error);
+
+      } finally {
+        setCarregandoPerfil(false);
+      }
+    }
+
+    carregarPerfil();
+  }, [usuario?.id]);
+
+  if (carregandoPerfil) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-pulse text-lg">
+          Carregando perfil...
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -51,11 +100,11 @@ function Conta() {
 
               {/* Informações da conta */}
               <div className="flex flex-col gap-2 mb-6">
-                {usuario ? (
+                {dados ? (
                   <>
                     <p>
                       <span className="body-semibold-pequeno">Nome:</span>{" "}
-                      <span className="body-pequeno">{usuario.nome}</span>
+                      <span className="body-pequeno">{dados?.nome || dados?.nome_completo || "Nome não informado"}</span>
                     </p>
 
                     <p>
@@ -65,22 +114,22 @@ function Conta() {
 
                     <p>
                       <span className="body-semibold-pequeno">CPF:</span>{" "}
-                      <span className="body-pequeno">{usuario.cpf}</span>
+                      <span className="body-pequeno">{dados?.cpf || "CPF não informado"}</span>
                     </p>
 
                     <p>
                       <span className="body-semibold-pequeno">CEP:</span>{" "}
-                      <span className="body-pequeno">{usuario.cep}</span>
+                      <span className="body-pequeno">{dados?.cep || "CEP não informado"}</span>
                     </p>
 
                     <p>
                       <span className="body-semibold-pequeno">Telefone:</span>{" "}
-                      <span className="body-pequeno">{usuario.telefone || "Não informado"}</span>
+                      <span className="body-pequeno">{dados?.telefone || "Telefone não informado"}</span>
                     </p>
 
                     <p>
                       <span className="body-semibold-pequeno">Email:</span>{" "}
-                      <span className="body-pequeno">{usuario.email}</span>
+                      <span className="body-pequeno">{dados?.email || "Email não informado"}</span>
                     </p>
 
                     <p>
@@ -90,13 +139,13 @@ function Conta() {
 
                     <p>
                       <span className="body-semibold-pequeno">Data de cadastro:</span>{" "}
-                      <span className="body-pequeno">{new Date(usuario.dataCadastro).toLocaleDateString("pt-BR")}</span>
+                      <span className="body-pequeno">{dataCadastroFormatada}</span>
                     </p>
 
-                    {usuario.tipo && (
+                    {(dados?.tipo || dados?.funcao) && (
                       <p>
-                        <span className="body-semibold-pequeno">Tipo:</span>{" "}
-                        <span className="body-pequeno">{usuario.tipo}</span>
+                        <span className="body-semibold-pequeno">Tipo de conta:</span>{" "}
+                        <span className="body-pequeno">{dados.tipo || dados.funcao?.[0]?.tipo_usuario || "Não informado"}</span>
                       </p>
                     )}
                   </>
@@ -131,6 +180,7 @@ function Conta() {
                     onCancelar={() => setMostrarModal(false)}
                     onConfirmar={() => {
                       setMostrarModal(false);
+                      // FUTURO: chamar API aqui para excluir conta do backend antes de deslogar
                       definirUsuario(null);
                       navigate("/");
                     }}
