@@ -73,7 +73,7 @@ class respostaUsuario(usuarioBase):
     id:int
     funcao: List[respostaFuncao] = []
     perfil_beneficiario: Optional[respostaUsuarioBeneficiario] = None
-    familia_beneficiario: Optional[respostaFamiliaBeneficiario] = None
+    familia_beneficiario: Optional["respostaFamiliaBeneficiario"] = None
     
 class cadastrarFamiliaBeneficiario(BaseModel):
     nome: str = Field(min_length=2, max_length=255)
