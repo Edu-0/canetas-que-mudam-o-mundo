@@ -125,3 +125,31 @@ class cadastrarDocumento(BaseModel):
 class respostaDocumento(cadastrarDocumento):
     model_config = ConfigDict(from_attributes=True)
     id:int
+    
+
+class atualizarUsuario(BaseModel):
+    nome_completo: Optional[str] = Field(default=None, min_length=2, max_length=255)
+    data_nascimento : Optional[date] = None
+    cep : Optional[str] = Field(default=None, pattern=r"^\d{8}$")
+    cpf: Optional[str] = Field(default=None, pattern=r"^\d{11}$")
+    telefone: Optional[str] = Field(default=None, pattern=r"^\d{10,11}$")
+    email: Optional[EmailStr] = None
+
+
+class atualizarUsuarioBeneficiario(BaseModel):
+    qtd_familiares : Optional[int] = Field(default=None, ge = 0)
+    auxilio: Optional[BeneficiosUsuario] = None
+    concordou_termos: Optional[bool] = None
+
+
+class atualizarFamiliaBeneficiario(BaseModel):
+    nome: Optional[str] = Field(default=None, min_length=2, max_length=255)
+    parentesco: Optional[str] = Field(default=None, min_length=2, max_length=100)
+    data_nascimento: Optional[date] = None
+    renda: Optional[float] = Field(default=None, ge=0)
+
+
+class atualizarDocumento(BaseModel):
+    tipo_documento: Optional[str] = Field(default=None, min_length=2,max_length=50)
+    nome_original: Optional[str] = Field(default=None, min_length=2, max_length=255)
+    caminho_arquivo: Optional[str] = Field(default=None, min_length=2, max_length=1000)
