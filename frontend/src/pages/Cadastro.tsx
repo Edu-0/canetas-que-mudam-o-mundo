@@ -26,6 +26,16 @@ function Cadastro() {
     }
   }
 
+  const tiposValidos: TipoUsuario[] = ["Genérico", "Coordenador de Processos", "Responsável pelo beneficiário", "Doador", "Voluntário da triagem"];
+
+  function mapearTipo(tipo?: string): TipoUsuario {
+    if (tiposValidos.includes(tipo as TipoUsuario)) {
+      return tipo as TipoUsuario;
+    }
+
+    return "Genérico";
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-[var(--base-5)]">
       
@@ -87,7 +97,7 @@ function Cadastro() {
                     cep: usuarioCadastrado.cep,
                     telefone: usuarioCadastrado.telefone,
                     email: usuarioCadastrado.email,
-                    tipo: usuarioCadastrado.funcao?.[0]?.tipo_usuario as TipoUsuario, // a pessoa pode ter mais de uma função e quero pegar todas elas
+                    tipos: usuarioCadastrado.funcao?.map(f => mapearTipo(f.tipo_usuario)) || [], // a pessoa pode ter mais de uma função e quero pegar todas elas
                     data_cadastro: new Date().toISOString()
                   });
 

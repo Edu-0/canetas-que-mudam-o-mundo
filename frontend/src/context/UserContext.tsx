@@ -16,7 +16,7 @@ export type Usuario = {
   cep: string;
   telefone?: string;
   email: string;
-  tipo?: TipoUsuario;
+  tipos?: TipoUsuario[];
   data_cadastro: string;
 };
 

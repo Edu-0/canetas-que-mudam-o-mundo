@@ -5,10 +5,11 @@ import { validarCampo } from "../utils/validacoesFormulario";
 import { verificarRequisitosSenha } from "../utils/validacoes";
 import olho_visivel from "../assets/olho_visivel.png";
 import olho_bloqueado from "../assets/olho_bloqueado.png";
-import { criarUsuario } from "../services/usuarioService";
-import { DadosUsuario } from "../services/usuarioService";
+import { criarUsuario, atualizarUsuario } from "../services/usuarioService";
+import { DadosUsuario, AtualizarUsuarioEnvio } from "../services/usuarioService";
 
-type Props = {
+type PropsCadastro = {
+  modo: "cadastro";
   aoEnviar: (usuario: DadosUsuario) => void;
 
   valoresIniciais?: {
@@ -20,13 +21,34 @@ type Props = {
     email?: string;
   };
 
-  modo?: "cadastro" | "edicao";
   textoBotaoEnviar?: string;
   textoBotaoCancelar?: string;
   mostrarCancelar?: boolean;
   aoCancelar?: () => void;
   mudouDados?: (dados: any) => void;
 };
+
+type PropsEdicao = {
+  modo: "edicao";
+  aoEnviar: (usuario: AtualizarUsuarioEnvio) => void;
+
+  valoresIniciais?: {
+    nome_completo?: string;
+    data_nascimento?: string;
+    cpf?: string;
+    cep?: string;
+    telefone?: string;
+    email?: string;
+  };
+
+  textoBotaoEnviar?: string;
+  textoBotaoCancelar?: string;
+  mostrarCancelar?: boolean;
+  aoCancelar?: () => void;
+  mudouDados?: (dados: any) => void;
+};
+
+type Props = PropsCadastro | PropsEdicao;
 
 function FormCadastroBase({ aoEnviar, valoresIniciais, modo = "cadastro",textoBotaoEnviar = "Cadastrar", textoBotaoCancelar = "Cancelar", mostrarCancelar = false, aoCancelar, mudouDados}: Props) {
   const [nome_completo, setNomeCompleto] = useState(valoresIniciais?.nome_completo || "");
@@ -136,6 +158,8 @@ function FormCadastroBase({ aoEnviar, valoresIniciais, modo = "cadastro",textoBo
 
     try {
       if (modo === "cadastro") {
+        const propsCadastro = { aoEnviar } as PropsCadastro;
+
         // chama API do backend
         const usuarioCadastrado = await criarUsuario({
           nome_completo,
@@ -147,11 +171,13 @@ function FormCadastroBase({ aoEnviar, valoresIniciais, modo = "cadastro",textoBo
           senha,
         });
 
-        aoEnviar(usuarioCadastrado); // envia para o Cadastro.tsx
+        propsCadastro.aoEnviar(usuarioCadastrado); // envia para o Cadastro.tsx
 
       } else if (modo === "edicao") {
 
-        const dadosAtualizados: any = {
+        const propsEdicao = { aoEnviar } as PropsEdicao;
+
+        const dadosAtualizados: AtualizarUsuarioEnvio = {
           nome_completo,
           data_nascimento,
           cpf: cpf.replace(/\D/g, ""),
@@ -165,9 +191,7 @@ function FormCadastroBase({ aoEnviar, valoresIniciais, modo = "cadastro",textoBo
           dadosAtualizados.senha = senha;
         }
 
-        // const usuarioAtualizado = await atualizarUsuario(dadosAtualizados); // ainda esta sendo feita
-
-        // aoEnviar(usuarioAtualizado);
+        propsEdicao.aoEnviar(dadosAtualizados); // envia para o EditarConta.tsx
       }
 
     } catch (error: any) {
@@ -227,7 +251,7 @@ function FormCadastroBase({ aoEnviar, valoresIniciais, modo = "cadastro",textoBo
       {erros.nome_completo && tocados.nome_completo && <p id="erro-nome" className="text-[var(--cor-resposta-errada)] text-sm">{erros.nome_completo}</p>}
 
       <div>
-        <label className="body-semibold-pequeno" htmlFor="dataNascimento">Data de nascimento <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
+        <label className="body-semibold-pequeno" htmlFor="data_nascimento">Data de nascimento <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
         <input id="data_nascimento" type="date" max={hojeFormatado} required className={`input-padrao ${tocados.data_nascimento && data_nascimento.trim() ? erros.data_nascimento ? "border-[var(--cor-resposta-errada)] focus:ring-[var(--cor-resposta-errada)]" : "border-[var(--cor-resposta-correta)] focus:ring-[var(--cor-resposta-correta)]" : ""}`} 
         autoComplete="off" value={data_nascimento} onChange={(e) => setDataNascimento(e.target.value)} aria-invalid={!!erros.data_nascimento} aria-describedby={erros.data_nascimento ? "erro-data-nascimento" : undefined} onBlur={() => {marcarComoTocado("data_nascimento"), validarUmCampo("data_nascimento");}}/>
       </div>

@@ -1,6 +1,6 @@
 import api from "./api";
 
-export type DadosUsuario = { // (GET/POST retorno)
+export type DadosUsuario = { // (GET retorno)
   id: number;
   nome_completo: string;
   data_nascimento: string;
@@ -8,11 +8,11 @@ export type DadosUsuario = { // (GET/POST retorno)
   cep: string;
   telefone?: string; // telefone é opcional no backend, então aqui também
   email: string;
-  senha?: string; // senha é opcional porque no editar conta, o usuário pode não querer mudar a senha
-  funcao?: { // a pessoa pode ter mais de uma função, então é um array.
+  // senha não é retornada pelo backend por segurança, então não coloco aqui
+  funcao: { // a pessoa pode ter mais de uma função, então é um array.
     tipo_usuario: string;
   }[];
-  data_cadastro?: string; 
+  data_cadastro?: string; // não é criado no backend, criamos aqui no frontend para facilitar a manipulação, mas é opcional porque pode não vir do backend
 };
 
 export type CriarUsuarioEnvio = { // (POST envio) 
@@ -23,7 +23,18 @@ export type CriarUsuarioEnvio = { // (POST envio)
   telefone?: string;
   email: string;
   senha: string; // senha é obrigatória para criar um usuário
-  // id e data_cadastro são gerados pelo backend, então não precisam ser enviados
+  // id é gerado pelo backend, então não precisa ser enviado
+  // ver se dá para o backend criar o data_cadastro automaticamente
+};
+
+export type AtualizarUsuarioEnvio = { // (PUT envio)
+  nome_completo?: string;
+  data_nascimento?: string;
+  cpf?: string;
+  cep?: string;
+  telefone?: string;
+  email?: string;
+  senha?: string;
 };
 
 export type DadosBeneficiario = {
@@ -63,7 +74,7 @@ export async function obterUsuario(id: number) {
 }
 
 // Atualizar perfil do usuário
-export async function atualizarUsuario(id: number, dados: DadosUsuario) {
+export async function atualizarUsuario(id: number, dados: AtualizarUsuarioEnvio) {
   const response = await api.put(`/usuario/${id}`, dados); 
   return response.data;
 }
