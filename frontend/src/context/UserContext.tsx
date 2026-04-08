@@ -1,18 +1,23 @@
 import { createContext, useContext, useState, ReactNode } from "react";
 
 // tipo do usuário
-type TipoUsuario = "generico" | "doador" | "voluntario" | "responsavel";
+export type TipoUsuario = 
+  | "Genérico"
+  | "Coordenador de Processos"
+  | "Responsável pelo beneficiário"
+  | "Doador"
+  | "Voluntário da triagem";
 
 export type Usuario = {
   id: number;
-  nome: string;
-  dataNascimento: string;
+  nome_completo: string;
+  data_nascimento: string;
   cpf: string;
   cep: string;
   telefone?: string;
   email: string;
-  tipo?: TipoUsuario;
-  dataCadastro: string;
+  tipos?: TipoUsuario[];
+  data_cadastro: string;
 };
 
 // o que o contexto fornece

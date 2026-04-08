@@ -14,7 +14,7 @@ def get_usuarios(db:SessionDep):
     usuarios = db.query(m.Usuario).all()
     return usuarios
 
-@router.get("/{id}", response_model=s.respostaUsuario)
+@router.get("/{usuario_id}", response_model=s.respostaUsuario)
 def get_usuario(usuario_id,db:SessionDep):
     usuario = db.get(m.Usuario,usuario_id)
     if not usuario:

@@ -8,6 +8,7 @@ import Toast from "../components/Toast";
 import FormCadastroBase from "../components/FormCadastroBase";
 import { useAvisoAlteracoesNaoSalvas } from "../hooks/useAvisoAlteracoesNaoSalvas";
 import ModalConfirmacao from "../components/ModalConfirmacao";
+import { atualizarUsuario, AtualizarUsuarioEnvio} from "../services/usuarioService";
 
 function EditarConta() {
   const { usuario, definirUsuario } = useUsuario();
@@ -64,8 +65,8 @@ function EditarConta() {
                 valoresIniciais={usuario}
                 mudouDados={(dados) => {
                   const mudou =
-                    dados.nome.trim() !== (usuario.nome || "") ||
-                    dados.dataNascimento.trim() !== (usuario.dataNascimento || "") ||
+                    dados.nome_completo.trim() !== (usuario.nome_completo || "") ||
+                    dados.data_nascimento.trim() !== (usuario.data_nascimento || "") ||
                     dados.cpf.trim() !== (usuario.cpf || "") ||
                     dados.cep.trim() !== (usuario.cep || "") ||
                     dados.telefone.trim() !== (usuario.telefone || "") ||
@@ -81,21 +82,33 @@ function EditarConta() {
 
                 aoCancelar={() => tentarSair("/conta")}
 
-                aoEnviar={(dados) => {
+                aoEnviar={async (dados: AtualizarUsuarioEnvio) => {
                   const { senha, ...dadosSemSenha } = dados;
 
-                  definirUsuario({
-                    ...usuario, // mantém dataCadastro e tipo
+                  const dadosAtualizados = {
                     ...dadosSemSenha,
-                  });
+                    ...(senha ? { senha } : {})
+                  };
 
-                  setAlterou(false);
-                  setMensagem("Alterações salvas com sucesso!");
+                  try {
+                    await atualizarUsuario(usuario.id, dadosAtualizados);
 
-                  setTimeout(() => {
-                    setMensagem(""); // some o toast
-                    navigate("/conta");
-                  }, 2000);
+                    definirUsuario({
+                      ...usuario,
+                      ...dadosSemSenha,
+                    });
+
+                    setAlterou(false);
+                    setMensagem("Alterações salvas com sucesso!");
+
+                    setTimeout(() => {
+                      setMensagem("");
+                      navigate("/conta");
+                    }, 2000);
+
+                  } catch (error) {
+                    console.error("Erro ao atualizar conta:", error);
+                  }
                 }}
               />
 

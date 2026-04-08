@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
-import { useUsuario } from "../context/UserContext";
+import { useUsuario, TipoUsuario, Usuario } from "../context/UserContext";
 import { useEffect, useState } from "react";
-import { obterPerfil } from "../services/usuarioService";
+import { obterUsuario, DadosUsuario } from "../services/usuarioService";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Botao from "../components/Botao";
@@ -12,17 +12,45 @@ function Conta() {
   const { usuario, definirUsuario } = useUsuario();
   const [mostrarModal, setMostrarModal] = useState(false);
   const navigate = useNavigate();
-  const [perfil, setPerfil] = useState<any>(null);
+  const [perfil, setPerfil] = useState<DadosUsuario | null>(null);
   const [carregandoPerfil, setCarregandoPerfil] = useState(true);
 
-  const dados = perfil || usuario;
+  const tiposValidos: TipoUsuario[] = ["Genérico", "Coordenador de Processos", "Responsável pelo beneficiário", "Doador", "Voluntário da triagem"];
+  
+  function mapearTipo(tipo?: string): TipoUsuario {
+    if (tiposValidos.includes(tipo as TipoUsuario)) {
+      return tipo as TipoUsuario;
+    }
+  
+    return "Genérico";
+  }
+
+  function normalizarUsuario(dados: DadosUsuario | Usuario): Usuario {
+    return {
+      id: dados.id,
+      nome_completo: dados.nome_completo,
+      data_nascimento: dados.data_nascimento,
+      cpf: dados.cpf,
+      cep: dados.cep,
+      telefone: dados.telefone,
+      email: dados.email,
+      data_cadastro: dados.data_cadastro || new Date().toISOString(),
+      tipos: "funcao" in dados
+        ? dados.funcao?.map(f => mapearTipo(f.tipo_usuario)) || [] // se tiver a propriedade "funcao", mapeio para os tipos, se não tiver, deixo como array vazio
+        : ("tipos" in dados ? dados.tipos : [])
+    };
+  }
+
+  const dadosNormalizados = perfil
+    ? normalizarUsuario(perfil)
+    : usuario;
 
   function sair() {
     definirUsuario(null);
     navigate("/");
   }
 
-  const dataNascimentoRaw = dados?.dataNascimento || dados?.data_nascimento;
+  const dataNascimentoRaw = dadosNormalizados?.data_nascimento;
 
   let dataNascimentoFormatada = "Data de nascimento não informada";
 
@@ -36,7 +64,7 @@ function Conta() {
     }
   }
 
-  const dataCadastroRaw = dados?.dataCadastro || dados?.data_cadastro;
+  const dataCadastroRaw = dadosNormalizados?.data_cadastro;
 
   const dataCadastroFormatada = dataCadastroRaw
     ? new Date(dataCadastroRaw).toLocaleDateString("pt-BR")
@@ -50,7 +78,7 @@ function Conta() {
 
     async function carregarPerfil() {
       try {
-        const dados = await obterPerfil(usuario!.id); // o ! é para dizer que tenho certeza que usuario existe nesse ponto, porque já verifiquei no if acima. Assim evito erro de tipo do TS.
+        const dados = await obterUsuario(usuario!.id); // o ! é para dizer que tenho certeza que usuario existe nesse ponto, porque já verifiquei no if acima. Assim evito erro de tipo do TS.
         setPerfil(dados);
 
       } catch (error) {
@@ -100,11 +128,11 @@ function Conta() {
 
               {/* Informações da conta */}
               <div className="flex flex-col gap-2 mb-6">
-                {dados ? (
+                {dadosNormalizados ? (
                   <>
                     <p>
                       <span className="body-semibold-pequeno">Nome:</span>{" "}
-                      <span className="body-pequeno">{dados?.nome || dados?.nome_completo || "Nome não informado"}</span>
+                      <span className="body-pequeno">{dadosNormalizados?.nome_completo || "Nome não informado"}</span>
                     </p>
 
                     <p>
@@ -114,22 +142,22 @@ function Conta() {
 
                     <p>
                       <span className="body-semibold-pequeno">CPF:</span>{" "}
-                      <span className="body-pequeno">{dados?.cpf || "CPF não informado"}</span>
+                      <span className="body-pequeno">{dadosNormalizados?.cpf || "CPF não informado"}</span>
                     </p>
 
                     <p>
                       <span className="body-semibold-pequeno">CEP:</span>{" "}
-                      <span className="body-pequeno">{dados?.cep || "CEP não informado"}</span>
+                      <span className="body-pequeno">{dadosNormalizados?.cep || "CEP não informado"}</span>
                     </p>
 
                     <p>
                       <span className="body-semibold-pequeno">Telefone:</span>{" "}
-                      <span className="body-pequeno">{dados?.telefone || "Telefone não informado"}</span>
+                      <span className="body-pequeno">{dadosNormalizados?.telefone || "Telefone não informado"}</span>
                     </p>
 
                     <p>
                       <span className="body-semibold-pequeno">Email:</span>{" "}
-                      <span className="body-pequeno">{dados?.email || "Email não informado"}</span>
+                      <span className="body-pequeno">{dadosNormalizados?.email || "Email não informado"}</span>
                     </p>
 
                     <p>
@@ -142,10 +170,10 @@ function Conta() {
                       <span className="body-pequeno">{dataCadastroFormatada}</span>
                     </p>
 
-                    {(dados?.tipo || dados?.funcao) && (
+                    {dadosNormalizados?.tipos && dadosNormalizados.tipos.length > 0 && (
                       <p>
                         <span className="body-semibold-pequeno">Tipo de conta:</span>{" "}
-                        <span className="body-pequeno">{dados.tipo || dados.funcao?.[0]?.tipo_usuario || "Não informado"}</span>
+                        <span className="body-pequeno">{dadosNormalizados.tipos.join(", ")}</span> {/* a pessoa pode ter mais de uma função e quero pegar todas elas*/}
                       </p>
                     )}
                   </>

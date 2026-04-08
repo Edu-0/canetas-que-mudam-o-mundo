@@ -1,8 +1,8 @@
 import {nomeCompletoValido, dataValida, validarCPF, emailValido, senhaValida, senhasIguais} from "./validacoes";
 
 type DadosFormulario = {
-  nome: string;
-  dataNascimento: string;
+  nome_completo: string;
+  data_nascimento: string;
   cpf: string;
   cep: string;
   telefone: string;
@@ -16,19 +16,19 @@ export function validarCampo(
   dados: DadosFormulario
 ) {
   switch (campo) {
-    case "nome":
-      if (!dados.nome) 
+    case "nome_completo":
+      if (!dados.nome_completo) 
         return "Campo obrigatório, informe o seu nome completo";
-      if (!nomeCompletoValido(dados.nome))
+      if (!nomeCompletoValido(dados.nome_completo))
         return "Digite nome e sobrenome";
-      if(dados.nome.length > 100)
+      if(dados.nome_completo.length > 100)
         return "O nome é muito longo, deve conter no máximo 100 caracteres";
       break;
 
-    case "dataNascimento":
-      if (!dados.dataNascimento) 
+    case "data_nascimento":
+      if (!dados.data_nascimento) 
         return "Campo obrigatório, informe sua data de nascimento";
-      if (!dataValida(dados.dataNascimento)) 
+      if (!dataValida(dados.data_nascimento)) 
         return "Data inválida, idade deve ser entre 0 e 130 anos e a data não pode ser futura";
       break;
 

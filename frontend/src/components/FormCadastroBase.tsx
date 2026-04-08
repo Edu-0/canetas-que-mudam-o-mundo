@@ -5,30 +5,22 @@ import { validarCampo } from "../utils/validacoesFormulario";
 import { verificarRequisitosSenha } from "../utils/validacoes";
 import olho_visivel from "../assets/olho_visivel.png";
 import olho_bloqueado from "../assets/olho_bloqueado.png";
-import { criarUsuario } from "../services/usuarioService";
+import { criarUsuario, atualizarUsuario } from "../services/usuarioService";
+import { DadosUsuario, AtualizarUsuarioEnvio } from "../services/usuarioService";
 
-type Props = {
-  aoEnviar: (dados: { 
-    nome: string;
-    dataNascimento: string;
-    cpf: string;
-    cep: string;
-    telefone: string;
-    email: string; 
-    senha?: string;
-    confirmarSenha?: string;
-  }) => void;
+type PropsCadastro = {
+  modo: "cadastro";
+  aoEnviar: (usuario: DadosUsuario) => void;
 
   valoresIniciais?: {
-    nome?: string;
-    dataNascimento?: string;
+    nome_completo?: string;
+    data_nascimento?: string;
     cpf?: string;
     cep?: string;
     telefone?: string;
     email?: string;
   };
 
-  modo?: "cadastro" | "edicao";
   textoBotaoEnviar?: string;
   textoBotaoCancelar?: string;
   mostrarCancelar?: boolean;
@@ -36,9 +28,31 @@ type Props = {
   mudouDados?: (dados: any) => void;
 };
 
+type PropsEdicao = {
+  modo: "edicao";
+  aoEnviar: (usuario: AtualizarUsuarioEnvio) => void;
+
+  valoresIniciais?: {
+    nome_completo?: string;
+    data_nascimento?: string;
+    cpf?: string;
+    cep?: string;
+    telefone?: string;
+    email?: string;
+  };
+
+  textoBotaoEnviar?: string;
+  textoBotaoCancelar?: string;
+  mostrarCancelar?: boolean;
+  aoCancelar?: () => void;
+  mudouDados?: (dados: any) => void;
+};
+
+type Props = PropsCadastro | PropsEdicao;
+
 function FormCadastroBase({ aoEnviar, valoresIniciais, modo = "cadastro",textoBotaoEnviar = "Cadastrar", textoBotaoCancelar = "Cancelar", mostrarCancelar = false, aoCancelar, mudouDados}: Props) {
-  const [nome, setNome] = useState(valoresIniciais?.nome || "");
-  const [dataNascimento, setDataNascimento] = useState(valoresIniciais?.dataNascimento || "");
+  const [nome_completo, setNomeCompleto] = useState(valoresIniciais?.nome_completo || "");
+  const [data_nascimento, setDataNascimento] = useState(valoresIniciais?.data_nascimento || "");
   const [cpf, setCpf] = useState(valoresIniciais?.cpf || "");
   const [cep, setCep] = useState(valoresIniciais?.cep || "");
   const [telefone, setTelefone] = useState(valoresIniciais?.telefone || "");
@@ -56,8 +70,8 @@ function FormCadastroBase({ aoEnviar, valoresIniciais, modo = "cadastro",textoBo
   const requisitosSenha = verificarRequisitosSenha(senha);
 
   const [erros, setErros] = useState({
-    nome: "",
-    dataNascimento: "",
+    nome_completo: "",
+    data_nascimento: "",
     cpf: "",
     cep: "",
     telefone: "",
@@ -67,8 +81,8 @@ function FormCadastroBase({ aoEnviar, valoresIniciais, modo = "cadastro",textoBo
   });
 
   const [tocados, setTocados] = useState({
-    nome: false,
-    dataNascimento: false,
+    nome_completo: false,
+    data_nascimento: false,
     cpf: false,
     cep: false,
     telefone: false,
@@ -80,8 +94,8 @@ function FormCadastroBase({ aoEnviar, valoresIniciais, modo = "cadastro",textoBo
   const [carregando, setCarregando] = useState(false);
 
   const dados = {
-    nome,
-    dataNascimento,
+    nome_completo,
+    data_nascimento,
     cpf,
     cep,
     telefone,
@@ -114,8 +128,8 @@ function FormCadastroBase({ aoEnviar, valoresIniciais, modo = "cadastro",textoBo
 
     // validação de todos os campos
     const novosErros = {
-      nome: validarCampo("nome", dados),
-      dataNascimento: validarCampo("dataNascimento", dados),
+      nome_completo: validarCampo("nome_completo", dados),
+      data_nascimento: validarCampo("data_nascimento", dados),
       cpf: validarCampo("cpf", dados),
       cep: validarCampo("cep", dados),
       telefone: validarCampo("telefone", dados),
@@ -128,8 +142,8 @@ function FormCadastroBase({ aoEnviar, valoresIniciais, modo = "cadastro",textoBo
 
     if (Object.values(novosErros).some((erro) => erro !== "")) {
       setTocados({
-        nome: true,
-        dataNascimento: true,
+        nome_completo: true,
+        data_nascimento: true,
         cpf: true,
         cep: true,
         telefone: true,
@@ -144,31 +158,40 @@ function FormCadastroBase({ aoEnviar, valoresIniciais, modo = "cadastro",textoBo
 
     try {
       if (modo === "cadastro") {
+        const propsCadastro = { aoEnviar } as PropsCadastro;
+
         // chama API do backend
         const usuarioCadastrado = await criarUsuario({
-          nome_completo: nome,
-          data_nascimento: dataNascimento,
+          nome_completo,
+          data_nascimento,
           cpf: cpf.replace(/\D/g, ""),
           cep: cep.replace(/\D/g, ""),
-          telefone: telefone.replace(/\D/g, ""),
+          telefone: telefone ? telefone.replace(/\D/g, "") : undefined,
           email,
           senha,
-          funcao: "Genérico"
         });
 
-        aoEnviar(usuarioCadastrado); // envia para o Cadastro.tsx
+        propsCadastro.aoEnviar(usuarioCadastrado); // envia para o Cadastro.tsx
 
       } else if (modo === "edicao") {
-        
-        // Na edição, a senha é opcional e só é enviada se o usuário optar por alterar a senha (alterarSenha = true)
-        aoEnviar({
-          nome,
-          dataNascimento,
-          cpf,
-          cep,
-          telefone,
+
+        const propsEdicao = { aoEnviar } as PropsEdicao;
+
+        const dadosAtualizados: AtualizarUsuarioEnvio = {
+          nome_completo,
+          data_nascimento,
+          cpf: cpf.replace(/\D/g, ""),
+          cep: cep.replace(/\D/g, ""),
+          telefone: telefone ? telefone.replace(/\D/g, "") : undefined,
           email,
-        });
+        };
+
+        // só envia senha se usuário quiser alterar
+        if (alterarSenha) {
+          dadosAtualizados.senha = senha;
+        }
+
+        propsEdicao.aoEnviar(dadosAtualizados); // envia para o EditarConta.tsx
       }
 
     } catch (error: any) {
@@ -221,18 +244,18 @@ function FormCadastroBase({ aoEnviar, valoresIniciais, modo = "cadastro",textoBo
     >
 
       <div>
-        <label className="body-semibold-pequeno" htmlFor="nome">Nome completo <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
-        <input id="nome" type="text" maxLength={100} required className={`input-padrao ${tocados.nome && nome.trim() ? erros.nome ? "border-[var(--cor-resposta-errada)] focus:ring-[var(--cor-resposta-errada)]" : "border-[var(--cor-resposta-correta)] focus:ring-[var(--cor-resposta-correta)]" : ""}`} 
-        autoComplete="name" placeholder="Digite aqui o seu nome completo" value={nome} onChange={(e) => setNome(e.target.value)} aria-invalid={!!erros.nome} aria-describedby={erros.nome ? "erro-nome" : undefined} onBlur={() => {marcarComoTocado("nome"), validarUmCampo("nome");}}/>
+        <label className="body-semibold-pequeno" htmlFor="nome_completo">Nome completo <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
+        <input id="nome_completo" type="text" maxLength={100} required className={`input-padrao ${tocados.nome_completo && nome_completo.trim() ? erros.nome_completo ? "border-[var(--cor-resposta-errada)] focus:ring-[var(--cor-resposta-errada)]" : "border-[var(--cor-resposta-correta)] focus:ring-[var(--cor-resposta-correta)]" : ""}`} 
+        autoComplete="name" placeholder="Digite aqui o seu nome completo" value={nome_completo} onChange={(e) => setNomeCompleto(e.target.value)} aria-invalid={!!erros.nome_completo} aria-describedby={erros.nome_completo ? "erro-nome" : undefined} onBlur={() => {marcarComoTocado("nome_completo"), validarUmCampo("nome_completo");}}/>
       </div>
-      {erros.nome && tocados.nome && <p id="erro-nome" className="text-[var(--cor-resposta-errada)] text-sm">{erros.nome}</p>}
+      {erros.nome_completo && tocados.nome_completo && <p id="erro-nome" className="text-[var(--cor-resposta-errada)] text-sm">{erros.nome_completo}</p>}
 
       <div>
-        <label className="body-semibold-pequeno" htmlFor="data-nascimento">Data de nascimento <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
-        <input id="data-nascimento" type="date" max={hojeFormatado} required className={`input-padrao ${tocados.dataNascimento && dataNascimento.trim() ? erros.dataNascimento ? "border-[var(--cor-resposta-errada)] focus:ring-[var(--cor-resposta-errada)]" : "border-[var(--cor-resposta-correta)] focus:ring-[var(--cor-resposta-correta)]" : ""}`} 
-        autoComplete="off" value={dataNascimento} onChange={(e) => setDataNascimento(e.target.value)} aria-invalid={!!erros.dataNascimento} aria-describedby={erros.dataNascimento ? "erro-data-nascimento" : undefined} onBlur={() => {marcarComoTocado("dataNascimento"), validarUmCampo("dataNascimento");}}/>
+        <label className="body-semibold-pequeno" htmlFor="data_nascimento">Data de nascimento <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
+        <input id="data_nascimento" type="date" max={hojeFormatado} required className={`input-padrao ${tocados.data_nascimento && data_nascimento.trim() ? erros.data_nascimento ? "border-[var(--cor-resposta-errada)] focus:ring-[var(--cor-resposta-errada)]" : "border-[var(--cor-resposta-correta)] focus:ring-[var(--cor-resposta-correta)]" : ""}`} 
+        autoComplete="off" value={data_nascimento} onChange={(e) => setDataNascimento(e.target.value)} aria-invalid={!!erros.data_nascimento} aria-describedby={erros.data_nascimento ? "erro-data-nascimento" : undefined} onBlur={() => {marcarComoTocado("data_nascimento"), validarUmCampo("data_nascimento");}}/>
       </div>
-      {erros.dataNascimento && tocados.dataNascimento && <p id="erro-data-nascimento" className="text-[var(--cor-resposta-errada)] text-sm">{erros.dataNascimento}</p>}
+      {erros.data_nascimento && tocados.data_nascimento && <p id="erro-data-nascimento" className="text-[var(--cor-resposta-errada)] text-sm">{erros.data_nascimento}</p>}
 
       <div>
         <label className="body-semibold-pequeno" htmlFor="cpf">CPF <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>

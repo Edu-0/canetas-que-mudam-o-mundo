@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useUsuario } from "../context/UserContext";
+import { useUsuario, TipoUsuario } from "../context/UserContext";
 import { useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
@@ -24,6 +24,16 @@ function Cadastro() {
     } else {
       navigate(rota);
     }
+  }
+
+  const tiposValidos: TipoUsuario[] = ["Genérico", "Coordenador de Processos", "Responsável pelo beneficiário", "Doador", "Voluntário da triagem"];
+
+  function mapearTipo(tipo?: string): TipoUsuario {
+    if (tiposValidos.includes(tipo as TipoUsuario)) {
+      return tipo as TipoUsuario;
+    }
+
+    return "Genérico";
   }
 
   return (
@@ -60,8 +70,8 @@ function Cadastro() {
 
                 mudouDados={(dados) => {
                   const mudou =
-                    dados.nome.trim() !== "" ||
-                    dados.dataNascimento.trim() !== "" ||
+                    dados.nome_completo.trim() !== "" ||
+                    dados.data_nascimento.trim() !== "" ||
                     dados.cpf.trim() !== "" ||
                     dados.cep.trim() !== "" ||
                     dados.telefone.trim() !== "" ||
@@ -78,7 +88,19 @@ function Cadastro() {
 
                 aoCancelar={() => tentarSair("/")}
 
-                aoEnviar={() => {
+                aoEnviar={(usuarioCadastrado) => {
+                  definirUsuario({
+                    id: usuarioCadastrado.id,
+                    nome_completo: usuarioCadastrado.nome_completo,
+                    data_nascimento: usuarioCadastrado.data_nascimento,
+                    cpf: usuarioCadastrado.cpf,
+                    cep: usuarioCadastrado.cep,
+                    telefone: usuarioCadastrado.telefone,
+                    email: usuarioCadastrado.email,
+                    tipos: usuarioCadastrado.funcao?.map(f => mapearTipo(f.tipo_usuario)) || [], // a pessoa pode ter mais de uma função e quero pegar todas elas
+                    data_cadastro: new Date().toISOString()
+                  });
+
                   setAlterou(false); // reseta o estado de alteração para evitar alerta ao sair depois de cadastrar
                   setMensagem("Cadastro realizado com sucesso!");
 

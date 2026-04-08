@@ -1,12 +1,12 @@
-export function nomeCompletoValido(nome: string) {
-  return nome.trim().split(" ").length >= 2;
+export function nomeCompletoValido(nome_completo: string) {
+  return nome_completo.trim().split(" ").length >= 2;
 }
 
-export function dataValida(data: string) {
-  if (!data) return false;
+export function dataValida(data_nascimento: string) {
+  if (!data_nascimento) return false;
 
   const hoje = new Date();
-  const dataInput = new Date(data);
+  const dataInput = new Date(data_nascimento);
 
   // subtrai 1 se ainda não fez aniversário este ano, pois a idade só aumenta no aniversário e não no início do ano
   const idade = hoje.getFullYear() - dataInput.getFullYear() - (hoje < new Date(hoje.getFullYear(), dataInput.getMonth(), dataInput.getDate()) ? 1 : 0); 
