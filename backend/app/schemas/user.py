@@ -47,11 +47,10 @@ class criarUsuario(usuarioBase):
   
         return senha
 
-class criarUsuarioBeneficiario(BaseModel):
+class criarUsuarioResponsavel(BaseModel):
     qtd_familiares : int = Field(default=0, ge = 0)
     auxilio: BeneficiosUsuario = BeneficiosUsuario.NENHUM
-    concordou_termos: bool = False
-    data_preenchimento: datetime = Field(default_factory=date.today)
+    concordou_termos: bool 
 
     @field_validator('concordou_termos')
     @classmethod
@@ -60,22 +59,27 @@ class criarUsuarioBeneficiario(BaseModel):
             raise ValueError('Você deve ler e aceitar os termos de uso para prosseguir com o cadastro.')
         return v
 
-class respostaUsuarioBeneficiario(criarUsuarioBeneficiario):
-    model_config = ConfigDict(from_attributes=True)
+class respostaUsuarioResponsavel(criarUsuarioResponsavel):
     id:int
+    model_config = ConfigDict(from_attributes=True)
+    documentacao_aprovada:bool
+    data_preenchimento_termos: datetime 
+    familia: List[respostaFamiliaResponsavel] = []
 
 class respostaFuncao(BaseModel):
     tipo_usuario:TipoUsuario
     model_config = ConfigDict(from_attributes=True)
 
 class respostaUsuario(usuarioBase):
-    model_config = ConfigDict(from_attributes=True)
     id:int
+    model_config = ConfigDict(from_attributes=True)
+    data_cadastro:datetime
+    data_edicao_conta:datetime
+    ativo:bool
     funcao: List[respostaFuncao] = []
-    perfil_beneficiario: Optional[respostaUsuarioBeneficiario] = None
-    familia_beneficiario: Optional["respostaFamiliaBeneficiario"] = None
+    perfil_responsavel: Optional[respostaUsuarioResponsavel] = None
     
-class cadastrarFamiliaBeneficiario(BaseModel):
+class cadastrarFamiliaResponsavel(BaseModel):
     nome: str = Field(min_length=2, max_length=255)
     parentesco: str = Field(min_length=2, max_length=100)
     data_nascimento: date 
@@ -96,10 +100,9 @@ class cadastrarFamiliaBeneficiario(BaseModel):
             raise ValueError('Data de nascimento não pode ser no futuro.')
         return v
 
-class respostaFamiliaBeneficiario(cadastrarFamiliaBeneficiario):
-    model_config = ConfigDict(from_attributes=True)
+class respostaFamiliaResponsavel(cadastrarFamiliaResponsavel):
     id: int
-
+    model_config = ConfigDict(from_attributes=True)
     
 
 class cadastrarDocumento(BaseModel):
@@ -123,8 +126,8 @@ class cadastrarDocumento(BaseModel):
     
 
 class respostaDocumento(cadastrarDocumento):
-    model_config = ConfigDict(from_attributes=True)
     id:int
+    model_config = ConfigDict(from_attributes=True)
     
 
 class atualizarUsuario(BaseModel):
@@ -136,13 +139,13 @@ class atualizarUsuario(BaseModel):
     email: Optional[EmailStr] = None
 
 
-class atualizarUsuarioBeneficiario(BaseModel):
+class atualizarUsuarioResponsavel(BaseModel):
     qtd_familiares : Optional[int] = Field(default=None, ge = 0)
     auxilio: Optional[BeneficiosUsuario] = None
     concordou_termos: Optional[bool] = None
 
 
-class atualizarFamiliaBeneficiario(BaseModel):
+class atualizarFamiliaResponsavel(BaseModel):
     nome: Optional[str] = Field(default=None, min_length=2, max_length=255)
     parentesco: Optional[str] = Field(default=None, min_length=2, max_length=100)
     data_nascimento: Optional[date] = None
