@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, Float ,String, Text,Boolean, Date, DateTime, Enum, ForeignKey
 from sqlalchemy.orm import declarative_base, relationship
+from sqlalchemy.sql import func
 import datetime
 from app.core.enums import BeneficiosUsuario, TipoUsuario
 
@@ -16,31 +17,37 @@ class Usuario(Base):
     telefone = Column(String(11), nullable = False)
     email = Column(String(255), unique = True, nullable= False)
     senha = Column(String(255), nullable= False)
+    data_cadastro = Column(DateTime, server_default=func.now(), nullable=False)
+    data_edicao_conta = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
+    ativo = Column(Boolean, nullable=False)
     funcao = relationship("UsuarioFuncao", back_populates="usuario")
     documento = relationship("DocumentoUsuario", back_populates="usuario")
-    perfil_beneficiario = relationship("UsuarioBeneficiario", back_populates="usuario", uselist=False)
+    perfil_responsavel = relationship("UsuarioResponsavel", back_populates="usuario", uselist=False)
 
-class UsuarioBeneficiario(Base):
-    __tablename__ = 'usuario_beneficiario'
+class UsuarioResponsavel(Base):
+    __tablename__ = 'usuario_responsavel'
     id= Column(Integer, primary_key= True)
     usuario_id = Column(Integer, ForeignKey('usuario.id'), nullable = False, unique = True)
     qtd_familiares = Column(Integer, nullable= False)
     auxilio = Column(Enum(BeneficiosUsuario), default = BeneficiosUsuario.NENHUM, nullable= False)
     concordou_termos = Column(Boolean, default=False, nullable= False)
-    data_preenchimento = Column(DateTime, default=datetime.datetime.now)
-    familia = relationship("FamiliaBeneficiario", back_populates = "perfil")
-    usuario = relationship("Usuario", back_populates="perfil_beneficiario")
+    data_preenchimento_termos = Column(DateTime, default=datetime.datetime.now)
+    documentacao_aprovada = Column(Boolean, default = False, nullable=False)
+    familia = relationship("FamiliaResponsavel", back_populates = "perfil")
+    usuario = relationship("Usuario", back_populates="perfil_responsavel")
 
 
-class FamiliaBeneficiario(Base):
+class FamiliaResponsavel(Base):
     __tablename__ = 'familia_beneficiario'
     id = Column(Integer, primary_key= True)
-    perfil_id = Column(Integer, ForeignKey('usuario_beneficiario.id'), nullable= False)
+    perfil_id = Column(Integer, ForeignKey('usuario_responsavel.id'), nullable= False)
     nome = Column(String(255), nullable= False)
     parentesco = Column(String(100), nullable= False)
     data_nascimento = Column(Date, nullable= False)
     renda = Column(Float, nullable = False)
-    perfil = relationship("UsuarioBeneficiario", back_populates="familia")
+    data_cadastro = Column(DateTime, server_default=func.now(), nullable=False)
+    data_edicao = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False) 
+    perfil = relationship("UsuarioResponsavel", back_populates="familia")
 
 
 class DocumentoUsuario(Base):
