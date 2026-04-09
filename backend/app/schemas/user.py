@@ -64,7 +64,7 @@ class respostaUsuarioResponsavel(criarUsuarioResponsavel):
     model_config = ConfigDict(from_attributes=True)
     documentacao_aprovada:bool
     data_preenchimento_termos: datetime 
-    familia: List[respostaFamiliaResponsavel] = []
+    familia: List["respostaFamiliaResponsavel"] = []
 
 class respostaFuncao(BaseModel):
     tipo_usuario:TipoUsuario
