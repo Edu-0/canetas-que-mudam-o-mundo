@@ -2,19 +2,24 @@ export function nomeCompletoValido(nome_completo: string) {
   return nome_completo.trim().split(" ").length >= 2;
 }
 
-export function dataValida(data_nascimento: string) {
-  if (!data_nascimento) return false;
-
+export function dataNaoFutura(data: string) {
   const hoje = new Date();
-  const dataInput = new Date(data_nascimento);
+  const dataInput = new Date(data);
+  return dataInput <= hoje;
+}
 
-  // subtrai 1 se ainda não fez aniversário este ano, pois a idade só aumenta no aniversário e não no início do ano
-  const idade = hoje.getFullYear() - dataInput.getFullYear() - (hoje < new Date(hoje.getFullYear(), dataInput.getMonth(), dataInput.getDate()) ? 1 : 0); 
+export function idadeValida(data: string) {
+  const hoje = new Date();
+  const nascimento = new Date(data);
 
-  return (
-    dataInput <= hoje && // não pode ser uma data futuro
-    idade >= 0 && idade <= 130 // limite de idade
-  );
+  let idade = hoje.getFullYear() - nascimento.getFullYear();
+  const mes = hoje.getMonth() - nascimento.getMonth();
+
+  if (mes < 0 || (mes === 0 && hoje.getDate() < nascimento.getDate())) {
+    idade--;
+  }
+
+  return idade >= 18 && idade <= 130; // data minima de 18 anos e máxima de 130 anos para evitar datas inválidas
 }
 
 export function validarCPF(cpf: string) {

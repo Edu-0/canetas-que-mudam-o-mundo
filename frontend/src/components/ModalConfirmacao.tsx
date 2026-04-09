@@ -26,19 +26,23 @@ function ModalConfirmacao({
         <p id="modal-descricao" className="text-sm mb-6">{descricao}</p>
 
         <div className="flex justify-between gap-3">
-          <button
-            onClick={onCancelar}
-            className="px-4 py-2 rounded bg-[var(--base-20)] hover:bg-[var(--base-40)] border border-black"
-          >
-            {botaoCancelar || "Continuar editando"}
-          </button>
+          {botaoCancelar && (
+            <button
+              onClick={onCancelar}
+              className="px-4 py-2 rounded bg-[var(--base-20)] hover:bg-[var(--base-40)] border border-black"
+            >
+              {botaoCancelar}
+            </button>
+          )}
 
-          <button
-            onClick={onConfirmar}
-            className="px-4 py-2 rounded bg-[var(--cor-resposta-obrigatoria)] text-white hover:bg-red-700 border border-black"
-          >
-            {botaoConfirmar || "Sair sem salvar"}
-          </button>
+          {botaoConfirmar && (
+            <button
+              onClick={onConfirmar}
+              className="px-4 py-2 rounded bg-[var(--cor-resposta-obrigatoria)] text-white hover:bg-red-700 border border-black"
+            >
+              {botaoConfirmar}
+            </button>
+          )}
         </div>
       </div>
     </div>

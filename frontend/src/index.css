@@ -23,6 +23,7 @@
   --base-20: #E4EEBF;
   --base-40: #C4D86E;
   --base-60: #838513;
+  --base-70: #5B6A0B;
   --base-80: #383B08;
   --base-100: #000000;
 
@@ -175,5 +176,13 @@
 
   .btn-sair:hover {
     @apply bg-[var(--secundario-100)] border-black;
+  }
+
+  .btn-tipo-selecionado {
+    @apply bg-[var(--base-60)] border-black text-white;
+  }
+
+  .btn-tipo-selecionado:hover {
+    @apply bg-[var(--base-70)] border-black;
   }
 }

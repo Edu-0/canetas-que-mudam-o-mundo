@@ -1,22 +1,60 @@
 import { useNavigate } from "react-router-dom";
 import { useUsuario, TipoUsuario, Usuario } from "../context/UserContext";
 import { useEffect, useState } from "react";
-import { obterUsuario, DadosUsuario } from "../services/usuarioService";
+import { obterUsuario, DadosUsuario, atualizarTiposUsuario } from "../services/usuarioService";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Botao from "../components/Botao";
 import logo from "../assets/logo.svg";
 import ModalConfirmacao from "../components/ModalConfirmacao";
+import {formatarCPF, formatarCEP, formatarTelefone} from "../utils/formatarMascaraConta";
 
 function Conta() {
   const { usuario, definirUsuario } = useUsuario();
   const [mostrarModal, setMostrarModal] = useState(false);
   const navigate = useNavigate();
   const [perfil, setPerfil] = useState<DadosUsuario | null>(null);
-  const [carregandoPerfil, setCarregandoPerfil] = useState(true);
 
   const tiposValidos: TipoUsuario[] = ["Genérico", "Coordenador de Processos", "Responsável pelo beneficiário", "Doador", "Voluntário da triagem"];
   
+  const [tipoSelecionado, setTipoSelecionado] = useState<string | null>(null);
+  const [modalTipo, setModalTipo] = useState(false);
+
+  function selecionarTipo(tipo: string) {
+    setTipoSelecionado(tipo);
+    setModalTipo(true);
+  }
+
+  async function confirmarTipo() {
+    if (!tipoSelecionado || !dadosNormalizados) return;
+
+    const tiposAtuais = dadosNormalizados.tipos || [];
+
+    let novosTipos;
+
+    if (tiposAtuais.includes(tipoSelecionado as TipoUsuario)) {
+      novosTipos = tiposAtuais.filter(t => t !== tipoSelecionado);
+    } else {
+      novosTipos = [...tiposAtuais, tipoSelecionado as TipoUsuario];
+    }
+
+    try {
+      await atualizarTiposUsuario(dadosNormalizados.id, novosTipos); // função que chama a API para atualizar os tipos do usuário no backend
+
+      // Atualiza frontend depois de salvar no backend
+      definirUsuario({
+        ...dadosNormalizados,
+        tipos: novosTipos,
+      });
+
+    } catch (error) {
+      console.error("Erro ao atualizar tipos:", error);
+    }
+
+    setModalTipo(false);
+    setTipoSelecionado(null);
+  }
+
   function mapearTipo(tipo?: string): TipoUsuario {
     if (tiposValidos.includes(tipo as TipoUsuario)) {
       return tipo as TipoUsuario;
@@ -45,6 +83,15 @@ function Conta() {
     ? normalizarUsuario(perfil)
     : usuario;
 
+  
+  const tiposAtuais = dadosNormalizados?.tipos || [];
+  const jaTemTipo = tipoSelecionado
+    ? tiposAtuais.includes(tipoSelecionado as TipoUsuario)
+    : false;
+  const estaComoDoador = dadosNormalizados?.tipos?.includes("Doador");
+  const estaComoVoluntario = dadosNormalizados?.tipos?.includes("Voluntário da triagem");
+  const estaComoResponsavel = dadosNormalizados?.tipos?.includes("Responsável pelo beneficiário");
+
   function sair() {
     definirUsuario(null);
     navigate("/");
@@ -70,37 +117,25 @@ function Conta() {
     ? new Date(dataCadastroRaw).toLocaleDateString("pt-BR")
     : "Data de cadastro não informada";
 
-  useEffect(() => {
-    if (!usuario || !usuario.id) {
-      setCarregandoPerfil(false);
-      return;
-    }
+  useEffect(() => { // carrega o perfil do usuário logado para pegar as informações atualizadas do backend
+    if (!usuario) return;
+
+    const { id } = usuario; // id para pegar os dados atualizados do usuário
 
     async function carregarPerfil() {
       try {
-        const dados = await obterUsuario(usuario!.id); // o ! é para dizer que tenho certeza que usuario existe nesse ponto, porque já verifiquei no if acima. Assim evito erro de tipo do TS.
-        setPerfil(dados);
+        
+      const atualizado = await obterUsuario(id); // pega os dados atualizados do backend
+      setPerfil(atualizado);
 
       } catch (error) {
         console.error("Erro ao carregar perfil:", error);
-
-      } finally {
-        setCarregandoPerfil(false);
       }
     }
 
     carregarPerfil();
-  }, [usuario?.id]);
 
-  if (carregandoPerfil) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse text-lg">
-          Carregando perfil...
-        </div>
-      </div>
-    );
-  }
+  }, [usuario]);
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--base-5)]">
@@ -142,17 +177,17 @@ function Conta() {
 
                     <p>
                       <span className="body-semibold-pequeno">CPF:</span>{" "}
-                      <span className="body-pequeno">{dadosNormalizados?.cpf || "CPF não informado"}</span>
+                      <span className="body-pequeno">{formatarCPF(dadosNormalizados?.cpf)}</span>
                     </p>
 
                     <p>
                       <span className="body-semibold-pequeno">CEP:</span>{" "}
-                      <span className="body-pequeno">{dadosNormalizados?.cep || "CEP não informado"}</span>
+                      <span className="body-pequeno">{formatarCEP(dadosNormalizados?.cep)}</span>
                     </p>
 
                     <p>
                       <span className="body-semibold-pequeno">Telefone:</span>{" "}
-                      <span className="body-pequeno">{dadosNormalizados?.telefone || "Telefone não informado"}</span>
+                      <span className="body-pequeno">{formatarTelefone(dadosNormalizados?.telefone)}</span>
                     </p>
 
                     <p>
@@ -220,22 +255,44 @@ function Conta() {
               <div className="border-t border-[var(--primario-40)] my-6" />
 
               <h3 className="header-pequeno text-center mb-6">
-                Escolha seu tipo de conta
+                Adicione/altere o seu tipo de usuário
               </h3>
+
+              <p className="body-pequeno text-center mb-6">
+                Com o/s tipo/s de usuário/s escolhidos, você poderá acessar as funcionalidades específicas de cada tipo de usuário!
+              </p>
 
               {/* botões para os tipos de cadastros */}
               <div className="flex flex-col md:flex-row gap-4 w-full">
                 <div className="flex-1">
-                  <Botao aoClicar={() => navigate("/cadastro/doador")} variante="confirmar">Doador</Botao>
+                  <Botao aoClicar={() => selecionarTipo("Doador")} variante={estaComoDoador ? "tipo-selecionado" : "confirmar"}>Doador</Botao>
                 </div>
 
                 <div className="flex-1">
-                  <Botao aoClicar={() => navigate("/cadastro/voluntario")} variante="confirmar">Voluntário</Botao>
+                  <Botao aoClicar={() => selecionarTipo("Voluntário")} variante={estaComoVoluntario ? "tipo-selecionado" : "confirmar"}>Voluntário</Botao>
                 </div>
 
                 <div className="flex-1">
-                  <Botao aoClicar={() => navigate("/cadastro/responsavel")} variante="confirmar">Responsável</Botao>
+                  <Botao aoClicar={() => selecionarTipo("Responsável")} variante={estaComoResponsavel ? "tipo-selecionado" : "confirmar"}>Responsável</Botao>
                 </div>
+
+                <ModalConfirmacao
+                  aberto={modalTipo}
+                  titulo={jaTemTipo ? "Remover tipo de usuário" : "Adicionar tipo de usuário"}
+                  descricao={
+                    jaTemTipo
+                      ? `Você tem certeza que deseja deixar de ser um usuário ${tipoSelecionado}?
+                      
+                        Você poderá adicionar este tipo novamente depois.`
+                      : `Você tem certeza que deseja se tornar um usuário ${tipoSelecionado}?
+
+                        Você poderá sair deste tipo depois.`
+                  }
+                  botaoCancelar="Cancelar"
+                  botaoConfirmar={jaTemTipo ? "Remover" : "Confirmar"}
+                  onCancelar={() => setModalTipo(false)}
+                  onConfirmar={confirmarTipo}
+                />
               </div>
 
             </div>
