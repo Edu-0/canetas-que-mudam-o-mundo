@@ -17,6 +17,11 @@ function Cadastro() {
   const [mostrarModal, setMostrarModal] = useState(false);
   const [rotaDestino, setRotaDestino] = useState<string | null>(null);
 
+  const [erroModal, setErroModal] = useState<{
+    campo?: string;
+    mensagem: string;
+  } | null>(null);
+
   function tentarSair(rota: string) {
     if (alterou) {
       setRotaDestino(rota);
@@ -86,6 +91,10 @@ function Cadastro() {
                 textoBotaoEnviar="Cadastrar"
                 mostrarCancelar={true}
 
+                aoErro={(erro) => {
+                  setErroModal(erro);
+                }}
+
                 aoCancelar={() => tentarSair("/")}
 
                 aoEnviar={(usuarioCadastrado) => {
@@ -112,7 +121,7 @@ function Cadastro() {
               />
 
               <ModalConfirmacao
-                aberto={mostrarModal}
+                aberto={mostrarModal} // mostra o modal de erro se tiver erro e não estiver mostrando o modal de confirmação (para evitar os dois modais juntos)
                 titulo="Alterações não salvas"
                 descricao="Você começou o cadastro. Deseja sair mesmo?"
                 botaoCancelar="Continuar cadastro"
@@ -122,6 +131,15 @@ function Cadastro() {
                     setMostrarModal(false);
                     if (rotaDestino) navigate(rotaDestino);
                 }}
+              />
+
+              <ModalConfirmacao
+                aberto={!!erroModal}
+                titulo="Erro no cadastro"
+                descricao={erroModal?.mensagem || ""}
+                botaoConfirmar="Fechar"
+                onCancelar={() => setErroModal(null)}
+                onConfirmar={() => setErroModal(null)}
               />
 
             </div>

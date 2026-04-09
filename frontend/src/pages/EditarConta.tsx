@@ -18,6 +18,11 @@ function EditarConta() {
   const [mostrarModal, setMostrarModal] = useState(false);
   const [rotaDestino, setRotaDestino] = useState<string | null>(null)
 
+  const [erroModal, setErroModal] = useState<{
+      campo?: string;
+      mensagem: string;
+    } | null>(null);
+
   if (!usuario) {
     return <p>Nenhum usuário</p>;
   }
@@ -67,11 +72,11 @@ function EditarConta() {
                   const mudou =
                     dados.nome_completo.trim() !== (usuario.nome_completo || "") ||
                     dados.data_nascimento.trim() !== (usuario.data_nascimento || "") ||
-                    dados.cpf.trim() !== (usuario.cpf || "") ||
-                    dados.cep.trim() !== (usuario.cep || "") ||
-                    dados.telefone.trim() !== (usuario.telefone || "") ||
+                    dados.cpf.replace(/\D/g, "") !== (usuario.cpf || "") ||
+                    dados.cep.replace(/\D/g, "") !== (usuario.cep || "") ||
+                    (dados.telefone || "").replace(/\D/g, "") !== (usuario.telefone || "") || // telefone é opcional, então comparo com string vazia se for undefined
                     dados.email.trim() !== (usuario.email || "") ||
-                    dados.senha.trim() !== ""; // só se digitou senha nova
+                    (dados.senha && dados.senha.trim() !== ""); // só se digitou senha nova
 
                   setAlterou(mudou);
                 }}
@@ -80,35 +85,25 @@ function EditarConta() {
                 textoBotaoEnviar="Salvar alterações"
                 mostrarCancelar={true}
 
+                aoErro={(erro) => {
+                  setErroModal(erro);
+                }}
+
                 aoCancelar={() => tentarSair("/conta")}
 
-                aoEnviar={async (dados: AtualizarUsuarioEnvio) => {
-                  const { senha, ...dadosSemSenha } = dados;
+                aoEnviar={(usuarioAtualizado) => {
+                  definirUsuario({
+                    ...usuario,
+                    ...usuarioAtualizado,
+                  });
 
-                  const dadosAtualizados = {
-                    ...dadosSemSenha,
-                    ...(senha ? { senha } : {})
-                  };
+                  setAlterou(false);
+                  setMensagem("Alterações salvas com sucesso!");
 
-                  try {
-                    await atualizarUsuario(usuario.id, dadosAtualizados);
-
-                    definirUsuario({
-                      ...usuario,
-                      ...dadosSemSenha,
-                    });
-
-                    setAlterou(false);
-                    setMensagem("Alterações salvas com sucesso!");
-
-                    setTimeout(() => {
-                      setMensagem("");
-                      navigate("/conta");
-                    }, 2000);
-
-                  } catch (error) {
-                    console.error("Erro ao atualizar conta:", error);
-                  }
+                  setTimeout(() => {
+                    setMensagem("");
+                    navigate("/conta");
+                  }, 2000);
                 }}
               />
 
@@ -123,6 +118,15 @@ function EditarConta() {
                     setMostrarModal(false);
                     if (rotaDestino) navigate(rotaDestino);
                 }}
+              />
+
+              <ModalConfirmacao
+                aberto={!!erroModal}
+                titulo="Erro na edição"
+                descricao={erroModal?.mensagem || ""}
+                botaoConfirmar="Fechar"
+                onCancelar={() => setErroModal(null)}
+                onConfirmar={() => setErroModal(null)}
               />
 
             </div>
