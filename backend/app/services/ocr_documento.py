@@ -129,6 +129,38 @@ class OcrDocumentoService:
         }
 
     @staticmethod
+    def extrair_cpf_identidade(texto_bruto: str) -> str | None:
+        return OcrDocumentoService._extrair_cpf(texto_bruto)
+
+    @staticmethod
+    def extrair_dados_identidade(texto_bruto: str) -> dict[str, Any]:
+        cpf = OcrDocumentoService._extrair_cpf(texto_bruto)
+        nome = OcrDocumentoService._extrair_nome(texto_bruto)
+
+        return {
+            "cpf": cpf,
+            "nome_completo": nome,
+            "texto_bruto": texto_bruto,
+        }
+
+    @staticmethod
+    def extrair_dados_comprovante_renda(
+        texto_bruto: str,
+        valor_referencia: float | None = None,
+    ) -> dict[str, Any]:
+        nome = OcrDocumentoService._extrair_nome(texto_bruto)
+        salario_beneficio = OcrDocumentoService._extrair_valor_monetario(
+            texto_bruto,
+            valor_referencia=valor_referencia,
+        )
+
+        return {
+            "nome_completo": nome,
+            "salario_beneficio": salario_beneficio,
+            "texto_bruto": texto_bruto,
+        }
+
+    @staticmethod
     def comparar_com_cadastro(
         dados_extraidos: dict[str, Any],
         nome_completo: str,
@@ -216,13 +248,13 @@ class OcrDocumentoService:
                 # Tenta extrair valor na mesma linha depois de : ou -
                 partes = re.split(r"[:\-]", linha, maxsplit=1)
                 if len(partes) == 2:
-                    candidato = partes[1].strip()
+                    candidato = OcrDocumentoService._limpar_prefixo_codigo_nome(partes[1].strip())
                     if OcrDocumentoService._linha_parece_nome(candidato):
                         return candidato.title()
 
                 # Se não houver valor na mesma linha, tenta a próxima.
                 if idx + 1 < len(linhas):
-                    proxima = linhas[idx + 1].strip()
+                    proxima = OcrDocumentoService._limpar_prefixo_codigo_nome(linhas[idx + 1].strip())
                     if OcrDocumentoService._linha_parece_nome(proxima):
                         return proxima.title()
 
@@ -234,10 +266,16 @@ class OcrDocumentoService:
         return None
 
     @staticmethod
+    def _limpar_prefixo_codigo_nome(linha: str) -> str:
+        # Ex.: "5564 Jose Silva" -> "Jose Silva"
+        return re.sub(r"^\d{2,}\s+", "", (linha or "").strip())
+
+    @staticmethod
     def _linha_parece_nome(linha: str) -> bool:
         if not linha:
             return False
 
+        linha = OcrDocumentoService._limpar_prefixo_codigo_nome(linha)
         linha_norm = OcrDocumentoService._normalizar_texto(linha)
 
         if len(linha_norm.split()) < 2:
@@ -249,6 +287,9 @@ class OcrDocumentoService:
         termos_bloqueados = {
             "SALARIO",
             "BASE",
+            "NOME",
+            "NOMEDO",
+            "FUNCIONARIO",
             "REMUNERACAO",
             "RENDA",
             "BENEFICIO",
@@ -277,30 +318,104 @@ class OcrDocumentoService:
         return re.fullmatch(r"[A-Za-zÀ-ÿ\s]{6,}", linha) is not None
 
     @staticmethod
-    def _extrair_valor_monetario(texto: str) -> float | None:
+    def _extrair_valor_monetario(
+        texto: str,
+        valor_referencia: float | None = None,
+    ) -> float | None:
         texto_norm = OcrDocumentoService._normalizar_texto(texto)
 
-        padrao_rotulo = re.search(
-            r"(?:SALARIO|REMUNERACAO|RENDA|BENEFICIO|PROVENTOS)\s*[:\-]?\s*(R\$\s*)?([\d\.]+,\d{2}|\d+[\.,]\d{2})",
-            texto_norm,
-        )
-        if padrao_rotulo:
-            return OcrDocumentoService._parse_valor_brl(padrao_rotulo.group(2))
+        candidatos: list[tuple[float, float]] = []
+        linhas = [linha.strip() for linha in texto_norm.splitlines() if linha.strip()]
 
-        candidatos = re.findall(r"(?:R\$\s*)?([\d\.]+,\d{2}|\d+[\.,]\d{2})", texto_norm)
-        valores = [
-            OcrDocumentoService._parse_valor_brl(valor)
-            for valor in candidatos
-            if OcrDocumentoService._parse_valor_brl(valor) is not None
-        ]
-        if not valores:
+        padrao_valor = re.compile(
+            r"(?:R\$\s*)?(\d{1,3}(?:[\.\s]\d{3})*(?:[\.,]\d{2})|\d+[\.,]\d{2})"
+        )
+
+        palavras_chave_valor = (
+            "TOTAL PROVENTOS",
+            "TOTAL DOS VENCIMENTOS",
+            "SALARIO BASE",
+            "REMUNERACAO",
+            "RENDA",
+            "BENEFICIO",
+            "PROVENTOS",
+        )
+
+        palavras_ignorar_linha = (
+            "CNPJ",
+            "CPF",
+            "DATA",
+            "PERIODO",
+            "MES",
+            "ANO",
+            "CBO",
+            "COD",
+        )
+
+        for linha in linhas:
+            if any(token in linha for token in palavras_ignorar_linha):
+                continue
+
+            prioridade = 1.0
+            if any(token in linha for token in palavras_chave_valor):
+                prioridade = 4.0
+            elif "R$" in linha:
+                prioridade = 2.5
+
+            for match in padrao_valor.finditer(linha):
+                _, fim = match.span(1)
+                valor_str = match.group(1)
+
+                sufixo = linha[fim:fim + 2]
+                if "%" in sufixo:
+                    continue
+
+                valor = OcrDocumentoService._parse_valor_brl(valor_str)
+                if valor is None:
+                    continue
+
+                # Elimina outliers comuns de documento para renda mensal.
+                if valor < 50 or valor > 99999:
+                    continue
+
+                candidatos.append((valor, prioridade))
+
+        if not candidatos:
             return None
 
-        return max(valores)
+        if valor_referencia is not None:
+            melhor_valor, _ = min(
+                candidatos,
+                key=lambda item: (abs(item[0] - float(valor_referencia)) - item[1] * 0.01),
+            )
+            return melhor_valor
+
+        # Sem referência, prioriza maior relevância e depois maior valor.
+        melhor_valor, _ = max(candidatos, key=lambda item: (item[1], item[0]))
+        return melhor_valor
 
     @staticmethod
     def _parse_valor_brl(valor_str: str) -> float | None:
-        valor_limpo = valor_str.replace(".", "").replace(",", ".").strip()
+        valor_limpo = re.sub(r"\s+", "", (valor_str or "")).strip()
+        if not valor_limpo:
+            return None
+
+        if "," in valor_limpo and "." in valor_limpo:
+            # Assume separador decimal pelo último símbolo.
+            if valor_limpo.rfind(",") > valor_limpo.rfind("."):
+                # Ex.: 2.750,00
+                valor_limpo = valor_limpo.replace(".", "").replace(",", ".")
+            else:
+                # Ex.: 2,750.00
+                valor_limpo = valor_limpo.replace(",", "")
+        elif "," in valor_limpo:
+            # Ex.: 2750,00
+            valor_limpo = valor_limpo.replace(",", ".")
+        elif valor_limpo.count(".") > 1:
+            # Ex.: 2.309.70 -> 2309.70
+            partes = valor_limpo.split(".")
+            valor_limpo = "".join(partes[:-1]) + "." + partes[-1]
+
         try:
             return float(valor_limpo)
         except ValueError:
