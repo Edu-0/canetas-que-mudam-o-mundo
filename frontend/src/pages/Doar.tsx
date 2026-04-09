@@ -5,7 +5,7 @@
 // import Botao from "../components/Botao";
 // import { useState } from "react";
 
-// function CadastroDoador() {
+// function Doar() {
 
 //   const [nome, setNome] = useState("");
 //   const [cpf, setCpf] = useState("");
@@ -40,7 +40,7 @@
 //         >
 
 //           <h2 className="header-medio text-center">
-//             Cadastro do Doador
+//             Doar materiais
 //           </h2>
 
 //           <input
@@ -76,4 +76,4 @@
 //   );
 // }
 
-// export default CadastroDoador;
+// export default Doar;

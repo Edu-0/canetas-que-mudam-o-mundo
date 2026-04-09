@@ -19,7 +19,7 @@ function Header({ aoNavegar }: Props) {
 
   let listaDeBotoes: { id: string; texto: string; rota: string }[] = [];
 
-  // sempre tem início
+  // início sempre fica no começo da lista
   listaDeBotoes.push({ id: "inicio", texto: "Início", rota: "/" });
 
   if (!usuario) {
@@ -28,26 +28,29 @@ function Header({ aoNavegar }: Props) {
       { id: "cadastro", texto: "Cadastro", rota: "/cadastro" }
     );
   } else {
-    // exemplo pensando em futuro multi-tipo de usuário
-    const tipos = Array.isArray(usuario.tipo) ? usuario.tipo : [usuario.tipo];
+    const tipos = usuario.tipos || [];
 
-    if (tipos.includes("doador")) {
-      listaDeBotoes.push({ id: "doar", texto: "Doar", rota: "/doar" });
-    }
+    // mapa de tipos (sem incluir "Genérico")
+    const mapaTipos: Record<string, { id: string; texto: string; rota: string }> = {
+      "Doador": { id: "doar", texto: "Doar", rota: "/doar" },
+      "Voluntário da triagem": { id: "voluntario", texto: "Voluntariado", rota: "/triagem" },
+      "Responsável pelo beneficiário": { id: "responsavel", texto: "Responsável", rota: "/pedido" },
+      "Coordenador de Processos": { id: "coordenador", texto: "Coordenador", rota: "/coordenador" },
+    };
 
-    if (tipos.includes("voluntario")) {
-      listaDeBotoes.push({ id: "voluntario", texto: "Voluntariado", rota: "/triagem" });
-    }
+    const adicionados = new Set();
 
-    if (tipos.includes("responsavel")) {
-      listaDeBotoes.push({ id: "responsavel", texto: "Responsável", rota: "/pedido" });
-    }
+    tipos.forEach((tipo) => {
+      if (tipo === "Genérico") return; // ignora
 
-    // if (tipos.includes("coordenador")) {
-    //   listaDeBotoes.push({ id: "coordenador", texto: "Coordenador", rota: "/coordenador" });
-    // }
+      const botao = mapaTipos[tipo];
+      if (botao && !adicionados.has(botao.id)) { // verifica se o botão existe para o tipo e se já não foi adicionado
+        listaDeBotoes.push(botao);
+        adicionados.add(botao.id);
+      }
+    });
 
-    // SEMPRE conta por último
+    // conta sempre por último para ficar no final da lista
     listaDeBotoes.push({ id: "conta", texto: "Conta", rota: "/conta" });
   }
 

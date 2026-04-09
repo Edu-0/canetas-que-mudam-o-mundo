@@ -79,20 +79,8 @@ export async function atualizarUsuario(id: number, dados: AtualizarUsuarioEnvio)
   return response.data;
 }
 
-// // Criar doador
-// export const criarDoador = async (dados: any) => {
-//   const response = await api.post("/usuario/doador", dados)
-//   return response.data
-// }
-
-// // Criar voluntário
-// export const criarVoluntario = async (dados: any) => {
-//   const response = await api.post("/usuario/voluntario", dados)
-//   return response.data
-// }
-
-// // Obter beneficiários do usuário   
-// export const obterBeneficiarios = async (usuarioId: number) => {
-//   const response = await api.get(`/usuario/${usuarioId}/beneficiarios`)
-//   return response.data
-// }
+// Atualizar tipos do usuário 
+export async function atualizarTiposUsuario(id: number, tipos: string[]) {
+  const response = await api.put(`/usuario/${id}/tipos`, { tipos });
+  return response.data;
+}
