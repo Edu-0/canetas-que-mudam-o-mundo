@@ -64,7 +64,7 @@ class respostaUsuarioResponsavel(criarUsuarioResponsavel):
     model_config = ConfigDict(from_attributes=True)
     documentacao_aprovada:bool
     data_preenchimento_termos: datetime 
-    familia: List[respostaFamiliaResponsavel] = []
+    familia: List["respostaFamiliaResponsavel"] = []
 
 class respostaFuncao(BaseModel):
     tipo_usuario:TipoUsuario
@@ -81,6 +81,7 @@ class respostaUsuario(usuarioBase):
     
 class cadastrarFamiliaResponsavel(BaseModel):
     nome: str = Field(min_length=2, max_length=255)
+    cpf: str = Field(pattern=r"^\d{11}$")
     parentesco: str = Field(min_length=2, max_length=100)
     data_nascimento: date 
     renda: float = Field(default=0.0, ge=0)
@@ -147,6 +148,7 @@ class atualizarUsuarioResponsavel(BaseModel):
 
 class atualizarFamiliaResponsavel(BaseModel):
     nome: Optional[str] = Field(default=None, min_length=2, max_length=255)
+    cpf: Optional[str] = Field(default=None, pattern=r"^\d{11}$")
     parentesco: Optional[str] = Field(default=None, min_length=2, max_length=100)
     data_nascimento: Optional[date] = None
     renda: Optional[float] = Field(default=None, ge=0)

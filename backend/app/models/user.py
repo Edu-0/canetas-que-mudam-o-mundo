@@ -42,6 +42,7 @@ class FamiliaResponsavel(Base):
     id = Column(Integer, primary_key= True)
     perfil_id = Column(Integer, ForeignKey('usuario_responsavel.id'), nullable= False)
     nome = Column(String(255), nullable= False)
+    cpf = Column(String(11), nullable= False)
     parentesco = Column(String(100), nullable= False)
     data_nascimento = Column(Date, nullable= False)
     renda = Column(Float, nullable = False)

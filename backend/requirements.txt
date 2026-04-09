@@ -13,3 +13,8 @@ typing_extensions
 python-jose[cryptography]
 firebase-admin
 python-multipart
+paddleocr
+paddlepaddle
+pillow
+numpy
+pypdfium2

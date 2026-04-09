@@ -97,6 +97,7 @@ def cadastrar_familia_responsavel(perfil_id, dados:List[s.cadastrarFamiliaRespon
         novo_familiar = m.FamiliaResponsavel(
             perfil_id = perfil_id, #id do usuario na tab usuario_responsavel
             nome = membro.nome,
+            cpf = membro.cpf,
             parentesco = membro.parentesco,
             data_nascimento = membro.data_nascimento,
             renda = membro.renda
