@@ -23,6 +23,7 @@ Start-Process powershell -ArgumentList "-NoExit", "-Command", $frontendCmd | Out
 
 if (-not $NoBrowser) {
     Start-Process "http://localhost:5173"
+    Start-Process "http://localhost:8000/docs"
 }
 
 Write-Host "Frontend e backend iniciados em janelas separadas."
