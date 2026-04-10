@@ -12,3 +12,9 @@ class BeneficiosUsuario(enum.Enum):
     BPC = "Benefício de Prestação Continuada"
     APOSENTADORIA = "Aposentadoria"
     NENHUM = "Nenhum"
+
+
+class StatusBeneficiario(enum.Enum):
+    PENDENTE = "pendente"
+    ATIVO = "ativo"
+    REPROVADO = "reprovado"

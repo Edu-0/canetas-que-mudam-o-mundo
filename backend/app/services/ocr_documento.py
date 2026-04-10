@@ -10,6 +10,14 @@ from PIL import Image
 
 
 class OcrDocumentoService:
+    TERMOS_AUXILIO = (
+        "BOLSA FAMILIA",
+        "CADUNICO",
+        "CAD UNICO",
+        "BPC",
+        "AUXILIO BRASIL",
+    )
+
     @staticmethod
     def extrair_texto_bruto(file_bytes: bytes, is_pdf: bool = False) -> str:
         """Executa OCR com PaddleOCR e retorna o texto bruto concatenado."""
@@ -204,6 +212,46 @@ class OcrDocumentoService:
         return {
             "aprovado": aprovado,
             "campos": campos,
+        }
+
+    @staticmethod
+    def detectar_termos_auxilio(texto_bruto: str) -> list[str]:
+        texto_norm = OcrDocumentoService._normalizar_texto(texto_bruto or "")
+        termos_encontrados: list[str] = []
+
+        for termo in OcrDocumentoService.TERMOS_AUXILIO:
+            if termo in texto_norm:
+                termos_encontrados.append(termo)
+
+        return termos_encontrados
+
+    @staticmethod
+    def avaliar_regra_renda(
+        renda_documento: float,
+        salario_minimo: float,
+        limite_salarios_minimos: float,
+        qtd_familiares: int,
+        considerar_per_capita: bool,
+    ) -> dict[str, Any]:
+        qtd_familiares_ajustada = max(int(qtd_familiares or 1), 1)
+        limite_base = float(salario_minimo) * float(limite_salarios_minimos)
+
+        if considerar_per_capita:
+            renda_avaliada = float(renda_documento) / qtd_familiares_ajustada
+            regra = "renda_per_capita"
+        else:
+            renda_avaliada = float(renda_documento)
+            regra = "renda_bruta_familiar"
+
+        aprovado = renda_avaliada <= limite_base
+
+        return {
+            "regra": regra,
+            "qtd_familiares": qtd_familiares_ajustada,
+            "renda_documento": round(float(renda_documento), 2),
+            "renda_avaliada": round(renda_avaliada, 2),
+            "limite": round(limite_base, 2),
+            "aprovado": aprovado,
         }
 
     @staticmethod

@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr,Field, field_validator, ConfigDict
 from datetime import date, datetime
-from app.core.enums import BeneficiosUsuario, TipoUsuario
+from app.core.enums import BeneficiosUsuario, TipoUsuario, StatusBeneficiario
 from typing import List, Optional
 
 
@@ -62,6 +62,7 @@ class criarUsuarioResponsavel(BaseModel):
 class respostaUsuarioResponsavel(criarUsuarioResponsavel):
     id:int
     model_config = ConfigDict(from_attributes=True)
+    status: StatusBeneficiario
     documentacao_aprovada:bool
     data_preenchimento_termos: datetime 
     familia: List["respostaFamiliaResponsavel"] = []

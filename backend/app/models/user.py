@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, Float ,String, Text,Boolean, Date, DateT
 from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy.sql import func
 import datetime
-from app.core.enums import BeneficiosUsuario, TipoUsuario
+from app.core.enums import BeneficiosUsuario, TipoUsuario, StatusBeneficiario
 
 # Traduz as classes para SQL
 Base = declarative_base()
@@ -30,6 +30,7 @@ class UsuarioResponsavel(Base):
     usuario_id = Column(Integer, ForeignKey('usuario.id'), nullable = False, unique = True)
     qtd_familiares = Column(Integer, nullable= False)
     auxilio = Column(Enum(BeneficiosUsuario), default = BeneficiosUsuario.NENHUM, nullable= False)
+    status = Column(Enum(StatusBeneficiario), default=StatusBeneficiario.PENDENTE, nullable=False)
     concordou_termos = Column(Boolean, default=False, nullable= False)
     data_preenchimento_termos = Column(DateTime, default=datetime.datetime.now)
     documentacao_aprovada = Column(Boolean, default = False, nullable=False)
@@ -69,4 +70,22 @@ class UsuarioFuncao(Base):
     usuario_id = Column(Integer, ForeignKey('usuario.id'), nullable= False)
     tipo_usuario =  Column(Enum(TipoUsuario), default = TipoUsuario.GENERICO)
     usuario = relationship("Usuario", back_populates = "funcao")
+
+
+class AuditoriaAprovacao(Base):
+    __tablename__ = "auditoria_aprovacao"
+
+    id = Column(Integer, primary_key=True)
+    data_hora = Column(DateTime, default=datetime.datetime.now, nullable=False)
+    usuario_id = Column(Integer, ForeignKey('usuario.id'), nullable=False, index=True)
+    entidade = Column(String(20), nullable=False)  # documento | material
+    acao = Column(String(120), nullable=False)
+    resultado = Column(String(20), nullable=False)  # aprovado | reprovado
+    ip_origem = Column(String(45), nullable=False)
+    detalhes = Column(Text, nullable=True)
+    reter_ate = Column(
+        DateTime,
+        default=lambda: datetime.datetime.now() + datetime.timedelta(days=365),
+        nullable=False,
+    )
 
