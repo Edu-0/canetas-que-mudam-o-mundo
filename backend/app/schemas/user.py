@@ -158,3 +158,7 @@ class atualizarDocumento(BaseModel):
     tipo_documento: Optional[str] = Field(default=None, min_length=2,max_length=50)
     nome_original: Optional[str] = Field(default=None, min_length=2, max_length=255)
     caminho_arquivo: Optional[str] = Field(default=None, min_length=2, max_length=1000)
+
+
+class atualizarUsuarioFuncao(BaseModel):
+    tipo_usuario: TipoUsuario

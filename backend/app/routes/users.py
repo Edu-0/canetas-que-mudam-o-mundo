@@ -152,6 +152,29 @@ def atualizar_usuario(usuario_id, dados:s.atualizarUsuario, db:SessionDep):
             }
         )
 
+
+@router.put("/{usuario_id}/funcao", response_model=s.respostaFuncao)
+def atualizar_usuario_funcao(usuario_id: int, dados: s.atualizarUsuarioFuncao, db: SessionDep):
+    usuario = db.get(m.Usuario, usuario_id)
+    if not usuario:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado.")
+
+    funcao_usuario = db.query(m.UsuarioFuncao).filter(m.UsuarioFuncao.usuario_id == usuario_id).first()
+
+    if not funcao_usuario:
+        funcao_usuario = m.UsuarioFuncao(
+            usuario_id=usuario_id,
+            tipo_usuario=dados.tipo_usuario
+        )
+        db.add(funcao_usuario)
+    else:
+        funcao_usuario.tipo_usuario = dados.tipo_usuario
+
+    usuario.data_edicao_conta = func.now()
+    db.commit()
+    db.refresh(funcao_usuario)
+    return funcao_usuario
+
 @router.put("/{perfil_id}/responsavel", response_model=s.respostaUsuarioResponsavel)
 def atualizar_usuario_responsavel(perfil_id, dados:s.atualizarUsuarioResponsavel, db:SessionDep):
     perfil = db.get(m.UsuarioResponsavel, perfil_id)
