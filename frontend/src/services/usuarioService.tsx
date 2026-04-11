@@ -13,6 +13,7 @@ export type DadosUsuario = { // (GET retorno)
     tipo_usuario: string;
   }[];
   data_cadastro?: string; // não é criado no backend, criamos aqui no frontend para facilitar a manipulação, mas é opcional porque pode não vir do backend
+  data_edicao_conta?: string;
 };
 
 export type CriarUsuarioEnvio = { // (POST envio) 
@@ -81,6 +82,8 @@ export async function atualizarUsuario(id: number, dados: AtualizarUsuarioEnvio)
 
 // Atualizar tipos do usuário 
 export async function atualizarTiposUsuario(id: number, tipos: string[]) {
-  const response = await api.put(`/usuario/${id}/tipos`, { tipos });
+  const response = await api.put(`/usuario/${id}/funcao`, { 
+    tipo_usuario: tipos 
+  });
   return response.data;
 }

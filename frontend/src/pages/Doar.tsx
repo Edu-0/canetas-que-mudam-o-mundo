@@ -1,79 +1,44 @@
-// Ainda será feita, mas não vamos mexer nela agora, para não atrapalhar o desenvolvimento da Sprint da semana.
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import logo from "../assets/logo.svg";
 
-// import Header from "../components/Header";
-// import Footer from "../components/Footer";
-// import Botao from "../components/Botao";
-// import { useState } from "react";
+function Doar() {
+  return (
+    <div className="min-h-screen flex flex-col bg-[var(--base-5)]">
+      
+      {/* header */}
+      <Header />
 
-// function Doar() {
+      {/* body */}
+      <main className="flex-1 pt-24 pb-10">
+        <div className="w-full px-6 md:px-20 flex flex-col gap-10">
 
-//   const [nome, setNome] = useState("");
-//   const [cpf, setCpf] = useState("");
-//   const [cep, setCep] = useState("");
-
-//   function handleSubmit(e: React.FormEvent) {
-//     e.preventDefault();
-
-//     const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
-
-//     const dadosCompletos = {
-//       ...usuario,
-//       nome,
-//       cpf,
-//       cep,
-//       tipo: "doador"
-//     };
-
-//     console.log("Cadastro completo:", dadosCompletos);
-//   }
-
-//   return (
-//     <div className="min-h-screen flex flex-col bg-[var(--base-5)]">
-
-//       <Header />
-
-//       <main className="flex-1 pt-24 flex justify-center">
+          {/* título e logo da caneta */}
+          <div className="flex items-center justify-center gap-4 flex-wrap text-center">
+            <img src={logo} alt="Logo" className="h-16 md:h-20" />
         
-//         <form 
-//           onSubmit={handleSubmit}
-//           className="w-full max-w-md bg-[var(--primario-5)] p-6 rounded-lg shadow-lg flex flex-col gap-4"
-//         >
+            <h1 className="header-medio text-center">
+              Canetas que Mudam o Mundo
+            </h1>
+          </div>
 
-//           <h2 className="header-medio text-center">
-//             Doar materiais
-//           </h2>
+          <div className="flex flex-col items-center px-4">
 
-//           <input
-//             className="input-padrao"
-//             placeholder="Nome"
-//             value={nome}
-//             onChange={(e) => setNome(e.target.value)}
-//           />
+            {/* título do formulário */}
+            <div className="w-full max-w-4xl bg-[var(--primario-5)] shadow-[2px_10px_40px_rgba(0,0,0,0.1)] rounded-lg p-6">
 
-//           <input
-//             className="input-padrao"
-//             placeholder="CPF"
-//             value={cpf}
-//             onChange={(e) => setCpf(e.target.value)}
-//           />
+              <h2 className="header-pequeno text-center mb-6">
+                DOAR - Página em construção...
+              </h2>
 
-//           <input
-//             className="input-padrao"
-//             placeholder="CEP"
-//             value={cep}
-//             onChange={(e) => setCep(e.target.value)}
-//           />
+            </div>
+          </div>
+        </div>
+      </main>
 
-//           <Botao tipo="submit" variante="confirmar">
-//             Finalizar cadastro
-//           </Botao>
-
-//         </form>
-//       </main>
-
-//       <Footer />
-//     </div>
-//   );
-// }
-
-// export default Doar;
+      {/* footer */}
+      <Footer />
+    </div>
+  );
+}
+export default Doar;

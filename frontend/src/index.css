@@ -179,10 +179,25 @@
   }
 
   .btn-tipo-selecionado {
-    @apply bg-[var(--base-60)] border-black text-white;
+    @apply bg-[var(--base-70)] border-black text-white;
   }
 
   .btn-tipo-selecionado:hover {
-    @apply bg-[var(--base-70)] border-black;
+    @apply bg-[var(--base-80)] border-black;
+  }
+
+  .btn-quiz-proximo {
+    background-color: #4CAF50;
+    color: white;
+  }
+
+  .btn-quiz-voltar {
+    background-color: #9E9E9E;
+    color: white;
+  }
+
+  .btn-quiz-resposta {
+    background-color: #2196F3;
+    color: white;
   }
 }

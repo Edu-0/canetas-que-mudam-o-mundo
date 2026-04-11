@@ -161,4 +161,4 @@ class atualizarDocumento(BaseModel):
 
 
 class atualizarUsuarioFuncao(BaseModel):
-    tipo_usuario: TipoUsuario
+    tipo_usuario: list[TipoUsuario]

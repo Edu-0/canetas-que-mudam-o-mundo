@@ -38,14 +38,18 @@ function Conta() {
       novosTipos = [...tiposAtuais, tipoSelecionado as TipoUsuario];
     }
 
+    if (!novosTipos.includes("Genérico")) { // garantir sempre tenha o tipo "Genérico"
+      novosTipos.push("Genérico");
+    }
+
     try {
       await atualizarTiposUsuario(dadosNormalizados.id, novosTipos); // função que chama a API para atualizar os tipos do usuário no backend
 
       // Atualiza frontend depois de salvar no backend
-      definirUsuario({
-        ...dadosNormalizados,
-        tipos: novosTipos,
-      });
+
+      const atualizado = await obterUsuario(dadosNormalizados.id);
+      setPerfil(atualizado);
+      definirUsuario(normalizarUsuario(atualizado));
 
     } catch (error) {
       console.error("Erro ao atualizar tipos:", error);
@@ -75,7 +79,8 @@ function Conta() {
       data_cadastro: dados.data_cadastro || new Date().toISOString(),
       tipos: "funcao" in dados
         ? dados.funcao?.map(f => mapearTipo(f.tipo_usuario)) || [] // se tiver a propriedade "funcao", mapeio para os tipos, se não tiver, deixo como array vazio
-        : ("tipos" in dados ? dados.tipos : [])
+        : ("tipos" in dados ? dados.tipos : []),
+      data_edicao_conta: "data_edicao_conta" in dados ? dados.data_edicao_conta : undefined
     };
   }
 
@@ -113,9 +118,34 @@ function Conta() {
 
   const dataCadastroRaw = dadosNormalizados?.data_cadastro;
 
-  const dataCadastroFormatada = dataCadastroRaw
-    ? new Date(dataCadastroRaw).toLocaleDateString("pt-BR")
-    : "Data de cadastro não informada";
+  function formatarDataHora(valor?: string, fallback = "Data não informada") {
+    if (!valor) return fallback;
+
+    const data = new Date(valor + "Z");
+
+    if (Number.isNaN(data.getTime())) return fallback;
+
+    return new Intl.DateTimeFormat("pt-BR", {
+      timeZone: "America/Sao_Paulo",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    }).format(data).replace(",", " às") + " horas";
+  }
+
+  const dataCadastroFormatada = formatarDataHora(
+    dataCadastroRaw,
+    "Data de cadastro não informada"
+  );
+
+  const dataEdicaoContaRaw = dadosNormalizados?.data_edicao_conta;
+
+  const dataEdicaoContaFormatada = formatarDataHora(
+    dataEdicaoContaRaw,
+    "A conta nunca foi editada"
+  );
 
   useEffect(() => { // carrega o perfil do usuário logado para pegar as informações atualizadas do backend
     if (!usuario) return;
@@ -205,6 +235,11 @@ function Conta() {
                       <span className="body-pequeno">{dataCadastroFormatada}</span>
                     </p>
 
+                    <p>
+                      <span className="body-semibold-pequeno">Data de edição da conta:</span>{" "}
+                      <span className="body-pequeno">{dataEdicaoContaFormatada}</span>
+                    </p>
+
                     {dadosNormalizados?.tipos && dadosNormalizados.tipos.length > 0 && (
                       <p>
                         <span className="body-semibold-pequeno">Tipo de conta:</span>{" "}
@@ -269,11 +304,11 @@ function Conta() {
                 </div>
 
                 <div className="flex-1">
-                  <Botao aoClicar={() => selecionarTipo("Voluntário")} variante={estaComoVoluntario ? "tipo-selecionado" : "confirmar"}>Voluntário</Botao>
+                  <Botao aoClicar={() => selecionarTipo("Voluntário da triagem")} variante={estaComoVoluntario ? "tipo-selecionado" : "confirmar"}>Voluntário da triagem</Botao>
                 </div>
 
                 <div className="flex-1">
-                  <Botao aoClicar={() => selecionarTipo("Responsável")} variante={estaComoResponsavel ? "tipo-selecionado" : "confirmar"}>Responsável</Botao>
+                  <Botao aoClicar={() => selecionarTipo("Responsável pelo beneficiário")} variante={estaComoResponsavel ? "tipo-selecionado" : "confirmar"}>Responsável pelo beneficiário</Botao>
                 </div>
 
                 <ModalConfirmacao

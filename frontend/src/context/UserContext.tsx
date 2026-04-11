@@ -18,6 +18,7 @@ export type Usuario = {
   email: string;
   tipos?: TipoUsuario[];
   data_cadastro: string;
+  data_edicao_conta?: string;
 };
 
 // o que o contexto fornece
