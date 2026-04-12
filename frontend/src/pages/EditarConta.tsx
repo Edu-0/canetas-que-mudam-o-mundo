@@ -8,7 +8,6 @@ import Toast from "../components/Toast";
 import FormCadastroBase from "../components/FormCadastroBase";
 import { useAvisoAlteracoesNaoSalvas } from "../hooks/useAvisoAlteracoesNaoSalvas";
 import ModalConfirmacao from "../components/ModalConfirmacao";
-import { atualizarUsuario, AtualizarUsuarioEnvio} from "../services/usuarioService";
 
 function EditarConta() {
   const { usuario, definirUsuario } = useUsuario();

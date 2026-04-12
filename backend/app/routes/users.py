@@ -4,6 +4,7 @@ from app.core.security import gerar_hash_senha
 from app.models import user as m
 from app.database.connection import SessionDep
 from typing import List
+from app.core.enums import TipoUsuario
 from fastapi import HTTPException
 from sqlalchemy.sql import func
 from sqlalchemy.exc import IntegrityError
@@ -153,26 +154,35 @@ def atualizar_usuario(usuario_id, dados:s.atualizarUsuario, db:SessionDep):
         )
 
 
-@router.put("/{usuario_id}/funcao", response_model=s.respostaFuncao)
+@router.put("/{usuario_id}/funcao", response_model=list[s.respostaFuncao])
 def atualizar_usuario_funcao(usuario_id: int, dados: s.atualizarUsuarioFuncao, db: SessionDep):
     usuario = db.get(m.Usuario, usuario_id)
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuário não encontrado.")
 
-    funcao_usuario = db.query(m.UsuarioFuncao).filter(m.UsuarioFuncao.usuario_id == usuario_id).first()
+    db.query(m.UsuarioFuncao).filter(
+        m.UsuarioFuncao.usuario_id == usuario_id
+    ).delete()
 
-    if not funcao_usuario:
-        funcao_usuario = m.UsuarioFuncao(
+    funcao_usuario = []
+
+    tipos = set(dados.tipo_usuario)
+    tipos.add(TipoUsuario.GENERICO)
+
+    for tipo in tipos:
+        nova_funcao = m.UsuarioFuncao(
             usuario_id=usuario_id,
-            tipo_usuario=dados.tipo_usuario
+            tipo_usuario=tipo
         )
-        db.add(funcao_usuario)
-    else:
-        funcao_usuario.tipo_usuario = dados.tipo_usuario
+        db.add(nova_funcao)
+        funcao_usuario.append(nova_funcao)
 
     usuario.data_edicao_conta = func.now()
     db.commit()
-    db.refresh(funcao_usuario)
+
+    for f in funcao_usuario:
+        db.refresh(f)
+
     return funcao_usuario
 
 @router.put("/{perfil_id}/responsavel", response_model=s.respostaUsuarioResponsavel)

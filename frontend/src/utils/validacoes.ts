@@ -2,15 +2,46 @@ export function nomeCompletoValido(nome_completo: string) {
   return nome_completo.trim().split(" ").length >= 2;
 }
 
+function parseDataLocal(data: string): Date | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) return null;
+
+  const [anoTexto, mesTexto, diaTexto] = data.split("-");
+  const ano = Number(anoTexto);
+  const mes = Number(mesTexto);
+  const dia = Number(diaTexto);
+
+  if ([ano, mes, dia].some(Number.isNaN)) return null;
+
+  const dataLocal = new Date(ano, mes - 1, dia);
+
+  if (Number.isNaN(dataLocal.getTime())) return null;
+
+  // Garante que datas inválidas (ex.: 2026-02-31) não sejam normalizadas automaticamente.
+  if (
+    dataLocal.getFullYear() !== ano ||
+    dataLocal.getMonth() !== mes - 1 ||
+    dataLocal.getDate() !== dia
+  ) {
+    return null;
+  }
+
+  return dataLocal;
+}
+
 export function dataNaoFutura(data: string) {
-  const hoje = new Date();
-  const dataInput = new Date(data);
+  const dataInput = parseDataLocal(data);
+  if (!dataInput) return false;
+
+  const agora = new Date();
+  const hoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate()); // ignora a parte de horário para comparar apenas as datas
   return dataInput <= hoje;
 }
 
 export function idadeValida(data: string) {
+  const nascimento = parseDataLocal(data);
+  if (!nascimento) return false;
+
   const hoje = new Date();
-  const nascimento = new Date(data);
 
   let idade = hoje.getFullYear() - nascimento.getFullYear();
   const mes = hoje.getMonth() - nascimento.getMonth();

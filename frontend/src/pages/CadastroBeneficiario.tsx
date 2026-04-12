@@ -1,10 +1,8 @@
-// // Oii Yasmin, criei a página aqui só para já poder arrumar a parte de navegar entre as páginas usando o Header.
-
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import logo from "../assets/logo.svg";
 
-function Logar() {
+function CadastroBeneficiario() {
   return (
     <div className="min-h-screen flex flex-col bg-[var(--base-5)]">
       
@@ -30,7 +28,7 @@ function Logar() {
             <div className="w-full max-w-4xl bg-[var(--primario-5)] shadow-[2px_10px_40px_rgba(0,0,0,0.1)] rounded-lg p-6">
 
               <h2 className="header-pequeno text-center mb-6">
-                LOGAR - Página em construção...
+                CADASTRO DO RESPONSÁVEL PELO BENEFICIÁRIO - Página em construção...
               </h2>
 
             </div>
@@ -43,4 +41,4 @@ function Logar() {
     </div>
   );
 }
-export default Logar;
+export default CadastroBeneficiario;

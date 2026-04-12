@@ -18,6 +18,7 @@ export type Usuario = {
   email: string;
   tipos?: TipoUsuario[];
   data_cadastro: string;
+  data_edicao_conta?: string;
 };
 
 // o que o contexto fornece
@@ -28,6 +29,23 @@ type ContextoUsuarioType = {
 
 // cria o contexto
 const ContextoUsuario = createContext<ContextoUsuarioType | undefined>(undefined);
+
+// função para mapear string do backend para TipoUsuario, garantindo que seja um valor válido
+export function mapearTipo(tipo?: string): TipoUsuario {
+  const tiposValidos: TipoUsuario[] = [
+    "Genérico",
+    "Coordenador de Processos",
+    "Responsável pelo beneficiário",
+    "Doador",
+    "Voluntário da triagem"
+  ];
+
+  if (tiposValidos.includes(tipo as TipoUsuario)) {
+    return tipo as TipoUsuario;
+  }
+
+  return "Genérico";
+}
 
 // provider
 export function ProvedorUsuario({ children }: { children: ReactNode }) {

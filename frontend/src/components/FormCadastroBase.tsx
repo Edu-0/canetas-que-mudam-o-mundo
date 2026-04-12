@@ -5,8 +5,7 @@ import { validarCampo } from "../utils/validacoesFormulario";
 import { verificarRequisitosSenha } from "../utils/validacoes";
 import olho_visivel from "../assets/olho_visivel.png";
 import olho_bloqueado from "../assets/olho_bloqueado.png";
-import { criarUsuario, atualizarUsuario } from "../services/usuarioService";
-import { DadosUsuario, AtualizarUsuarioEnvio } from "../services/usuarioService";
+import { criarUsuario, atualizarUsuario, DadosUsuario, AtualizarUsuarioEnvio } from "../services/usuarioService";
 
 type PropsCadastro = {
   modo: "cadastro";
