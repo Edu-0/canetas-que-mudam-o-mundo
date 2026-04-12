@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Inicio from "./pages/Inicio";
 import Cadastro from "./pages/Cadastro";
-import Logar from "./pages/Logar"; // descomentar quando Logar estiver pronta
+import Logar from "./pages/Logar";
 import Conta from "./pages/Conta";
 import EditarConta from "./pages/EditarConta";
 import CadastroBeneficiario from "./pages/CadastroBeneficiario";

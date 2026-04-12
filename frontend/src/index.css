@@ -187,17 +187,26 @@
   }
 
   .btn-quiz-proximo {
-    background-color: #4CAF50;
-    color: white;
+    @apply bg-[var(--cor-resposta-correta)] border-black text-white;
+  }
+
+  .btn-quiz-proximo:hover {
+    @apply bg-green-700 border-black text-white;
   }
 
   .btn-quiz-voltar {
-    background-color: #9E9E9E;
-    color: white;
+    @apply bg-[#9E9E9E] border-black text-white;
+  }
+
+  .btn-quiz-voltar:hover {
+    @apply bg-[#7E7E7E] border-black text-white;
   }
 
   .btn-quiz-resposta {
-    background-color: #2196F3;
-    color: white;
+    @apply bg-[#2196F3] border-black text-white;
+  }
+
+  .btn-quiz-resposta:hover {
+    @apply bg-[#1976D2] border-black text-white;
   }
 }

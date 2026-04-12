@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useUsuario } from "../context/UserContext";
+import { useUsuario, TipoUsuario, mapearTipo } from "../context/UserContext";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import logo from "../assets/logo.svg";
@@ -8,7 +8,8 @@ import Botao from "../components/Botao";
 import { useAvisoAlteracoesNaoSalvas } from "../hooks/useAvisoAlteracoesNaoSalvas";
 import Toast from "../components/Toast";
 import ModalConfirmacao from "../components/ModalConfirmacao";
-import axios from "axios";
+import { obterImagensQuiz, enviarRespostasQuiz  } from "../services/quizService";
+import { DadosUsuario, obterUsuario, atualizarTiposUsuario } from "../services/usuarioService";
 
 interface ImagemTeste {
   id: string;
@@ -16,10 +17,13 @@ interface ImagemTeste {
 }
 
 export default function QuizVoluntario() {
-  const { definirUsuario } = useUsuario();
+  const { usuario, definirUsuario } = useUsuario();
   const navigate = useNavigate();
+
   const [mensagem, setMensagem] = useState("");
-  const { alterou, setAlterou } = useAvisoAlteracoesNaoSalvas({ mensagem: "Você começou o cadastro. Deseja sair mesmo?" });
+  const [tipoMensagem, setTipoMensagem] = useState<"sucesso" | "erro">("sucesso");
+
+  const { alterou, setAlterou } = useAvisoAlteracoesNaoSalvas({ mensagem: "Você começou o quiz do voluntário da triagem. Deseja sair mesmo?" });
   const [mostrarModal, setMostrarModal] = useState(false);
   const [rotaDestino, setRotaDestino] = useState<string | null>(null);
 
@@ -44,17 +48,31 @@ export default function QuizVoluntario() {
     if (rotaDestino) navigate(rotaDestino);
   }
 
-  // Carregar imagens do backend apenas no passo 3
+  // marca como "alterou" se o usuário avançar no quiz
+  useEffect(() => {
+    const iniciouQuiz =
+      passo > 1 ||
+      aceitouTermos ||
+      Object.keys(respostas).length > 0;
+
+    if (!alterou && iniciouQuiz) {
+      setAlterou(true);
+    }
+  }, [passo, aceitouTermos, respostas, alterou, setAlterou]);
+
+  // Carrega as imagens do quiz quando chegar no passo 3
   useEffect(() => {
     async function carregarImagens() {
       try {
-        const { data } = await axios.get<ImagemTeste[]>("/api/quiz-imagens");
+        const data = await obterImagensQuiz();
         setImagens(data);
       } catch (error) {
         console.error("Erro ao carregar imagens", error);
-        setMensagem("Não foi possível carregar as imagens de teste.");
+        setMensagem("Não foi possível carregar as imagens.");
+        setTipoMensagem("erro");
       }
     }
+
     if (passo === 3) carregarImagens();
   }, [passo]);
 
@@ -65,13 +83,12 @@ export default function QuizVoluntario() {
   async function enviarRespostas() {
     if (Object.keys(respostas).length < 3) {
       setMensagem("Responda todas as imagens antes de continuar.");
+      setTipoMensagem("erro");
       return;
     }
 
     try {
-      const { data } = await axios.post("/api/quiz-imagens", {
-        respostas
-      });
+      const data = await enviarRespostasQuiz(respostas);
 
       setFeedback(
         data.aprovado
@@ -79,12 +96,38 @@ export default function QuizVoluntario() {
           : "Você não atingiu a pontuação mínima"
       );
 
+      setMensagem(data.aprovado ? "Parabéns!" : "Tente novamente.");
+      setTipoMensagem(data.aprovado ? "sucesso" : "erro");
+
+      // se aprovado, adiciona o tipo "Voluntário da triagem" ao usuário no contexto
+      if (data.aprovado && usuario) {
+        // pega dados atualizados do backend
+        const usuarioAtualizado: DadosUsuario = await obterUsuario(usuario.id);
+
+        const tiposAtuais: TipoUsuario[] = usuarioAtualizado.funcao?.map((f: any) => mapearTipo(f.tipo_usuario)) || [];
+
+        // evita duplicar tipo
+        const novosTipos: TipoUsuario[] = tiposAtuais.includes("Voluntário da triagem")
+          ? tiposAtuais
+          : [...tiposAtuais, "Voluntário da triagem"];
+
+        // salva no backend
+        await atualizarTiposUsuario(usuario.id, novosTipos);
+
+        // atualiza frontend
+        definirUsuario({
+          ...usuario,
+          tipos: novosTipos
+        });
+      }
+
       setPasso(4);
       setAlterou(false);
 
     } catch (error) {
       console.error("Erro ao enviar respostas", error);
       setMensagem("Erro ao enviar respostas, tente novamente.");
+      setTipoMensagem("erro");
     }
   }
 
@@ -96,7 +139,7 @@ export default function QuizVoluntario() {
       {/* body */}
       <main className="flex-1 pt-24 pb-10">
         <div className="w-full px-6 md:px-20 flex flex-col gap-10">
-          <Toast mensagem={mensagem} tipo="sucesso" />
+          <Toast mensagem={mensagem} tipo={tipoMensagem} />
 
           {/* título e logo da caneta */}
           <div className="flex items-center justify-center gap-4 flex-wrap text-center">
@@ -111,6 +154,9 @@ export default function QuizVoluntario() {
               {/* PASSO 1: Termo */}
               {passo === 1 && (
                 <div className="flex flex-col gap-4">
+                  <p className="body-semibold-pequeno">Termo:</p>
+                  <p className="body-pequeno">Eu como voluntário da triagem, vou respeitar as normas e procedimentos da organização. 
+                    E não vou divulgar informações confidenciais.</p>
                   <label className="flex items-center gap-2">
                     <input type="checkbox" checked={aceitouTermos} onChange={() => setAceitouTermos(!aceitouTermos)} />
                     Li e aceito os termos
@@ -123,10 +169,17 @@ export default function QuizVoluntario() {
               {/* PASSO 2: PDF */}
               {passo === 2 && (
                 <div className="flex flex-col gap-4">
-                  <a href="/pdf/padroes-qualidade.pdf" target="_blank" className="btn">Baixar PDF</a>
-                  <Botao variante="quiz-voltar" aoClicar={() => setPasso(1)}>Voltar</Botao>
+                  <a href="/pdf/padroes-qualidade.pdf" target="_blank" className="px-4 py-2 bg-blue-500 text-white rounded text-center">Baixar PDF</a>
+                  
+                  <div className="flex flex-col md:flex-row gap-4 w-full">
+                    <div className="flex-1">
+                      <Botao variante="quiz-voltar" aoClicar={() => setPasso(1)}>Voltar</Botao>
+                    </div>
 
-                  <Botao variante="quiz-proximo" aoClicar={() => setPasso(3)}>Próximo</Botao>
+                    <div className="flex-1">
+                    <Botao variante="quiz-proximo" aoClicar={() => setPasso(3)}>Próximo</Botao>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -174,11 +227,10 @@ export default function QuizVoluntario() {
       {/* footer */}
       <Footer />
 
-      {/* Modal confirmação de saída */}
       <ModalConfirmacao
         aberto={mostrarModal}
         titulo="Sair do quiz?"
-        descricao="Você começou o cadastro. Deseja sair mesmo?"
+        descricao="Você começou o quiz do voluntário da triagem. Deseja sair mesmo?"
         botaoCancelar="Cancelar"
         botaoConfirmar="Confirmar saída"
         onCancelar={() => setMostrarModal(false)}

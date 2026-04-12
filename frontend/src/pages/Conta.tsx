@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useUsuario, TipoUsuario, Usuario } from "../context/UserContext";
+import { useUsuario, TipoUsuario, Usuario, mapearTipo } from "../context/UserContext";
 import { useEffect, useState } from "react";
 import { obterUsuario, DadosUsuario, atualizarTiposUsuario } from "../services/usuarioService";
 import Header from "../components/Header";
@@ -27,6 +27,25 @@ function Conta() {
 
   async function confirmarTipo() {
     if (!tipoSelecionado || !dadosNormalizados) return;
+
+    const tiposComConfirmacao = ["Voluntário da triagem", "Responsável pelo beneficiário"];
+
+    if (tiposComConfirmacao.includes(tipoSelecionado)) {
+      setModalTipo(false);
+
+      // redireciona pro quiz ao invés de salvar
+      if (tipoSelecionado === "Voluntário da triagem") {
+        navigate("/quiz-voluntario");
+        return;
+      }
+
+      if (tipoSelecionado === "Responsável pelo beneficiário") {  
+        navigate("/cadastro-beneficiario");
+        return;
+      }
+
+      return;
+    }
 
     const tiposAtuais = dadosNormalizados.tipos || [];
 
@@ -57,14 +76,6 @@ function Conta() {
 
     setModalTipo(false);
     setTipoSelecionado(null);
-  }
-
-  function mapearTipo(tipo?: string): TipoUsuario {
-    if (tiposValidos.includes(tipo as TipoUsuario)) {
-      return tipo as TipoUsuario;
-    }
-  
-    return "Genérico";
   }
 
   function normalizarUsuario(dados: DadosUsuario | Usuario): Usuario {
@@ -121,7 +132,15 @@ function Conta() {
   function formatarDataHora(valor?: string, fallback = "Data não informada") {
     if (!valor) return fallback;
 
-    const data = new Date(valor + "Z");
+    let data = new Date(valor);
+
+    if (Number.isNaN(data.getTime())) {
+      const possuiTimezone = /(?:Z|[+-]\d{2}:\d{2})$/i.test(valor);
+
+      if (!possuiTimezone) {
+        data = new Date(valor + "Z");
+      }
+    }
 
     if (Number.isNaN(data.getTime())) return fallback;
 
