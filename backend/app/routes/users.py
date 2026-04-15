@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, UploadFile,File, Form
 from app.schemas import user as s
 from app.core.security import gerar_hash_senha
 from app.models import user as m
@@ -8,6 +8,7 @@ from app.core.enums import TipoUsuario
 from fastapi import HTTPException
 from sqlalchemy.sql import func
 from sqlalchemy.exc import IntegrityError
+from app.services.firebase_storage import FirebaseStorageService
 
 router = APIRouter(prefix="/usuario", tags=["usuario"])
 
@@ -23,6 +24,30 @@ def get_usuario(usuario_id,db:SessionDep):
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuário não encontrado.")
     return usuario
+
+@router.get("/{responsavel_id}/documentacao", response_model=List[s.cadastrarDocumento])
+def buscar_documentos_responsavel(
+    responsavel_id: int, 
+    db: SessionDep
+):
+    documentos = db.query(m.DocumentoUsuario).filter(m.DocumentoUsuario.responsavel_id == responsavel_id).all()
+    
+    if not documentos:
+        raise HTTPException(status_code=404, detail="Nenhum documento encontrado para este responsável.")
+        
+    return documentos
+
+@router.get("/familia/{familiar_id}/documentacao", response_model=List[s.cadastrarDocumento])
+def buscar_documentos_familiar(
+    familiar_id: int, 
+    db: SessionDep
+):
+    documentos = db.query(m.DocumentoFamilia).filter(m.DocumentoFamilia.familiar_id == familiar_id).all()
+    
+    if not documentos:
+        raise HTTPException(status_code=404, detail="Nenhum documento encontrado para este familiar.")
+        
+    return documentos
     
 
 @router.post("/generico", response_model=s.respostaUsuario)
@@ -81,7 +106,7 @@ def criar_usuario_base(dados:s.criarUsuario, db:SessionDep):
 def criar_usuario_responsavel(usuario_id:int, dados:s.criarUsuarioResponsavel, db:SessionDep):
 
     usuario = m.UsuarioResponsavel(
-        usuario_id = usuario_id,
+        responsavel_id = usuario_id,
         qtd_familiares = dados.qtd_familiares,
         auxilio = dados.auxilio,
         concordou_termos = dados.concordou_termos
@@ -91,12 +116,12 @@ def criar_usuario_responsavel(usuario_id:int, dados:s.criarUsuarioResponsavel, d
     db.refresh(usuario)
     return usuario
 
-@router.post("/{perfil_id}/familia-responsavel", response_model=List[s.respostaFamiliaResponsavel])
-def cadastrar_familia_responsavel(perfil_id, dados:List[s.cadastrarFamiliaResponsavel], db:SessionDep):
+@router.post("/{responsavel_id}/familia-responsavel", response_model=List[s.respostaFamiliaResponsavel])
+def cadastrar_familia_responsavel(responsavel_id, dados:List[s.cadastrarFamiliaResponsavel], db:SessionDep):
     familiares = []
     for membro in dados:
         novo_familiar = m.FamiliaResponsavel(
-            perfil_id = perfil_id, #id do usuario na tab usuario_responsavel
+            responsavel_id = responsavel_id, #id do usuario na tab usuario_responsavel
             nome = membro.nome,
             cpf = membro.cpf,
             parentesco = membro.parentesco,
@@ -110,6 +135,52 @@ def cadastrar_familia_responsavel(perfil_id, dados:List[s.cadastrarFamiliaRespon
     for familiar in familiares:
         db.refresh(familiar)
     return familiares
+
+@router.post("/{responsavel_id}/documentacao", response_model=s.cadastrarDocumento)
+def upload_documento_responsavel(
+    responsavel_id, 
+    db:SessionDep,
+    tipo_documento:str = Form(...),
+    file: UploadFile = File(...)
+    ):
+
+    url = FirebaseStorageService.upload_file(file)
+
+    documentacao = m.DocumentoUsuario(
+        responsavel_id = responsavel_id,
+        tipo_documento = tipo_documento,
+        nome_original = file.filename,
+        caminho_arquivo = url
+    )
+    db.add(documentacao)
+    db.commit()
+    db.refresh(documentacao)
+    return documentacao
+
+
+@router.post("/familia/{familiar_id}/documentacao", response_model = s.cadastrarDocumento)
+def upload_documento_familiar(
+    familiar_id, 
+    db:SessionDep,
+    tipo_documento:str = Form(...),
+    file: UploadFile = File(...),
+    ):
+
+    url = FirebaseStorageService.upload_file(file)
+
+    documentacao = m.DocumentoFamilia(
+        familiar_id = familiar_id,
+        tipo_documento = tipo_documento,
+        nome_original = file.filename,
+        caminho_arquivo = url
+    )
+
+    db.add(documentacao)
+    db.commit()
+    db.refresh(documentacao)
+    return documentacao
+
+
 
 @router.put("/{usuario_id}", response_model=s.respostaUsuario)
 def atualizar_usuario(usuario_id, dados:s.atualizarUsuario, db:SessionDep):
