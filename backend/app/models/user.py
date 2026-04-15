@@ -21,7 +21,17 @@ class Usuario(Base):
     data_edicao_conta = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
     ativo = Column(Boolean, nullable=False)
     funcao = relationship("UsuarioFuncao", back_populates="usuario")
+    perfil_triagem = relationship("UsuarioTriagem", back_populates = "usuario", uselist = False)
     perfil_responsavel = relationship("UsuarioResponsavel", back_populates="usuario", uselist=False)
+
+class UsuarioTriagem(Base):
+    __tablename__ = 'usuario_triagem'
+    id = Column(Integer, primary_key=True, index=True)
+    usuario_id = Column(Integer, ForeignKey('usuario.id'), unique=True) 
+    pontuacao_total = Column(Integer)
+    status = Column(String(10))    
+    data_realizacao = Column(DateTime(timezone=True), server_default=func.now())
+    usuario = relationship("Usuario", back_populates="perfil_triagem")
 
 class UsuarioResponsavel(Base):
     __tablename__ = 'usuario_responsavel'

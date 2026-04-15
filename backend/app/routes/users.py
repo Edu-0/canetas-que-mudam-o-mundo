@@ -9,6 +9,8 @@ from fastapi import HTTPException
 from sqlalchemy.sql import func
 from sqlalchemy.exc import IntegrityError
 from app.services.firebase_storage import FirebaseStorageService
+from datetime import date, datetime
+
 
 router = APIRouter(prefix="/usuario", tags=["usuario"])
 
@@ -101,6 +103,24 @@ def criar_usuario_base(dados:s.criarUsuario, db:SessionDep):
             status_code=400,
             detail={"campo": "geral", "mensagem": "Erro ao cadastrar usuário."}
         )
+
+@router.post("/quiz/triagem", response_model=s.respostaUsuarioTriagem)
+def salvar_resultado_triagem(dados: s.criarUsuarioTriagem, db: SessionDep):
+    triagem_existente = db.query(m.UsuarioTriagem).filter(m.UsuarioTriagem.usuario_id == dados.usuario_id).first()
+
+    status_calculado = "ativo" if dados.pontuacao_total >= 3 else "inativo"
+
+    if triagem_existente:
+        triagem_existente.pontuacao_total = dados.pontuacao_total
+        triagem_existente.status = status_calculado
+        triagem_existente.data_realizacao = datetime.now()
+        db.commit()
+        db.refresh(triagem_existente)
+        return triagem_existente
+    else:
+        nova_triagem = m.UsuarioTriagem(...)
+        db.add(nova_triagem)
+        db.commit()
 
 @router.post("/{usuario_id}/responsavel", response_model=s.respostaUsuarioResponsavel)
 def criar_usuario_responsavel(usuario_id:int, dados:s.criarUsuarioResponsavel, db:SessionDep):
