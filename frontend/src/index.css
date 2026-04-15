@@ -186,22 +186,6 @@
     @apply bg-[var(--base-80)] border-black;
   }
 
-  .btn-quiz-proximo {
-    @apply bg-[var(--cor-resposta-correta)] border-black text-white;
-  }
-
-  .btn-quiz-proximo:hover {
-    @apply bg-green-700 border-black text-white;
-  }
-
-  .btn-quiz-voltar {
-    @apply bg-[#9E9E9E] border-black text-white;
-  }
-
-  .btn-quiz-voltar:hover {
-    @apply bg-[#7E7E7E] border-black text-white;
-  }
-
   .btn-quiz-resposta {
     @apply bg-[#2196F3] border-black text-white;
   }

@@ -62,8 +62,8 @@ export async function criarUsuarioBeneficiario(usuario_id: number, dados: DadosB
 }
 
 // Criar familiar para beneficiário
-export async function criarFamiliar(perfil_id: number, dados: DadosFamilia[]) {
-  const response = await api.post(`/usuario/${perfil_id}/familia-beneficiario`, dados);
+export async function criarFamiliar(responsavel_id: number, dados: DadosFamilia[]) {
+  const response = await api.post(`/usuario/${responsavel_id}/familia-beneficiario`, dados);
   return response.data;
 }
 // quando chamar depois usar criarFamiliar(id, [familiar1, familiar2])
