@@ -30,23 +30,41 @@ function Header({ aoNavegar }: Props) {
   } else {
     const tipos = usuario.tipos || [];
 
-    // mapa de tipos (sem incluir "Genérico")
-    const mapaTipos: Record<string, { id: string; texto: string; rota: string }> = {
-      "Doador": { id: "doar", texto: "Doar", rota: "/doar" },
-      "Voluntário da triagem": { id: "voluntario", texto: "Voluntariado", rota: "/triagem" },
-      "Responsável pelo beneficiário": { id: "responsavel", texto: "Responsável", rota: "/pedido" },
-      "Coordenador de Processos": { id: "coordenador", texto: "Coordenador", rota: "/coordenador" },
-    };
+    // mapa de tipos
+    const mapaTipos: Record<string, { id: string; texto: string; rota: string }[]> = {
+    "Doador": [
+      { id: "doar", texto: "Doar", rota: "/doar" }
+    ],
+
+    "Voluntário da triagem": [
+      { id: "triagem", texto: "Triagem", rota: "/triagem" }
+    ],
+
+    "Responsável pelo beneficiário": [
+      { id: "pedido", texto: "Pedido", rota: "/pedido" }
+    ],
+
+    "Coordenador de Processos": [
+      { id: "relatorio", texto: "Relatório", rota: "/relatorio" },
+      { id: "pontos", texto: "Pontos", rota: "/pontos" },
+      { id: "auditoria", texto: "Auditoria", rota: "/auditoria" }
+    ]
+  };
 
     const adicionados = new Set();
 
     tipos.forEach((tipo) => {
       if (tipo === "Genérico") return; // ignora
 
-      const botao = mapaTipos[tipo];
-      if (botao && !adicionados.has(botao.id)) { // verifica se o botão existe para o tipo e se já não foi adicionado
-        listaDeBotoes.push(botao);
-        adicionados.add(botao.id);
+      const botoes = mapaTipos[tipo];
+      
+      if (botoes) {
+        botoes.forEach((botao) => {
+          if (!adicionados.has(botao.id)) { // verifica se o botão existe para o tipo e se já não foi adicionado
+            listaDeBotoes.push(botao);
+            adicionados.add(botao.id);
+          }
+        });
       }
     });
 

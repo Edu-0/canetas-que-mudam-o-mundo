@@ -10,6 +10,9 @@ import Toast from "../components/Toast";
 import ModalConfirmacao from "../components/ModalConfirmacao";
 import { obterImagensQuiz, enviarRespostasQuiz  } from "../services/quizService";
 import { DadosUsuario, obterUsuario, atualizarTiposUsuario } from "../services/usuarioService";
+import icon_documento from "../assets/icon_documento.png";
+import icon_download from "../assets/icon_download.png";
+import icon_check from "../assets/icon_check.png";
 
 interface ImagemTeste {
   id: string;
@@ -155,29 +158,96 @@ export default function QuizVoluntario() {
               {passo === 1 && (
                 <div className="flex flex-col gap-4">
                   <p className="body-semibold-pequeno">Termo:</p>
-                  <p className="body-pequeno">Eu como voluntário da triagem, vou respeitar as normas e procedimentos da organização. 
-                    E não vou divulgar informações confidenciais.</p>
-                  <label className="flex items-center gap-2">
-                    <input type="checkbox" checked={aceitouTermos} onChange={() => setAceitouTermos(!aceitouTermos)} />
-                    Li e aceito os termos
+                  <p className="body-pequeno">
+                    Eu, como voluntário da triagem, comprometo-me a respeitar todas as normas e procedimentos da organização, 
+                    atuando com responsabilidade, ética e zelo. Declaro também que não divulgarei quaisquer informações 
+                    confidenciais às quais tiver acesso durante minhas atividades.
+                  </p>
+
+                  <label className="flex items-center gap-3 cursor-pointer select-none">
+  
+                    {/* checkbox escondido */}
+                    <input
+                      type="checkbox"
+                      checked={aceitouTermos}
+                      onChange={() => setAceitouTermos(!aceitouTermos)}
+                      className="hidden"
+                    />
+
+                    {/* caixa customizada */}
+                    <div
+                      className={`w-5 h-5 flex items-center justify-center rounded border-2 transition hover:scale-110
+                        ${aceitouTermos 
+                          ? "bg-[var(--base-40)] border-black" 
+                          : "bg-white border-gray-400"}
+                        `}
+                    >
+                      {aceitouTermos && (
+                        <span className="text-white text-sm">
+                          <img src={icon_check} alt="Check" className="w-4 h-4"/>
+                        </span>
+                      )}
+                    </div>
+
+                    {/* texto */}
+                    <span className="body-pequeno">
+                      Li e aceito o termo acima.
+                    </span>
                   </label>
 
-                  <Botao variante="quiz-proximo" desabilitado={!aceitouTermos} aoClicar={() => setPasso(2)}>Próximo</Botao>
+                  <div className="flex flex-col md:flex-row gap-4 w-full">
+                    <div className="flex-1">
+                      <Botao variante="cancelar" aoClicar={() => navigate("/conta")}>Cancelar quiz</Botao>
+                    </div>
+
+                    <div className="flex-1">
+                    <Botao variante="confirmar" desabilitado={!aceitouTermos} aoClicar={() => setPasso(2)}>Próximo</Botao>
+                    </div>
+                  </div>
                 </div>
               )}
 
               {/* PASSO 2: PDF */}
               {passo === 2 && (
                 <div className="flex flex-col gap-4">
-                  <a href="/pdf/padroes-qualidade.pdf" target="_blank" className="px-4 py-2 bg-blue-500 text-white rounded text-center">Baixar PDF</a>
-                  
+                  <p className="body-pequeno">
+                    Antes de prosseguir com o quiz, é importante que você leia o documento abaixo. 
+                    Ele apresenta os padrões de qualidade e os critérios utilizados na triagem, garantindo que você esteja preparado 
+                    para exercer suas atividades com segurança e responsabilidade.
+                  </p>
+
+                  <div className="flex justify-center">
+                    <div onClick={() => window.open("/pdf/padroes-qualidade.pdf", "_blank")} className="flex items-center justify-between gap-4 mb-5 px-6 py-4 bg-[var(--base-10)] border border-[var(--base-40)] rounded-lg shadow-sm hover:shadow-md transition w-full max-w-xl cursor-pointer group">
+                      
+                      <div className="flex items-center gap-4 overflow-hidden">
+                        <img src={icon_documento} alt="Documento" className="w-7 h-7"/>
+
+                        <span className="truncate body-semibold-pequeno text-base">
+                          Padrões de Qualidade pré estabelecidos.pdf
+                        </span>
+                      </div>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation(); // impede de abrir o PDF
+                          const link = document.createElement("a");
+                          link.href = "/pdf/padroes-qualidade.pdf";
+                          link.download = "padroes-qualidade.pdf";
+                          link.click();
+                        }}
+                        className="p-3 rounded-full hover:bg-[var(--base-20)] transition">
+                        <img src={icon_download} alt="Download" className="w-7 h-7"/>
+                      </button>
+                    </div>
+                  </div>
+
                   <div className="flex flex-col md:flex-row gap-4 w-full">
                     <div className="flex-1">
-                      <Botao variante="quiz-voltar" aoClicar={() => setPasso(1)}>Voltar</Botao>
+                      <Botao variante="cancelar" aoClicar={() => setPasso(1)}>Voltar</Botao>
                     </div>
 
                     <div className="flex-1">
-                    <Botao variante="quiz-proximo" aoClicar={() => setPasso(3)}>Próximo</Botao>
+                      <Botao variante="confirmar" aoClicar={() => setPasso(3)}>Próximo</Botao>
                     </div>
                   </div>
                 </div>
