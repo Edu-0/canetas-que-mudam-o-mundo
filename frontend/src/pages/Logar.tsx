@@ -27,8 +27,8 @@ function Logar() {
       localStorage.setItem("access_token", response.data.access_token);
       localStorage.setItem("token_type", response.data.token_type);
 
-      // Redirecionar para a página inicial ou conta
-      navigate("/");
+      // Redirecionar para a página de escolha de cadastro
+      navigate("/escolha-cadastro");
     } catch (err: any) {
       setErro(err.response?.data?.detail || "Erro ao fazer login. Tente novamente.");
     } finally {
