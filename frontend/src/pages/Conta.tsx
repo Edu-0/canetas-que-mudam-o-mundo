@@ -28,43 +28,55 @@ function Conta() {
   async function confirmarTipo() {
     if (!tipoSelecionado || !dadosNormalizados) return;
 
+    const tiposAtuais = dadosNormalizados.tipos || [];
+    const jaTemTipo = tiposAtuais.includes(tipoSelecionado as TipoUsuario);
+
+    if (jaTemTipo) {
+      const novosTipos = tiposAtuais.filter(t => t !== tipoSelecionado);
+
+      if (!novosTipos.includes("Genérico")) {
+        novosTipos.push("Genérico");
+      }
+
+      try {
+        await atualizarTiposUsuario(dadosNormalizados.id, novosTipos);
+
+        const atualizado = await obterUsuario(dadosNormalizados.id);
+        setPerfil(atualizado);
+        definirUsuario(normalizarUsuario(atualizado));
+      } catch (error) {
+        console.error("Erro ao remover tipo:", error);
+      }
+
+      setModalTipo(false);
+      setTipoSelecionado(null);
+      return;
+    }
+
     const tiposComConfirmacao = ["Voluntário da triagem", "Responsável pelo beneficiário"];
 
     if (tiposComConfirmacao.includes(tipoSelecionado)) {
       setModalTipo(false);
 
-      // redireciona pro quiz ao invés de salvar
       if (tipoSelecionado === "Voluntário da triagem") {
         navigate("/conta/quiz-voluntario");
         return;
       }
 
-      if (tipoSelecionado === "Responsável pelo beneficiário") {  
+      if (tipoSelecionado === "Responsável pelo beneficiário") {
         navigate("/conta/cadastro-beneficiario");
         return;
       }
-
-      return;
     }
 
-    const tiposAtuais = dadosNormalizados.tipos || [];
+    let novosTipos = [...tiposAtuais, tipoSelecionado as TipoUsuario];
 
-    let novosTipos;
-
-    if (tiposAtuais.includes(tipoSelecionado as TipoUsuario)) {
-      novosTipos = tiposAtuais.filter(t => t !== tipoSelecionado);
-    } else {
-      novosTipos = [...tiposAtuais, tipoSelecionado as TipoUsuario];
-    }
-
-    if (!novosTipos.includes("Genérico")) { // garantir sempre tenha o tipo "Genérico"
+    if (!novosTipos.includes("Genérico")) {
       novosTipos.push("Genérico");
     }
 
     try {
-      await atualizarTiposUsuario(dadosNormalizados.id, novosTipos); // função que chama a API para atualizar os tipos do usuário no backend
-
-      // Atualiza frontend depois de salvar no backend
+      await atualizarTiposUsuario(dadosNormalizados.id, novosTipos);
 
       const atualizado = await obterUsuario(dadosNormalizados.id);
       setPerfil(atualizado);

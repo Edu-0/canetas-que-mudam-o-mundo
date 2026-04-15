@@ -193,4 +193,20 @@
   .btn-quiz-resposta:hover {
     @apply bg-[#1976D2] border-black text-white;
   }
+
+  .btn-apto-selecionado {
+    @apply bg-[var(--cor-resposta-correta)] border-black text-white;
+  }
+
+  .btn-apto-selecionado:hover {
+    @apply bg-green-500 border-black text-white;
+  }
+
+  .btn-inapto-selecionado {
+    @apply bg-[var(--cor-resposta-errada)] border-black text-white;
+  }
+
+  .btn-inapto-selecionado:hover {
+    @apply bg-red-500 border-black text-white;
+  }
 }
