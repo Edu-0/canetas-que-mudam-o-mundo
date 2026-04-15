@@ -59,6 +59,16 @@ class criarUsuarioResponsavel(BaseModel):
             raise ValueError('Você deve ler e aceitar os termos de uso para prosseguir com o cadastro.')
         return v
 
+class criarUsuarioTriagem(BaseModel):
+    usuario_id: int
+    pontuacao_total: int
+
+class respostaUsuarioTriagem(criarUsuarioTriagem):
+    id:int
+    status: str
+    data_realizacao:datetime
+    model_config = ConfigDict(from_attributes=True)
+
 class respostaUsuarioResponsavel(criarUsuarioResponsavel):
     id:int
     model_config = ConfigDict(from_attributes=True)
