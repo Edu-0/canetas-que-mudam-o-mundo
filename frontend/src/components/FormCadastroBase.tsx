@@ -3,8 +3,8 @@ import { useState, useEffect, useRef } from "react";
 import Botao from "./Botao";
 import { validarCampo } from "../utils/validacoesFormulario";
 import { verificarRequisitosSenha } from "../utils/validacoes";
-import olho_visivel from "../assets/olho_visivel.png";
-import olho_bloqueado from "../assets/olho_bloqueado.png";
+import olho_visivel from "../assets/icon_olho_visivel.png";
+import olho_bloqueado from "../assets/icon_olho_bloqueado.png";
 import { criarUsuario, atualizarUsuario, DadosUsuario, AtualizarUsuarioEnvio } from "../services/usuarioService";
 
 type PropsCadastro = {

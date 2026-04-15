@@ -7,9 +7,11 @@ import EditarConta from "./pages/EditarConta";
 import CadastroBeneficiario from "./pages/CadastroBeneficiario";
 import Doar from "./pages/Doar";
 import QuizVoluntario from "./pages/QuizVoluntario";
-// import Triagem from "./pages/Triagem";
-// import Pedido from "./pages/Pedido";
-// import Relatorio from "./pages/Relatorio";
+import Triagem from "./pages/Triagem";
+import Pedido from "./pages/PedidoMaterial";
+import Relatorio from "./pages/Relatorio";
+import Auditoria from "./pages/AuditoriaVoluntario";
+import Pontos from "./pages/Pontos";
 
 function App() {
   return (
@@ -23,9 +25,11 @@ function App() {
         <Route path="/cadastro-beneficiario" element={<CadastroBeneficiario />} />
         <Route path="/doar" element={<Doar />} />
         <Route path="/quiz-voluntario" element={<QuizVoluntario />} />
-        {/* <Route path="/triagem" element={<Triagem />} /> */}
-        {/* <Route path="/pedido" element={<Pedido />} /> */}
-        {/* <Route path="/relatorio" element={<Relatorio />} /> */}
+        <Route path="/triagem" element={<Triagem />} />
+        <Route path="/pedido" element={<Pedido />} />
+        <Route path="/relatorio" element={<Relatorio />} />
+        <Route path="/auditoria" element={<Auditoria />} />
+        <Route path="/pontos" element={<Pontos />} />
       </Routes>
     </BrowserRouter>
   );
