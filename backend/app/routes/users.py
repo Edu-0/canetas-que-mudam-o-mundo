@@ -118,9 +118,15 @@ def salvar_resultado_triagem(dados: s.criarUsuarioTriagem, db: SessionDep):
         db.refresh(triagem_existente)
         return triagem_existente
     else:
-        nova_triagem = m.UsuarioTriagem(...)
+        nova_triagem = m.UsuarioTriagem(
+            usuario_id=dados.usuario_id,
+            pontuacao_total=dados.pontuacao_total,
+            status=status_calculado
+        )
         db.add(nova_triagem)
         db.commit()
+        db.refresh(nova_triagem)
+        return nova_triagem
 
 @router.post("/{usuario_id}/responsavel", response_model=s.respostaUsuarioResponsavel)
 def criar_usuario_responsavel(usuario_id:int, dados:s.criarUsuarioResponsavel, db:SessionDep):
