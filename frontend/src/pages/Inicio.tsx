@@ -1,8 +1,18 @@
+import { useState, useEffect } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import Carrossel from "../components/Carrossel";
 import logo from "../assets/logo.svg";
+import { loadCarrosselImages } from "../services/carrosselImages";
+import type { CarrosselImage } from "../components/Carrossel";
 
 function Inicio() {
+   const [carrosselImages, setCarrosselImages] = useState<CarrosselImage[]>([]);
+
+  useEffect(() => {
+    loadCarrosselImages().then(setCarrosselImages);
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col bg-[var(--base-5)]">
       
@@ -52,6 +62,17 @@ function Inicio() {
             </span>{" "}
             de materiais escolares, incluindo: lápis, borracha, caderno, estojo, mochila e etc.
           </p>
+
+          {/* carrossel de imagens */}
+          <div className="w-full mt-10">
+            {carrosselImages.length > 0 && (
+              <Carrossel
+                images={carrosselImages}
+                autoPlay={true}
+                interval={5000}
+              />
+            )}
+          </div>
         </div>
       </main>
 
