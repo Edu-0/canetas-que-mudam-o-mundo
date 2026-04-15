@@ -6,12 +6,13 @@ import logo from "../assets/logo.svg";
 import { loadCarrosselImages } from "../services/carrosselImages";
 import type { CarrosselImage } from "../components/Carrossel";
 
-function App() {
-  const [carrosselImages, setCarrosselImages] = useState<CarrosselImage[]>([]);
+function Inicio() {
+   const [carrosselImages, setCarrosselImages] = useState<CarrosselImage[]>([]);
 
   useEffect(() => {
     loadCarrosselImages().then(setCarrosselImages);
   }, []);
+
   return (
     <div className="min-h-screen flex flex-col bg-[var(--base-5)]">
       
@@ -81,4 +82,4 @@ function App() {
   );
 }
 
-export default App;
+export default Inicio;

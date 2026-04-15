@@ -23,14 +23,22 @@
   --base-20: #E4EEBF;
   --base-40: #C4D86E;
   --base-60: #838513;
+  --base-70: #5B6A0B;
   --base-80: #383B08;
   --base-100: #000000;
 
   --secundario-10: #FFFEF5;
   --secundario-20: #FFFDE9;
+  --secundario-50: #FFFCD6;
   --secundario-60: #FFF9A8;
   --secundario-80: #FFF798;
   --secundario-100: #FFF09C;
+
+  --cor-resposta-obrigatoria: #ea2b2b;
+  --cor-resposta-correta: #16a34a; 
+  --cor-resposta-errada: #ef4444;
+
+  --cor-botao-editar: #BBE4FF;
 }
 
 :root {
@@ -78,6 +86,12 @@
   font-weight: 400;
 }
 
+.letra-footer {
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 150%;
+}
+
 .body-semibold-grande {
   font-family: var(--font-body);
   font-size: 40px;
@@ -97,4 +111,102 @@
   font-size: 20px;
   line-height: 150%;
   font-weight: 600;
+}
+
+@layer components {
+  /* estilo base para os botões no Header*/
+  .btn-base {
+    @apply px-4 py-0.5 rounded-md border body-semibold-pequeno transition-all duration-300 w-[120px] text-center;
+  }
+
+  /* estado do botão default */
+  .btn-padrao {
+    @apply bg-gradient-to-r from-[var(--base-40)] to-[var(--secundario-100)] border-[var(--secundario-100)];
+  }
+
+  /* hover do botão default */
+  .btn-padrao:hover {
+    @apply from-[var(--base-20)] to-[var(--secundario-60)];
+  }
+
+  /* botão selecionado */
+  .btn-ativado {
+    @apply bg-gradient-to-r from-[var(--primario-100)] to-[var(--primario-40)] border-[var(--primario-80)];
+  }
+
+  /* hover do botão selecionado */
+  .btn-ativado:hover {
+    @apply from-[var(--primario-80)] to-[var(--primario-30)];
+  }
+
+  /* estilo base para os inputs */
+  .input-padrao {
+    @apply w-full px-3 py-2 rounded-md border border-black bg-[var(--primario-5)] text-sm outline-none focus:ring-2 focus:ring-[var(--primario-60)];
+  }
+
+  /* estilo base para os botões dos formulários de confirmar */
+  .btn-confirmar {
+    @apply bg-[var(--base-20)] border-black;
+  }
+
+  .btn-confirmar:hover {
+    @apply bg-[var(--base-40)] border-black;
+  }
+
+  /* estilo base para os botões dos formulários de cancelar */
+  .btn-cancelar {
+    @apply bg-red-200 border-black;
+  }
+
+  .btn-cancelar:hover {
+    @apply bg-red-300 border-black;
+  }
+
+  .btn-editar {
+    @apply bg-[var(--cor-botao-editar)] border-black;
+  }
+
+  .btn-editar:hover {
+    @apply bg-blue-300 border-black;
+  }
+
+  .btn-sair {
+    @apply bg-[var(--secundario-50)] border-black;
+  }
+
+  .btn-sair:hover {
+    @apply bg-[var(--secundario-100)] border-black;
+  }
+
+  .btn-tipo-selecionado {
+    @apply bg-[var(--base-70)] border-black text-white;
+  }
+
+  .btn-tipo-selecionado:hover {
+    @apply bg-[var(--base-80)] border-black;
+  }
+
+  .btn-quiz-proximo {
+    @apply bg-[var(--cor-resposta-correta)] border-black text-white;
+  }
+
+  .btn-quiz-proximo:hover {
+    @apply bg-green-700 border-black text-white;
+  }
+
+  .btn-quiz-voltar {
+    @apply bg-[#9E9E9E] border-black text-white;
+  }
+
+  .btn-quiz-voltar:hover {
+    @apply bg-[#7E7E7E] border-black text-white;
+  }
+
+  .btn-quiz-resposta {
+    @apply bg-[#2196F3] border-black text-white;
+  }
+
+  .btn-quiz-resposta:hover {
+    @apply bg-[#1976D2] border-black text-white;
+  }
 }

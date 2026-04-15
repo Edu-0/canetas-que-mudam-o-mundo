@@ -2,5 +2,7 @@
   "name": "root",
   "version": "1.0.0",
   "private": true,
-  "scripts": {}
+  "scripts": {
+    "dev": "powershell -ExecutionPolicy Bypass -File ./start-dev.ps1"
+  }
 }
