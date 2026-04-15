@@ -111,7 +111,9 @@ function EditarConta() {
                 titulo="Alterações não salvas"
                 descricao="Você tem alterações não salvas. Deseja sair mesmo?"
                 botaoCancelar="Continuar editando"
-                botaoConfirmar="Sair sem salvar"
+                botaoConfirmar="Sair sem salvar"    
+                varianteCancelar="confirmar"
+                varianteConfirmar="cancelar"
                 onCancelar={() => setMostrarModal(false)}
                 onConfirmar={() => {
                     setMostrarModal(false);

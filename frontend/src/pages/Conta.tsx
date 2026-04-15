@@ -35,12 +35,12 @@ function Conta() {
 
       // redireciona pro quiz ao invés de salvar
       if (tipoSelecionado === "Voluntário da triagem") {
-        navigate("/quiz-voluntario");
+        navigate("/conta/quiz-voluntario");
         return;
       }
 
       if (tipoSelecionado === "Responsável pelo beneficiário") {  
-        navigate("/cadastro-beneficiario");
+        navigate("/conta/cadastro-beneficiario");
         return;
       }
 
@@ -294,6 +294,8 @@ function Conta() {
                     descricao="Tem certeza que deseja excluir sua conta? Essa ação não pode ser desfeita."
                     botaoCancelar="Cancelar exclusão da conta"
                     botaoConfirmar="Excluir conta"
+                    varianteCancelar="confirmar"
+                    varianteConfirmar="cancelar"
                     onCancelar={() => setMostrarModal(false)}
                     onConfirmar={() => {
                       setMostrarModal(false);
@@ -343,7 +345,11 @@ function Conta() {
                         Você poderá sair deste tipo depois.`
                   }
                   botaoCancelar="Cancelar"
-                  botaoConfirmar={jaTemTipo ? "Remover" : "Confirmar"}
+                  botaoConfirmar={jaTemTipo ? "Remover" : "Confirmar"} 
+                  
+                  varianteCancelar={jaTemTipo ? "confirmar" : "cancelar"}  
+                  varianteConfirmar={jaTemTipo ? "cancelar" : "confirmar"}
+
                   onCancelar={() => setModalTipo(false)}
                   onConfirmar={confirmarTipo}
                 />

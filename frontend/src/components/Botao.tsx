@@ -4,7 +4,7 @@ type PropriedadesBotao = {
   children: ReactNode; // o que tem dentro do botão
   ativo?: boolean; // se o botão está selecionado
   aoClicar?: () => void;
-  variante?: "padrao" | "confirmar" | "cancelar" | "editar" | "sair" | "tipo-selecionado" | "quiz-proximo" | "quiz-voltar" | "quiz-resposta";
+  variante?: "padrao" | "confirmar" | "cancelar" | "editar" | "sair" | "tipo-selecionado" | "quiz-resposta";
   tipo?: "button" | "submit";
   desabilitado?: boolean;
 };
@@ -13,15 +13,16 @@ export default function Botao({children, ativo = false, aoClicar, variante = "pa
   
   let estilo = "btn-padrao";
 
-  if (ativo) estilo = "btn-ativado";
-  else if (variante === "confirmar") estilo = "btn-confirmar";
+  if (variante === "confirmar") estilo = "btn-confirmar";
   else if (variante === "cancelar") estilo = "btn-cancelar";
   else if (variante === "editar") estilo = "btn-editar";
   else if (variante === "sair") estilo = "btn-sair";
   else if (variante === "tipo-selecionado") estilo = "btn-tipo-selecionado";
-  else if (variante === "quiz-proximo") estilo = "btn-quiz-proximo";
-  else if (variante === "quiz-voltar") estilo = "btn-quiz-voltar";
   else if (variante === "quiz-resposta") estilo = "btn-quiz-resposta";
+  
+  if (ativo && variante === "padrao") {
+    estilo = "btn-ativado";
+  }
 
   return (
     <button

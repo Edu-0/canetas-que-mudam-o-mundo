@@ -6,6 +6,9 @@ type Props = {
   botaoCancelar?: string;
   onConfirmar: () => void;
   onCancelar: () => void;
+
+  varianteConfirmar?: "confirmar" | "cancelar";
+  varianteCancelar?: "confirmar" | "cancelar";
 };
 
 function ModalConfirmacao({
@@ -16,6 +19,8 @@ function ModalConfirmacao({
   botaoCancelar,
   onConfirmar,
   onCancelar,
+  varianteConfirmar,
+  varianteCancelar,
 }: Props) {
   if (!aberto) return null;
 
@@ -29,7 +34,11 @@ function ModalConfirmacao({
           {botaoCancelar && (
             <button
               onClick={onCancelar}
-              className="px-4 py-2 rounded bg-[var(--base-20)] hover:bg-[var(--base-40)] border border-black"
+              className={`px-4 py-2 rounded border border-black ${
+                varianteCancelar === "confirmar"
+                  ? "bg-[var(--base-20)] hover:bg-[var(--base-40)]" 
+                  : "bg-[var(--cor-resposta-obrigatoria)] text-white hover:bg-red-700"
+              }`}
             >
               {botaoCancelar}
             </button>
@@ -38,7 +47,11 @@ function ModalConfirmacao({
           {botaoConfirmar && (
             <button
               onClick={onConfirmar}
-              className="px-4 py-2 rounded bg-[var(--cor-resposta-obrigatoria)] text-white hover:bg-red-700 border border-black"
+              className={`px-4 py-2 rounded border border-black ${
+                varianteConfirmar === "confirmar"
+                  ? "bg-[var(--base-20)] hover:bg-[var(--base-40)]"
+                  : "bg-[var(--cor-resposta-obrigatoria)] text-white hover:bg-red-700"
+              }`}
             >
               {botaoConfirmar}
             </button>
