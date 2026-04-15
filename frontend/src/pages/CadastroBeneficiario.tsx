@@ -6,8 +6,12 @@ import Footer from "../components/Footer";
 import Botao from "../components/Botao";
 import Toast from "../components/Toast";
 import logo from "../assets/logo.svg";
+import { atualizarTiposUsuario, DadosUsuario, obterUsuario } from "../services/usuarioService";
+import { mapearTipo, TipoUsuario, useUsuario } from "../context/UserContext";
 
 function CadastroBeneficiario() {
+  const { usuario, definirUsuario } = useUsuario();
+  
   const navigate = useNavigate();
   const [mensagem, setMensagem] = useState("");
   const [carregando, setCarregando] = useState(false);
@@ -174,10 +178,56 @@ function CadastroBeneficiario() {
       //   bens_familiares: formData.bensFamiliares,
       //   documentos: formData.documentos,
       // });
+      if(!usuario) return;
+      
+      try {
+        const usuarioAtualizado: DadosUsuario = await obterUsuario(usuario.id);
+
+        const tiposAtuais: TipoUsuario[] =
+          usuarioAtualizado.funcao?.map((f: any) =>
+            mapearTipo(f.tipo_usuario)
+          ) ||
+          (usuarioAtualizado as any).tipos ||
+          [];
+
+        let novosTipos: TipoUsuario[] = tiposAtuais.includes("Responsável pelo beneficiário")
+          ? tiposAtuais
+          : [...tiposAtuais, "Responsável pelo beneficiário"];
+
+        if (!novosTipos.includes("Genérico")) {
+          novosTipos.push("Genérico");
+        }
+
+        await atualizarTiposUsuario(usuario.id, novosTipos);
+
+        // busca atualizado do backend
+        const atualizado = await obterUsuario(usuario.id);
+
+        // normaliza igual Conta
+        const usuarioNormalizado = {
+          id: atualizado.id,
+          nome_completo: atualizado.nome_completo,
+          data_nascimento: atualizado.data_nascimento,
+          cpf: atualizado.cpf,
+          cep: atualizado.cep,
+          telefone: atualizado.telefone,
+          email: atualizado.email,
+          data_cadastro: atualizado.data_cadastro,
+          data_edicao_conta: atualizado.data_edicao_conta,
+          tipos: atualizado.funcao?.map((f: any) =>
+            mapearTipo(f.tipo_usuario)
+          ) || []
+        };
+
+        definirUsuario(usuarioNormalizado);
+
+      } catch (error) {
+        console.error("Erro ao atualizar tipo do usuário", error);
+      }
 
       setMensagem("Beneficiário cadastrado com sucesso!");
       setTimeout(() => {
-        navigate("/");
+        navigate("/conta");
       }, 2000);
     } catch (error) {
       setMensagem("Erro ao cadastrar beneficiário. Tente novamente.");
@@ -216,7 +266,7 @@ function CadastroBeneficiario() {
             <div className="w-full max-w-4xl bg-[var(--primario-5)] shadow-[2px_10px_40px_rgba(0,0,0,0.1)] rounded-lg p-6">
 
               <h2 className="header-pequeno text-center mb-6">
-                CADASTRO DO RESPONSÁVEL PELO BANEFIÁRIO
+                CADASTRO DE FAMILIAR
               </h2>
 
               <form onSubmit={handleSubmit} className="flex flex-col gap-6">

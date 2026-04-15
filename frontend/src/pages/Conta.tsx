@@ -145,6 +145,7 @@ function Conta() {
     if (!valor) return fallback;
 
     let data = new Date(valor);
+    console.log("Data original:", valor, "Data parseada:", data);
 
     if (Number.isNaN(data.getTime())) {
       const possuiTimezone = /(?:Z|[+-]\d{2}:\d{2})$/i.test(valor);
@@ -187,6 +188,7 @@ function Conta() {
       try {
         
       const atualizado = await obterUsuario(id); // pega os dados atualizados do backend
+      console.log("Perfil atualizado carregado:", atualizado);
       setPerfil(atualizado);
 
       } catch (error) {
