@@ -55,10 +55,10 @@ As rotas atualmente registradas em [src/App.tsx](src/App.tsx) são:
 - `/conta`
 - `/conta/editar`
   
-### Atribuição de tipo de usuário
+#### Atribuição de tipo de usuário
 
-- `/cadastro-beneficiario`
-- `/quiz-voluntario`
+- `/conta/cadastro-beneficiario`
+- `/conta/quiz-voluntario`
 
 ### Funcionalidades em desenvolvimento
 
