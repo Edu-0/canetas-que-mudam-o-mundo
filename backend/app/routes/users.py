@@ -290,3 +290,48 @@ def atualizar_documento(documento_id, dados:s.atualizarDocumento, db:SessionDep)
     db.commit()
     db.refresh(documento)
     return documento
+
+@router.delete("/familia/documentacao/{documento_id}")
+def deletar_documento_familiar(
+    documento_id: int, 
+    db: SessionDep
+):
+    documentacao = db.get(m.DocumentoFamilia, documento_id)
+    
+    if not documentacao:
+        raise HTTPException(status_code=404, detail="Documento não encontrado.")
+
+    try:
+        FirebaseStorageService.delete_file(documentacao.caminho_arquivo)
+    except Exception as e:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Erro ao excluir o arquivo no servidor: {str(e)}"
+        )
+
+    db.delete(documentacao)
+    db.commit()
+    return {"mensagem": "Documento excluído com sucesso."}
+
+@router.delete("/documentacao/{documento_id}")
+def deletar_documento_usuario(
+    documento_id: int, 
+    db: SessionDep
+):
+    documentacao = db.get(m.DocumentoUsuario, documento_id)
+    
+    if not documentacao:
+        raise HTTPException(status_code=404, detail="Documento não encontrado.")
+
+    try:
+        FirebaseStorageService.delete_file(documentacao.caminho_arquivo)
+    except Exception as e:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Erro ao excluir o arquivo no servidor: {str(e)}"
+        )
+
+    db.delete(documentacao)
+    db.commit()
+    return {"mensagem": "Documento excluído com sucesso."}
+
