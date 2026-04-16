@@ -39,6 +39,22 @@
   --cor-resposta-errada: #ef4444;
 
   --cor-botao-editar: #BBE4FF;
+
+  /* cores para a tela de inicio */
+  --pastel-azul: #E3F2FD;
+  --pastel-azul-borda: #90CAF9;
+
+  --pastel-verde: #E8F5E9;
+  --pastel-verde-borda: #A5D6A7;
+
+  --pastel-rosa: #FCE4EC;
+  --pastel-rosa-borda: #F8BBD0;
+
+  --pastel-roxo: #F3E5F5;
+  --pastel-roxo-borda: #CE93D8;
+
+  --pastel-laranja: #FFF3E0;
+  --pastel-laranja-borda: #FFCC80;
 }
 
 :root {
@@ -63,6 +79,12 @@
   font-family: var(--font-header);
   font-size: 40px;
   line-height: 125%;
+}
+
+.header-pequeno-tela-inicial {
+  font-family: var(--font-header);
+  font-size: 30px;
+  line-height: 100%;
 }
 
 .body-grande {
