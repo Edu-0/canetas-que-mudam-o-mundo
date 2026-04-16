@@ -55,6 +55,7 @@ def buscar_documentos_familiar(
 @router.post("/generico", response_model=s.respostaUsuario)
 def criar_usuario_base(dados:s.criarUsuario, db:SessionDep):
     hash_senha = gerar_hash_senha(dados.senha)
+    agora = datetime.now()
 
     usuario = m.Usuario(
         nome_completo = dados.nome_completo,
@@ -64,7 +65,9 @@ def criar_usuario_base(dados:s.criarUsuario, db:SessionDep):
         telefone = dados.telefone,
         email = dados.email,
         senha = hash_senha,
-        ativo = True
+        ativo = True,
+        data_cadastro = agora,
+        data_edicao_conta = agora
     )
 
     try:
@@ -216,6 +219,7 @@ def atualizar_usuario(usuario_id, dados:s.atualizarUsuario, db:SessionDep):
     try:
         for key, value in dados.model_dump(exclude_unset=True).items():
             setattr(usuario, key, value)
+        usuario.data_edicao_conta = datetime.now()
         db.commit()
         db.refresh(usuario)
         return usuario
@@ -274,7 +278,7 @@ def atualizar_usuario_funcao(usuario_id: int, dados: s.atualizarUsuarioFuncao, d
         db.add(nova_funcao)
         funcao_usuario.append(nova_funcao)
 
-    usuario.data_edicao_conta = func.now()
+    usuario.data_edicao_conta = datetime.now()
     db.commit()
 
     for f in funcao_usuario:
@@ -289,7 +293,7 @@ def atualizar_usuario_responsavel(perfil_id, dados:s.atualizarUsuarioResponsavel
         raise HTTPException(status_code=404, detail="Perfil de beneficiário não encontrado.")
     for key, value in dados.model_dump(exclude_unset=True).items():
         setattr(perfil, key, value)
-    perfil.usuario.data_edicao_conta = func.now()
+    perfil.usuario.data_edicao_conta = datetime.now()
     db.commit()
     db.refresh(perfil)
     return perfil
@@ -301,7 +305,7 @@ def atualizar_familia_responsavel(familia_id, dados:s.atualizarFamiliaResponsave
         raise HTTPException(status_code=404, detail="Familiar beneficiário não encontrado.")
     for key, value in dados.model_dump(exclude_unset=True).items():
         setattr(familiar, key, value)
-    familiar.perfil.usuario.data_edicao_conta = func.now()
+    familiar.perfil.usuario.data_edicao_conta = datetime.now()
     db.commit()
     db.refresh(familiar)
     return familiar
