@@ -125,59 +125,27 @@ function Conta() {
     navigate("/");
   }
 
-  const dataNascimentoRaw = dadosNormalizados?.data_nascimento;
+  function formatarData(data?: string) {
+    if (!data) return null;
 
-  let dataNascimentoFormatada = "Data de nascimento não informada";
+    const d = new Date(data);
 
-  if (dataNascimentoRaw) {
-    try {
-      const [ano, mes, dia] = dataNascimentoRaw.split("-");
-      const data = new Date(Number(ano), Number(mes) - 1, Number(dia));
-      dataNascimentoFormatada = data.toLocaleDateString("pt-BR");
-    } catch {
-      dataNascimentoFormatada = "Data de nascimento não informada";
-    }
+    return d.toLocaleDateString("pt-BR");
   }
 
-  const dataCadastroRaw = dadosNormalizados?.data_cadastro;
+  function formatarDataHora(data?: string) {
+    if (!data) return null;
 
-  function formatarDataHora(valor?: string, fallback = "Data não informada") {
-    if (!valor) return fallback;
+    const d = new Date(data);
 
-    let data = new Date(valor);
-    console.log("Data original:", valor, "Data parseada:", data);
-
-    if (Number.isNaN(data.getTime())) {
-      const possuiTimezone = /(?:Z|[+-]\d{2}:\d{2})$/i.test(valor);
-
-      if (!possuiTimezone) {
-        data = new Date(valor + "Z");
-      }
-    }
-
-    if (Number.isNaN(data.getTime())) return fallback;
-
-    return new Intl.DateTimeFormat("pt-BR", {
-      timeZone: "America/Sao_Paulo",
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
+    const dataFormatada = d.toLocaleDateString("pt-BR");
+    const horaFormatada = d.toLocaleTimeString("pt-BR", {
       hour: "2-digit",
-      minute: "2-digit"
-    }).format(data).replace(",", " às") + " horas";
+      minute: "2-digit",
+    });
+
+    return `${dataFormatada} às ${horaFormatada} horas`;
   }
-
-  const dataCadastroFormatada = formatarDataHora(
-    dataCadastroRaw,
-    "Data de cadastro não informada"
-  );
-
-  const dataEdicaoContaRaw = dadosNormalizados?.data_edicao_conta;
-
-  const dataEdicaoContaFormatada = formatarDataHora(
-    dataEdicaoContaRaw,
-    "A conta nunca foi editada"
-  );
 
   useEffect(() => { // carrega o perfil do usuário logado para pegar as informações atualizadas do backend
     if (!usuario) return;
@@ -235,7 +203,7 @@ function Conta() {
 
                     <p>
                       <span className="body-semibold-pequeno">Data de nascimento:</span>{" "}
-                      <span className="body-pequeno">{dataNascimentoFormatada}</span>
+                      <span className="body-pequeno">{formatarData(dadosNormalizados?.data_nascimento) || "Data de nascimento não informada"}</span>
                     </p>
 
                     <p>
@@ -265,12 +233,12 @@ function Conta() {
 
                     <p>
                       <span className="body-semibold-pequeno">Data de cadastro:</span>{" "}
-                      <span className="body-pequeno">{dataCadastroFormatada}</span>
+                      <span className="body-pequeno">{formatarDataHora(dadosNormalizados?.data_cadastro) || "Data de cadastro não informada"}</span>
                     </p>
 
                     <p>
                       <span className="body-semibold-pequeno">Data de edição da conta:</span>{" "}
-                      <span className="body-pequeno">{dataEdicaoContaFormatada}</span>
+                      <span className="body-pequeno">{formatarDataHora(dadosNormalizados?.data_edicao_conta) || "A conta nunca foi editada"}</span>
                     </p>
 
                     {dadosNormalizados?.tipos && dadosNormalizados.tipos.length > 0 && (
