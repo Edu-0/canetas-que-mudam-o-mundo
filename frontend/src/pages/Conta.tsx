@@ -312,6 +312,19 @@ function Conta() {
 
                 <div className="flex-1">
                   <Botao aoClicar={() => selecionarTipo("Responsável pelo beneficiário")} variante={estaComoResponsavel ? "tipo-selecionado" : "confirmar"}>Responsável pelo beneficiário</Botao>
+
+                  {estaComoResponsavel && (
+                    <div className="mt-5 flex justify-end">
+                      <div className="w-auto text-sm px-1 py-0"> 
+                        <Botao
+                          aoClicar={() => navigate("/conta/editar-renda-e-familiares")}
+                          variante="editar"
+                        >
+                          Editar renda e familiares
+                        </Botao>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <ModalConfirmacao

@@ -1,17 +1,21 @@
-import { useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { useUsuario } from "../context/UserContext";
 import { useState } from "react";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
 import logo from "../assets/logo.svg";
 import Toast from "../components/Toast";
-import FormCadastroBase from "../components/FormCadastroBase";
+import FormTrocarSenha from "../components/FormTrocaSenha";
 import { useAvisoAlteracoesNaoSalvas } from "../hooks/useAvisoAlteracoesNaoSalvas";
 import ModalConfirmacao from "../components/ModalConfirmacao";
+import { redefinirSenha } from "../services/usuarioService";
+import Botao from "../components/Botao";
 
-function EditarConta() {
+function TrocarSenha() {
   const { usuario, definirUsuario } = useUsuario();
   const navigate = useNavigate();
+  
+  const [params] = useSearchParams();
+  const token = params.get("token");
+
   const [mensagem, setMensagem] = useState("");
   const { alterou, setAlterou } = useAvisoAlteracoesNaoSalvas({ mensagem: "Você tem alterações não salvas. Deseja sair mesmo?" });
   const [mostrarModal, setMostrarModal] = useState(false);
@@ -22,8 +26,44 @@ function EditarConta() {
       mensagem: string;
     } | null>(null);
 
-  if (!usuario) {
-    return <p>Nenhum usuário</p>;
+  if (!token) {
+    return (
+      <div className="min-h-screen flex flex-col bg-[var(--base-5)]">
+      
+        {/* body */}
+        <main className="flex-1 pt-24 pb-10">
+          <div className="w-full px-6 md:px-20 flex flex-col gap-10">
+
+            {/* título e logo da caneta */}
+            <div className="flex items-center justify-center gap-4 flex-wrap text-center">
+              <img src={logo} alt="Logo" className="h-16 md:h-20" />
+          
+              <h1 className="header-medio text-center">
+                Canetas que Mudam o Mundo
+              </h1>
+            </div>
+
+            <div className="flex flex-col items-center px-4">
+
+              {/* título do formulário */}
+              <div className="w-full max-w-4xl bg-[var(--primario-5)] shadow-[2px_10px_40px_rgba(0,0,0,0.1)] rounded-lg p-6">
+
+                <h2 className="header-pequeno text-center mb-6">
+                  TROCAR A SENHA DA CONTA
+                </h2>
+
+                <div>
+                  <h2 className="body-pequeno text-center mb-6">Link para redefinir a senha inválido ou expirado</h2>
+                  <Botao variante="cancelar" aoClicar={() => navigate("/logar")}>
+                    Voltar para a tela de logar
+                  </Botao>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>  
+    );
   }
 
   function tentarSair(rota: string) {
@@ -38,13 +78,11 @@ function EditarConta() {
   return (
     <div className="min-h-screen flex flex-col bg-[var(--base-5)]">
       
-      {/* header */}
-      <Header aoNavegar={tentarSair} />
 
       {/* body */}
       <main className="flex-1 pt-24 pb-10">
         <div className="w-full px-6 md:px-20 flex flex-col gap-10">
-          <Toast mensagem={mensagem} tipo="sucesso" />
+            <Toast mensagem={mensagem} tipo="sucesso" />
 
           {/* título e logo da caneta */}
           <div className="flex items-center justify-center gap-4 flex-wrap text-center">
@@ -61,65 +99,42 @@ function EditarConta() {
             <div className="w-full max-w-4xl bg-[var(--primario-5)] shadow-[2px_10px_40px_rgba(0,0,0,0.1)] rounded-lg p-6">
 
               <h2 className="header-pequeno text-center mb-6">
-                EDITAR CONTA
+                TROCAR A SENHA DA CONTA
               </h2>
 
-              <FormCadastroBase
-                modo="edicao"
-                valoresIniciais={usuario}
+              <FormTrocarSenha
+                mostrarCancelar={true}
 
-                aoMensagemSucessoSenha={(msg) => {
-                  setMensagem(msg);
-
-                  setTimeout(() => {
-                    setMensagem("");
-                  }, 3000);
-                }}
-                
                 mudouDados={(dados) => {
-                  const mudou =
-                    dados.nome_completo.trim() !== (usuario.nome_completo || "") ||
-                    dados.data_nascimento.trim() !== (usuario.data_nascimento || "") ||
-                    dados.cpf.replace(/\D/g, "") !== (usuario.cpf || "") ||
-                    dados.cep.replace(/\D/g, "") !== (usuario.cep || "") ||
-                    (dados.telefone || "").replace(/\D/g, "") !== (usuario.telefone || "") || // telefone é opcional, então comparo com string vazia se for undefined
-                    dados.email.trim() !== (usuario.email || "");
-
+                  const mudou = dados.senha.trim() !== "";
                   setAlterou(mudou);
                 }}
-
-                textoBotaoCancelar="Cancelar edição"
-                textoBotaoEnviar="Salvar alterações"
-                mostrarCancelar={true}
 
                 aoErro={(erro) => {
                   setErroModal(erro);
                 }}
 
-                aoCancelar={() => tentarSair("/conta")}
+                aoCancelar={() => tentarSair("/conta")} // Perguntar para o Lucas para onde mandar se Cancelar a troca
 
-                aoEnviar={(usuarioAtualizado) => {
-                  definirUsuario({
-                    ...usuario,
-                    ...usuarioAtualizado,
-                  });
+                aoEnviar={async (senha) => {
+                  await redefinirSenha(token, senha);
 
                   setAlterou(false);
-                  setMensagem("Alterações salvas com sucesso!");
+                  setMensagem("Redefinição de senha salva com sucesso!");
 
                   setTimeout(() => {
                     setMensagem("");
-                    navigate("/conta");
+                    navigate("/conta"); // Perguntar para o Lucas para onde mandar quando estiver pronto
                   }, 2000);
                 }}
               />
 
               <ModalConfirmacao
                 aberto={mostrarModal}
-                titulo="Alterações não salvas"
+                titulo="Alterações para a troca da senha não foram salvas"
                 descricao="Você tem alterações não salvas. Deseja sair mesmo?"
-                botaoCancelar="Continuar editando"
-                botaoConfirmar="Sair sem salvar"    
+                botaoCancelar="Continuar redefinindo a senhar"
+                botaoConfirmar="Sair sem redefinir a senha"    
                 varianteCancelar="confirmar"
                 varianteConfirmar="cancelar"
                 onCancelar={() => setMostrarModal(false)}
@@ -131,7 +146,7 @@ function EditarConta() {
 
               <ModalConfirmacao
                 aberto={!!erroModal}
-                titulo="Erro na edição"
+                titulo="Erro para redefinir a senha"
                 descricao={erroModal?.mensagem || ""}
                 botaoConfirmar="Fechar"
                 onCancelar={() => setErroModal(null)}
@@ -143,9 +158,7 @@ function EditarConta() {
         </div>
       </main>
 
-      {/* footer */}
-      <Footer />
     </div>
   );
 }
-export default EditarConta;
+export default TrocarSenha;
