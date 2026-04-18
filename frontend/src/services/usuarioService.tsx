@@ -87,3 +87,16 @@ export async function atualizarTiposUsuario(id: number, tipos: string[]) {
   });
   return response.data;
 }
+
+// Pedir para mudar a senha
+export async function solicitarRedefinicaoSenha(email: string) {
+  return api.post("/usuarios/solicitar-redefinicao-senha", { email });
+}
+
+// mudar a senha
+export async function redefinirSenha(token: string, senha: string) {
+  return api.post("/usuarios/redefinir-senha", {
+    token,
+    nova_senha: senha,
+  });
+}

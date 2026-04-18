@@ -5,7 +5,7 @@ import { validarCampo } from "../utils/validacoesFormulario";
 import { verificarRequisitosSenha } from "../utils/validacoes";
 import olho_visivel from "../assets/icon_olho_visivel.png";
 import olho_bloqueado from "../assets/icon_olho_bloqueado.png";
-import { criarUsuario, atualizarUsuario, DadosUsuario, AtualizarUsuarioEnvio } from "../services/usuarioService";
+import { criarUsuario, atualizarUsuario, DadosUsuario, AtualizarUsuarioEnvio, solicitarRedefinicaoSenha } from "../services/usuarioService";
 
 type PropsCadastro = {
   modo: "cadastro";
@@ -32,6 +32,7 @@ type PropsCadastro = {
 type PropsEdicao = {
   modo: "edicao";
   aoEnviar: (usuario: DadosUsuario) => void;
+  aoMensagemSucessoSenha?: (mensagem: string) => void;
 
   valoresIniciais?: {
     id: number;
@@ -53,7 +54,19 @@ type PropsEdicao = {
 
 type Props = PropsCadastro | PropsEdicao;
 
-function FormCadastroBase({ aoEnviar, valoresIniciais, modo,textoBotaoEnviar = "Cadastrar", textoBotaoCancelar = "Cancelar", mostrarCancelar = false, aoCancelar, mudouDados, aoErro}: Props) {
+function FormCadastroBase(props: Props) {
+  const {
+    aoEnviar,
+    valoresIniciais,
+    modo,
+    textoBotaoEnviar = "Cadastrar",
+    textoBotaoCancelar = "Cancelar",
+    mostrarCancelar = false,
+    aoCancelar,
+    mudouDados,
+    aoErro,
+  } = props;
+
   const [nome_completo, setNomeCompleto] = useState(valoresIniciais?.nome_completo || "");
   const [data_nascimento, setDataNascimento] = useState(valoresIniciais?.data_nascimento || "");
   const [cpf, setCpf] = useState(valoresIniciais?.cpf || "");
@@ -64,11 +77,12 @@ function FormCadastroBase({ aoEnviar, valoresIniciais, modo,textoBotaoEnviar = "
   const [senha, setSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
 
-  const [alterarSenha, setAlterarSenha] = useState(modo === "cadastro");
-  const deveMostrarSenha = modo === "cadastro" || alterarSenha;
+  const deveMostrarSenha = modo === "cadastro";
 
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [mostrarConfirmarSenha, setMostrarConfirmarSenha] = useState(false);
+
+  // const [setEmailConfirmado] para ver sobre a confirmacao do email no futuro
 
   const requisitosSenha = verificarRequisitosSenha(senha);
   const primeiraRenderizacao = useRef(true);
@@ -152,8 +166,8 @@ function FormCadastroBase({ aoEnviar, valoresIniciais, modo,textoBotaoEnviar = "
       cep: validarCampo("cep", dados),
       telefone: validarCampo("telefone", dados),
       email: validarCampo("email", dados),
-      senha: (modo === "cadastro" || alterarSenha) ? validarCampo("senha", dados) : "",
-      confirmarSenha: (modo === "cadastro" || alterarSenha) ? validarCampo("confirmarSenha", dados) : "", 
+      senha: modo === "cadastro" ? validarCampo("senha", dados) : "",
+      confirmarSenha: modo === "cadastro" ? validarCampo("confirmarSenha", dados) : "",
     };
 
     setErros(novosErros);
@@ -203,11 +217,6 @@ function FormCadastroBase({ aoEnviar, valoresIniciais, modo,textoBotaoEnviar = "
           telefone: telefone ? telefone.replace(/\D/g, "") : undefined,
           email,
         };
-
-        // só envia senha se usuário quiser alterar
-        if (alterarSenha) {
-          dadosAtualizados.senha = senha;
-        }
 
         if (!valoresIniciais?.id) {
           throw new Error("ID do usuário não encontrado para atualização");
@@ -315,8 +324,19 @@ function FormCadastroBase({ aoEnviar, valoresIniciais, modo,textoBotaoEnviar = "
       </div>
       {erros.email && tocados.email && <p id="erro-email" className="text-[var(--cor-resposta-errada)] text-sm">{erros.email}</p>}
 
-      {modo === "edicao" && !alterarSenha && (
-        <Botao variante="editar" aoClicar={() => setAlterarSenha(true)}>Alterar senha</Botao>
+      {modo === "edicao" && (
+        <Botao variante="editar" tipo="button"    
+          aoClicar={async () => {
+            try {
+              await solicitarRedefinicaoSenha(email); 
+
+              props.aoMensagemSucessoSenha?.("Enviamos um email para redefinir sua senha."); // faca ser uma mensagem no Toast SUCESSO
+            
+            } catch {
+              aoErro?.({mensagem: "Erro ao enviar email para redefinir a sua senha."}); // faca ser uma mensagem no Toast ERRO
+            }
+          }} 
+        >Redefinir senha</Botao> // aoClicar={./conta}
       )}
 
       {deveMostrarSenha && (
@@ -370,26 +390,6 @@ function FormCadastroBase({ aoEnviar, valoresIniciais, modo,textoBotaoEnviar = "
             </div>
           </div>
           {erros.confirmarSenha && tocados.confirmarSenha && <p id="erro-confirmar-senha" className="text-[var(--cor-resposta-errada)] text-sm">{erros.confirmarSenha}</p>}
-          
-          {/* botão cancelar alteração de senha no modo edição */}
-          {modo === "edicao" && (
-            <Botao variante="cancelar" aoClicar={() => {setAlterarSenha(false); setSenha(""); setConfirmarSenha(""); 
-              setErros((prev) => ({
-                ...prev,
-                senha: "",
-                confirmarSenha: "",
-              }));
-
-              setTocados((prev) => ({
-                ...prev,
-                senha: false,
-                confirmarSenha: false,
-              }));
-            }}>
-              Cancelar alteração de senha
-            </Botao>
-          )}
-        
         </>
       )}
 

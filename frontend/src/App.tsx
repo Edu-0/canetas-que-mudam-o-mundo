@@ -12,6 +12,8 @@ import Pedido from "./pages/PedidoMaterial";
 import Relatorio from "./pages/Relatorio";
 import Auditoria from "./pages/AuditoriaVoluntario";
 import Pontos from "./pages/Pontos";
+import EditarRendaFamiliares from "./pages/EditarRendaFamiliares";
+import TrocarSenha from "./pages/TrocarSenha";
 
 function App() {
   return (
@@ -30,6 +32,8 @@ function App() {
         <Route path="/relatorio" element={<Relatorio />} />
         <Route path="/auditoria" element={<Auditoria />} />
         <Route path="/pontos" element={<Pontos />} />
+        <Route path="/conta/editar-renda-e-familiares" element={<EditarRendaFamiliares />} />
+        <Route path="/trocar-senha" element={<TrocarSenha/>} />
       </Routes>
     </BrowserRouter>
   );

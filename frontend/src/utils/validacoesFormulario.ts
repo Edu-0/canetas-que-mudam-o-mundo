@@ -1,6 +1,6 @@
 import {nomeCompletoValido, dataNaoFutura, idadeValida, validarCPF, emailValido, senhaValida, senhasIguais} from "./validacoes";
 
-type DadosFormulario = {
+type DadosFormulario = Partial<{
   nome_completo: string;
   data_nascimento: string;
   cpf: string;
@@ -9,7 +9,7 @@ type DadosFormulario = {
   email: string;
   senha: string;
   confirmarSenha: string;
-};
+}>;
 
 export function validarCampo(
   campo: keyof DadosFormulario,
@@ -17,14 +17,14 @@ export function validarCampo(
 ) {
 
   const dadosLimpos = { // aqui eu limpo os dados para evitar erros de validação por causa de espaços extras no início ou no fim
-    nome_completo: dados.nome_completo.trim(),
-    data_nascimento: dados.data_nascimento,
-    cpf: dados.cpf.trim(),
-    cep: dados.cep.trim(),
-    telefone: dados.telefone.trim(),
-    email: dados.email.trim(),
-    senha: dados.senha,
-    confirmarSenha: dados.confirmarSenha,
+    nome_completo: dados.nome_completo?.trim() || "",
+    data_nascimento: dados.data_nascimento || "",
+    cpf: dados.cpf?.trim() || "",
+    cep: dados.cep?.trim() || "",
+    telefone: dados.telefone?.trim() || "",
+    email: dados.email?.trim() || "",
+    senha: dados.senha || "",
+    confirmarSenha: dados.confirmarSenha || "",
   };
 
   switch (campo) {
