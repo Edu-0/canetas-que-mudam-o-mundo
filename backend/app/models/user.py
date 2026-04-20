@@ -21,17 +21,7 @@ class Usuario(Base):
     data_edicao_conta = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
     ativo = Column(Boolean, nullable=False)
     funcao = relationship("UsuarioFuncao", back_populates="usuario")
-    perfil_triagem = relationship("UsuarioTriagem", back_populates = "usuario", uselist = False)
     perfil_responsavel = relationship("UsuarioResponsavel", back_populates="usuario", uselist=False)
-
-class UsuarioTriagem(Base):
-    __tablename__ = 'usuario_triagem'
-    id = Column(Integer, primary_key=True, index=True)
-    usuario_id = Column(Integer, ForeignKey('usuario.id'), unique=True) 
-    pontuacao_total = Column(Integer)
-    status = Column(String(10))    
-    data_realizacao = Column(DateTime(timezone=True), server_default=func.now())
-    usuario = relationship("Usuario", back_populates="perfil_triagem")
 
 class UsuarioResponsavel(Base):
     __tablename__ = 'usuario_responsavel'
@@ -41,7 +31,9 @@ class UsuarioResponsavel(Base):
     auxilio = Column(Enum(BeneficiosUsuario), default = BeneficiosUsuario.NENHUM, nullable= False)
     concordou_termos = Column(Boolean, default=False, nullable= False)
     data_preenchimento_termos = Column(DateTime, default=datetime.datetime.now)
+    data_edicao_conta = Column(DateTime, default=datetime.datetime.now)
     documentacao_aprovada = Column(Boolean, default = False, nullable=False)
+    ativo = Column(Boolean, nullable=False)
     documento = relationship("DocumentoUsuario", back_populates="usuario_responsavel")
     familia = relationship("FamiliaResponsavel", back_populates = "perfil")
     usuario = relationship("Usuario", back_populates="perfil_responsavel")
@@ -56,8 +48,10 @@ class FamiliaResponsavel(Base):
     parentesco = Column(String(100), nullable= False)
     data_nascimento = Column(Date, nullable= False)
     renda = Column(Float, nullable = False)
+    beneficiario = Column(Boolean, nullable = False, default = False)
     data_cadastro = Column(DateTime, server_default=func.now(), nullable=False)
     data_edicao = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False) 
+    ativo = Column(Boolean, nullable=False)
     documento = relationship ("DocumentoFamilia", back_populates="familiar")
     perfil = relationship("UsuarioResponsavel", back_populates="familia")
 
@@ -70,6 +64,7 @@ class DocumentoUsuario(Base):
     nome_original = Column(String(255))
     caminho_arquivo = Column(Text)
     data_upload = Column(DateTime, default=datetime.datetime.now)
+    pendente_exclusao = Column(Boolean, nullable=False, default=False)
     usuario_responsavel = relationship("UsuarioResponsavel", back_populates = "documento")
 
 class DocumentoFamilia(Base):
@@ -80,6 +75,7 @@ class DocumentoFamilia(Base):
     nome_original = Column(String(255))
     caminho_arquivo = Column(Text)
     data_upload = Column(DateTime, default=datetime.datetime.now)
+    pendente_exclusao = Column(Boolean, nullable=False, default=False)
     familiar = relationship("FamiliaResponsavel", back_populates = "documento")    
 
 class UsuarioFuncao(Base):
