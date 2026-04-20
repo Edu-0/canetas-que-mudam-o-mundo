@@ -51,7 +51,7 @@ class criarUsuarioResponsavel(BaseModel):
     qtd_familiares : int = Field(default=0, ge = 0)
     auxilio: BeneficiosUsuario = BeneficiosUsuario.NENHUM
     concordou_termos: bool 
-
+    
     @field_validator('concordou_termos')
     @classmethod
     def verificar_aceitacao_termo(cls, v:bool):
@@ -66,7 +66,6 @@ class criarUsuarioTriagem(BaseModel):
 class respostaUsuarioTriagem(criarUsuarioTriagem):
     id:int
     status: str
-    data_realizacao:datetime
     model_config = ConfigDict(from_attributes=True)
 
 class respostaUsuarioResponsavel(criarUsuarioResponsavel):
@@ -74,6 +73,7 @@ class respostaUsuarioResponsavel(criarUsuarioResponsavel):
     model_config = ConfigDict(from_attributes=True)
     documentacao_aprovada:bool
     data_preenchimento_termos: datetime 
+    data_edicao_conta: datetime
     familia: List["respostaFamiliaResponsavel"] = []
 
 class respostaFuncao(BaseModel):
