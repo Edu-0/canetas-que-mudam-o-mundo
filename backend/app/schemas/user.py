@@ -120,7 +120,7 @@ class cadastrarDocumento(BaseModel):
     tipo_documento: str = Field(min_length=2,max_length=50)
     nome_original:str = Field(min_length=2, max_length=255)
     caminho_arquivo:str = Field(min_length=2, max_length=1000)
-    data_upload: datetime = Field(default_factory=date.today)
+    data_upload: datetime = Field(default_factory=datetime.now)
 
     @field_validator('nome_original')
     @classmethod

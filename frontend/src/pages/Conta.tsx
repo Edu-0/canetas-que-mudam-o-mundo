@@ -28,43 +28,55 @@ function Conta() {
   async function confirmarTipo() {
     if (!tipoSelecionado || !dadosNormalizados) return;
 
+    const tiposAtuais = dadosNormalizados.tipos || [];
+    const jaTemTipo = tiposAtuais.includes(tipoSelecionado as TipoUsuario);
+
+    if (jaTemTipo) {
+      const novosTipos = tiposAtuais.filter(t => t !== tipoSelecionado);
+
+      if (!novosTipos.includes("Genérico")) {
+        novosTipos.push("Genérico");
+      }
+
+      try {
+        await atualizarTiposUsuario(dadosNormalizados.id, novosTipos);
+
+        const atualizado = await obterUsuario(dadosNormalizados.id);
+        setPerfil(atualizado);
+        definirUsuario(normalizarUsuario(atualizado));
+      } catch (error) {
+        console.error("Erro ao remover tipo:", error);
+      }
+
+      setModalTipo(false);
+      setTipoSelecionado(null);
+      return;
+    }
+
     const tiposComConfirmacao = ["Voluntário da triagem", "Responsável pelo beneficiário"];
 
     if (tiposComConfirmacao.includes(tipoSelecionado)) {
       setModalTipo(false);
 
-      // redireciona pro quiz ao invés de salvar
       if (tipoSelecionado === "Voluntário da triagem") {
-        navigate("/quiz-voluntario");
+        navigate("/conta/quiz-voluntario");
         return;
       }
 
-      if (tipoSelecionado === "Responsável pelo beneficiário") {  
-        navigate("/cadastro-beneficiario");
+      if (tipoSelecionado === "Responsável pelo beneficiário") {
+        navigate("/conta/cadastro-beneficiario");
         return;
       }
-
-      return;
     }
 
-    const tiposAtuais = dadosNormalizados.tipos || [];
+    let novosTipos = [...tiposAtuais, tipoSelecionado as TipoUsuario];
 
-    let novosTipos;
-
-    if (tiposAtuais.includes(tipoSelecionado as TipoUsuario)) {
-      novosTipos = tiposAtuais.filter(t => t !== tipoSelecionado);
-    } else {
-      novosTipos = [...tiposAtuais, tipoSelecionado as TipoUsuario];
-    }
-
-    if (!novosTipos.includes("Genérico")) { // garantir sempre tenha o tipo "Genérico"
+    if (!novosTipos.includes("Genérico")) {
       novosTipos.push("Genérico");
     }
 
     try {
-      await atualizarTiposUsuario(dadosNormalizados.id, novosTipos); // função que chama a API para atualizar os tipos do usuário no backend
-
-      // Atualiza frontend depois de salvar no backend
+      await atualizarTiposUsuario(dadosNormalizados.id, novosTipos);
 
       const atualizado = await obterUsuario(dadosNormalizados.id);
       setPerfil(atualizado);
@@ -113,58 +125,27 @@ function Conta() {
     navigate("/");
   }
 
-  const dataNascimentoRaw = dadosNormalizados?.data_nascimento;
+  function formatarData(data?: string) {
+    if (!data) return null;
 
-  let dataNascimentoFormatada = "Data de nascimento não informada";
+    const d = new Date(data);
 
-  if (dataNascimentoRaw) {
-    try {
-      const [ano, mes, dia] = dataNascimentoRaw.split("-");
-      const data = new Date(Number(ano), Number(mes) - 1, Number(dia));
-      dataNascimentoFormatada = data.toLocaleDateString("pt-BR");
-    } catch {
-      dataNascimentoFormatada = "Data de nascimento não informada";
-    }
+    return d.toLocaleDateString("pt-BR");
   }
 
-  const dataCadastroRaw = dadosNormalizados?.data_cadastro;
+  function formatarDataHora(data?: string) {
+    if (!data) return null;
 
-  function formatarDataHora(valor?: string, fallback = "Data não informada") {
-    if (!valor) return fallback;
+    const d = new Date(data);
 
-    let data = new Date(valor);
-
-    if (Number.isNaN(data.getTime())) {
-      const possuiTimezone = /(?:Z|[+-]\d{2}:\d{2})$/i.test(valor);
-
-      if (!possuiTimezone) {
-        data = new Date(valor + "Z");
-      }
-    }
-
-    if (Number.isNaN(data.getTime())) return fallback;
-
-    return new Intl.DateTimeFormat("pt-BR", {
-      timeZone: "America/Sao_Paulo",
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
+    const dataFormatada = d.toLocaleDateString("pt-BR");
+    const horaFormatada = d.toLocaleTimeString("pt-BR", {
       hour: "2-digit",
-      minute: "2-digit"
-    }).format(data).replace(",", " às") + " horas";
+      minute: "2-digit",
+    });
+
+    return `${dataFormatada} às ${horaFormatada} horas`;
   }
-
-  const dataCadastroFormatada = formatarDataHora(
-    dataCadastroRaw,
-    "Data de cadastro não informada"
-  );
-
-  const dataEdicaoContaRaw = dadosNormalizados?.data_edicao_conta;
-
-  const dataEdicaoContaFormatada = formatarDataHora(
-    dataEdicaoContaRaw,
-    "A conta nunca foi editada"
-  );
 
   useEffect(() => { // carrega o perfil do usuário logado para pegar as informações atualizadas do backend
     if (!usuario) return;
@@ -175,6 +156,7 @@ function Conta() {
       try {
         
       const atualizado = await obterUsuario(id); // pega os dados atualizados do backend
+      console.log("Perfil atualizado carregado:", atualizado);
       setPerfil(atualizado);
 
       } catch (error) {
@@ -187,7 +169,7 @@ function Conta() {
   }, [usuario]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--base-5)]">
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-[var(--base-5)]">
 
       <Header />
 
@@ -196,7 +178,7 @@ function Conta() {
 
           {/* título e logo da caneta */}
           <div className="flex items-center justify-center gap-4 flex-wrap text-center">
-            <img src={logo} alt="Logo" className="h-16 md:h-20" />
+            <img src={logo} alt="Logo Canetas que Mudam o Mundo" className="h-16 md:h-20" />
         
             <h1 className="header-medio text-center">
               Canetas que Mudam o Mundo
@@ -211,59 +193,61 @@ function Conta() {
               </h2>
 
               {/* Informações da conta */}
-              <div className="flex flex-col gap-2 mb-6">
+              <dl className="flex flex-col gap-4 mb-6" aria-label="Informações da conta do usuário">
                 {dadosNormalizados ? (
                   <>
-                    <p>
-                      <span className="body-semibold-pequeno">Nome:</span>{" "}
-                      <span className="body-pequeno">{dadosNormalizados?.nome_completo || "Nome não informado"}</span>
-                    </p>
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:gap-2">
+                      <dt className="body-semibold-pequeno whitespace-nowrap">Nome:</dt>
+                      <dd className="body-pequeno break-words">{dadosNormalizados?.nome_completo || "Nome não informado"}</dd>
+                    </div>
 
-                    <p>
-                      <span className="body-semibold-pequeno">Data de nascimento:</span>{" "}
-                      <span className="body-pequeno">{dataNascimentoFormatada}</span>
-                    </p>
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:gap-2">
+                      <dt className="body-semibold-pequeno whitespace-nowrap">Data de nascimento:</dt>
+                      <dd className="body-pequeno">{formatarData(dadosNormalizados?.data_nascimento) || "Data de nascimento não informada"}</dd>
+                    </div>
 
-                    <p>
-                      <span className="body-semibold-pequeno">CPF:</span>{" "}
-                      <span className="body-pequeno">{formatarCPF(dadosNormalizados?.cpf)}</span>
-                    </p>
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:gap-2">
+                      <dt className="body-semibold-pequeno whitespace-nowrap flex-col sm:flex-row sm:items-center sm:gap-2">CPF:</dt>
+                      <dd className="body-pequeno">{formatarCPF(dadosNormalizados?.cpf)}</dd>
+                    </div>
 
-                    <p>
-                      <span className="body-semibold-pequeno">CEP:</span>{" "}
-                      <span className="body-pequeno">{formatarCEP(dadosNormalizados?.cep)}</span>
-                    </p>
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:gap-2">
+                      <dt className="body-semibold-pequeno whitespace-nowrap flex-col sm:flex-row sm:items-center sm:gap-2">CEP:</dt>
+                      <dd className="body-pequeno">{formatarCEP(dadosNormalizados?.cep)}</dd>
+                    </div>
 
-                    <p>
-                      <span className="body-semibold-pequeno">Telefone:</span>{" "}
-                      <span className="body-pequeno">{formatarTelefone(dadosNormalizados?.telefone)}</span>
-                    </p>
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:gap-2">
+                      <dt className="body-semibold-pequeno whitespace-nowrap flex-col sm:flex-row sm:items-center sm:gap-2">Telefone:</dt>
+                      <dd className="body-pequeno">{formatarTelefone(dadosNormalizados?.telefone)}</dd>
+                    </div>
 
-                    <p>
-                      <span className="body-semibold-pequeno">Email:</span>{" "}
-                      <span className="body-pequeno">{dadosNormalizados?.email || "Email não informado"}</span>
-                    </p>
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:gap-2">
+                      <dt className="body-semibold-pequeno whitespace-nowrap flex-col sm:flex-row sm:items-center sm:gap-2">Email:</dt>
+                      <dd className="body-pequeno">{dadosNormalizados?.email || "Email não informado"}</dd>
+                    </div>
 
-                    <p>
-                      <span className="body-semibold-pequeno">Senha:</span>{" "}
-                      <span className="body-pequeno">••••••••</span>
-                    </p>
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:gap-2">
+                      <dt className="body-semibold-pequeno whitespace-nowrap flex-col sm:flex-row sm:items-center sm:gap-2">Senha:</dt>
+                      <dd className="body-pequeno">••••••••</dd>
+                    </div>
 
-                    <p>
-                      <span className="body-semibold-pequeno">Data de cadastro:</span>{" "}
-                      <span className="body-pequeno">{dataCadastroFormatada}</span>
-                    </p>
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:gap-2">
+                      <dt className="body-semibold-pequeno whitespace-nowrap flex-col sm:flex-row sm:items-center sm:gap-2">Data de cadastro:</dt>
+                      <dd className="body-pequeno break-words">{formatarDataHora(dadosNormalizados?.data_cadastro) || "Data de cadastro não informada"}</dd>
+                    </div>
 
-                    <p>
-                      <span className="body-semibold-pequeno">Data de edição da conta:</span>{" "}
-                      <span className="body-pequeno">{dataEdicaoContaFormatada}</span>
-                    </p>
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:gap-2">
+                      <dt className="body-semibold-pequeno whitespace-nowrap flex-col sm:flex-row sm:items-center sm:gap-2">Data de edição da conta:</dt>
+                      <dd className="body-pequeno break-words">{formatarDataHora(dadosNormalizados?.data_edicao_conta) || "A conta nunca foi editada"}</dd>
+                    </div>
 
                     {dadosNormalizados?.tipos && dadosNormalizados.tipos.length > 0 && (
-                      <p>
-                        <span className="body-semibold-pequeno">Tipo de conta:</span>{" "}
-                        <span className="body-pequeno">{dadosNormalizados.tipos.join(", ")}</span> {/* a pessoa pode ter mais de uma função e quero pegar todas elas*/}
-                      </p>
+                      <>
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:gap-2">
+                          <dt className="body-semibold-pequeno whitespace-nowrap">Tipo de conta:</dt>
+                          <dd className="body-pequeno break-words">{dadosNormalizados.tipos.join(", ")}</dd>
+                        </div>
+                      </>
                     )}
                   </>
                 ) : (
@@ -271,21 +255,21 @@ function Conta() {
                     Nenhum usuário logado
                   </p>
                 )}
-              </div>
+              </dl>
 
               {/* Editar, Excluir e Sair */}
               {usuario && (
                 <div className="flex flex-col md:flex-row gap-4 mb-6">
                   <div className="flex-1">
-                    <Botao variante="editar" aoClicar={() => navigate("/conta/editar")}>Editar conta</Botao>
+                    <Botao variante="editar" aria-label="Botão para editar conta" aoClicar={() => navigate("/conta/editar")}>Editar conta</Botao>
                   </div>
 
                   <div className="flex-1">
-                    <Botao variante="cancelar" aoClicar={() => setMostrarModal(true)}>Excluir conta</Botao>
+                    <Botao variante="cancelar" aria-label="Botão para excluir conta" aoClicar={() => setMostrarModal(true)}>Excluir conta</Botao>
                   </div>
   
                   <div className="flex-1">
-                    <Botao variante="sair" aoClicar={sair}>Sair</Botao>
+                    <Botao variante="sair" aria-label="Botão para sair da conta" aoClicar={sair}>Sair</Botao>
                   </div>
 
                   <ModalConfirmacao
@@ -294,6 +278,8 @@ function Conta() {
                     descricao="Tem certeza que deseja excluir sua conta? Essa ação não pode ser desfeita."
                     botaoCancelar="Cancelar exclusão da conta"
                     botaoConfirmar="Excluir conta"
+                    varianteCancelar="confirmar"
+                    varianteConfirmar="cancelar"
                     onCancelar={() => setMostrarModal(false)}
                     onConfirmar={() => {
                       setMostrarModal(false);
@@ -309,7 +295,7 @@ function Conta() {
               <div className="border-t border-[var(--primario-40)] my-6" />
 
               <h3 className="header-pequeno text-center mb-6">
-                Adicione/altere o seu tipo de usuário
+                Adicione o seu tipo de usuário
               </h3>
 
               <p className="body-pequeno text-center mb-6">
@@ -319,15 +305,29 @@ function Conta() {
               {/* botões para os tipos de cadastros */}
               <div className="flex flex-col md:flex-row gap-4 w-full">
                 <div className="flex-1">
-                  <Botao aoClicar={() => selecionarTipo("Doador")} variante={estaComoDoador ? "tipo-selecionado" : "confirmar"}>Doador</Botao>
+                  <Botao aoClicar={() => selecionarTipo("Doador")} variante={estaComoDoador ? "tipo-selecionado" : "confirmar"} aria-label="Botão para selecionar tipo de usuário Doador">Doador</Botao>
                 </div>
 
                 <div className="flex-1">
-                  <Botao aoClicar={() => selecionarTipo("Voluntário da triagem")} variante={estaComoVoluntario ? "tipo-selecionado" : "confirmar"}>Voluntário da triagem</Botao>
+                  <Botao aoClicar={() => selecionarTipo("Voluntário da triagem")} variante={estaComoVoluntario ? "tipo-selecionado" : "confirmar"} aria-label="Botão para selecionar tipo de usuário Voluntário da triagem">Voluntário da triagem</Botao>
                 </div>
 
                 <div className="flex-1">
-                  <Botao aoClicar={() => selecionarTipo("Responsável pelo beneficiário")} variante={estaComoResponsavel ? "tipo-selecionado" : "confirmar"}>Responsável pelo beneficiário</Botao>
+                  <Botao aoClicar={() => selecionarTipo("Responsável pelo beneficiário")} variante={estaComoResponsavel ? "tipo-selecionado" : "confirmar"} aria-label="Botão para selecionar tipo de usuário Responsável pelo beneficiário">Responsável pelo beneficiário</Botao>
+
+                  {estaComoResponsavel && (
+                    <div className="mt-5 flex justify-end">
+                      <div className="w-auto text-sm px-1 py-0"> 
+                        <Botao
+                          aria-label="Botão para editar renda e familiares"
+                          aoClicar={() => navigate("/conta/editar-renda-e-familiares")}
+                          variante="editar"
+                        >
+                          Editar renda e familiares
+                        </Botao>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <ModalConfirmacao
@@ -343,7 +343,11 @@ function Conta() {
                         Você poderá sair deste tipo depois.`
                   }
                   botaoCancelar="Cancelar"
-                  botaoConfirmar={jaTemTipo ? "Remover" : "Confirmar"}
+                  botaoConfirmar={jaTemTipo ? "Remover" : "Confirmar"} 
+                  
+                  varianteCancelar={jaTemTipo ? "confirmar" : "cancelar"}  
+                  varianteConfirmar={jaTemTipo ? "cancelar" : "confirmar"}
+
                   onCancelar={() => setModalTipo(false)}
                   onConfirmar={confirmarTipo}
                 />

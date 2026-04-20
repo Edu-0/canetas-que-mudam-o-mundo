@@ -8,13 +8,28 @@ import Botao from "../components/Botao";
 import { useAvisoAlteracoesNaoSalvas } from "../hooks/useAvisoAlteracoesNaoSalvas";
 import Toast from "../components/Toast";
 import ModalConfirmacao from "../components/ModalConfirmacao";
-import { obterImagensQuiz, enviarRespostasQuiz  } from "../services/quizService";
 import { DadosUsuario, obterUsuario, atualizarTiposUsuario } from "../services/usuarioService";
+import { enviarResultadoQuiz } from "../services/quizService";
+import icon_documento from "../assets/icon_documento.png";
+import icon_download from "../assets/icon_download.png";
+import icon_check from "../assets/icon_check.png";
 
 interface ImagemTeste {
   id: string;
   url: string;
 }
+
+const imagens: ImagemTeste[] = [
+  { id: "1", url: "/quiz/img1.jpeg" },
+  { id: "2", url: "/quiz/img2.jpeg" },
+  { id: "3", url: "/quiz/img3.jpeg" }
+];
+
+const respostasCorretas: Record<string, "apto" | "inapto"> = {
+  "1": "apto",
+  "2": "inapto",
+  "3": "inapto"
+};
 
 export default function QuizVoluntario() {
   const { usuario, definirUsuario } = useUsuario();
@@ -29,7 +44,6 @@ export default function QuizVoluntario() {
 
   const [passo, setPasso] = useState(1);
   const [aceitouTermos, setAceitouTermos] = useState(false);
-  const [imagens, setImagens] = useState<ImagemTeste[]>([]);
   const [respostas, setRespostas] = useState<{[id: string]: "apto" | "inapto"}>({});
   const [feedback, setFeedback] = useState<string | null>(null);
 
@@ -60,22 +74,6 @@ export default function QuizVoluntario() {
     }
   }, [passo, aceitouTermos, respostas, alterou, setAlterou]);
 
-  // Carrega as imagens do quiz quando chegar no passo 3
-  useEffect(() => {
-    async function carregarImagens() {
-      try {
-        const data = await obterImagensQuiz();
-        setImagens(data);
-      } catch (error) {
-        console.error("Erro ao carregar imagens", error);
-        setMensagem("Não foi possível carregar as imagens.");
-        setTipoMensagem("erro");
-      }
-    }
-
-    if (passo === 3) carregarImagens();
-  }, [passo]);
-
   function marcarResposta(id: string, valor: "apto" | "inapto") {
     setRespostas(prev => ({ ...prev, [id]: valor }));
   }
@@ -87,47 +85,82 @@ export default function QuizVoluntario() {
       return;
     }
 
-    try {
-      const data = await enviarRespostasQuiz(respostas);
+    let pontuacao = 0;
 
-      setFeedback(
-        data.aprovado
-          ? "Parabéns, seu perfil foi ativado!"
-          : "Você não atingiu a pontuação mínima"
-      );
+    Object.keys(respostas).forEach((id) => {
+      if (respostas[id] === respostasCorretas[id]) {
+        pontuacao++;
+      }
+    });
 
-      setMensagem(data.aprovado ? "Parabéns!" : "Tente novamente.");
-      setTipoMensagem(data.aprovado ? "sucesso" : "erro");
+    const aprovado = pontuacao === imagens.length;
 
-      // se aprovado, adiciona o tipo "Voluntário da triagem" ao usuário no contexto
-      if (data.aprovado && usuario) {
-        // pega dados atualizados do backend
+    const mensagemFinal = aprovado
+      ? "Parabéns, seu perfil foi ativado!"
+      : "Você não atingiu a pontuação mínima";
+
+    setFeedback(mensagemFinal);
+
+    setPasso(4);
+    setAlterou(false);
+
+    if (usuario) {
+      try {
+        await enviarResultadoQuiz(usuario.id, pontuacao);
+        setMensagem("Respostas salvas com sucesso!");
+        setTipoMensagem("sucesso");
+      } catch (error) {
+        console.error("Erro ao salvar resultado", error);
+        setMensagem("Erro ao salvar respostas.");
+        setTipoMensagem("erro");
+      }
+    }
+
+    if (aprovado && usuario) {
+      try {
         const usuarioAtualizado: DadosUsuario = await obterUsuario(usuario.id);
 
-        const tiposAtuais: TipoUsuario[] = usuarioAtualizado.funcao?.map((f: any) => mapearTipo(f.tipo_usuario)) || [];
+        const tiposAtuais: TipoUsuario[] =
+          usuarioAtualizado.funcao?.map((f: any) =>
+            mapearTipo(f.tipo_usuario)
+          ) ||
+          (usuarioAtualizado as any).tipos ||
+          [];
 
-        // evita duplicar tipo
-        const novosTipos: TipoUsuario[] = tiposAtuais.includes("Voluntário da triagem")
+        let novosTipos: TipoUsuario[] = tiposAtuais.includes("Voluntário da triagem")
           ? tiposAtuais
           : [...tiposAtuais, "Voluntário da triagem"];
 
-        // salva no backend
+        if (!novosTipos.includes("Genérico")) {
+          novosTipos.push("Genérico");
+        }
+
         await atualizarTiposUsuario(usuario.id, novosTipos);
 
-        // atualiza frontend
-        definirUsuario({
-          ...usuario,
-          tipos: novosTipos
-        });
+        // busca atualizado do backend
+        const atualizado = await obterUsuario(usuario.id);
+
+        // normaliza igual Conta
+        const usuarioNormalizado = {
+          id: atualizado.id,
+          nome_completo: atualizado.nome_completo,
+          data_nascimento: atualizado.data_nascimento,
+          cpf: atualizado.cpf,
+          cep: atualizado.cep,
+          telefone: atualizado.telefone,
+          email: atualizado.email,
+          data_cadastro: atualizado.data_cadastro,
+          data_edicao_conta: atualizado.data_edicao_conta,
+          tipos: atualizado.funcao?.map((f: any) =>
+            mapearTipo(f.tipo_usuario)
+          ) || []
+        };
+
+        definirUsuario(usuarioNormalizado);
+
+      } catch (error) {
+        console.error("Erro ao atualizar tipo do usuário", error);
       }
-
-      setPasso(4);
-      setAlterou(false);
-
-    } catch (error) {
-      console.error("Erro ao enviar respostas", error);
-      setMensagem("Erro ao enviar respostas, tente novamente.");
-      setTipoMensagem("erro");
     }
   }
 
@@ -155,29 +188,96 @@ export default function QuizVoluntario() {
               {passo === 1 && (
                 <div className="flex flex-col gap-4">
                   <p className="body-semibold-pequeno">Termo:</p>
-                  <p className="body-pequeno">Eu como voluntário da triagem, vou respeitar as normas e procedimentos da organização. 
-                    E não vou divulgar informações confidenciais.</p>
-                  <label className="flex items-center gap-2">
-                    <input type="checkbox" checked={aceitouTermos} onChange={() => setAceitouTermos(!aceitouTermos)} />
-                    Li e aceito os termos
+                  <p className="body-pequeno">
+                    Eu, como voluntário da triagem, comprometo-me a respeitar todas as normas e procedimentos da organização, 
+                    atuando com responsabilidade, ética e zelo. Declaro também que não divulgarei quaisquer informações 
+                    confidenciais às quais tiver acesso durante minhas atividades.
+                  </p>
+
+                  <label className="flex items-center gap-3 cursor-pointer select-none">
+  
+                    {/* checkbox escondido */}
+                    <input
+                      type="checkbox"
+                      checked={aceitouTermos}
+                      onChange={() => setAceitouTermos(!aceitouTermos)}
+                      className="hidden"
+                    />
+
+                    {/* caixa customizada */}
+                    <div
+                      className={`w-5 h-5 flex items-center justify-center rounded border-2 transition hover:scale-110
+                        ${aceitouTermos 
+                          ? "bg-[var(--base-40)] border-black" 
+                          : "bg-white border-gray-400"}
+                        `}
+                    >
+                      {aceitouTermos && (
+                        <span className="text-white text-sm">
+                          <img src={icon_check} alt="Check" className="w-4 h-4"/>
+                        </span>
+                      )}
+                    </div>
+
+                    {/* texto */}
+                    <span className="body-pequeno">
+                      Li e aceito o termo acima.
+                    </span>
                   </label>
 
-                  <Botao variante="quiz-proximo" desabilitado={!aceitouTermos} aoClicar={() => setPasso(2)}>Próximo</Botao>
+                  <div className="flex flex-col md:flex-row gap-4 w-full">
+                    <div className="flex-1">
+                      <Botao variante="cancelar" aoClicar={() => navigate("/conta")}>Cancelar quiz</Botao>
+                    </div>
+
+                    <div className="flex-1">
+                    <Botao variante="confirmar" desabilitado={!aceitouTermos} aoClicar={() => setPasso(2)}>Próximo</Botao>
+                    </div>
+                  </div>
                 </div>
               )}
 
               {/* PASSO 2: PDF */}
               {passo === 2 && (
                 <div className="flex flex-col gap-4">
-                  <a href="/pdf/padroes-qualidade.pdf" target="_blank" className="px-4 py-2 bg-blue-500 text-white rounded text-center">Baixar PDF</a>
-                  
+                  <p className="body-pequeno">
+                    Antes de prosseguir com o quiz, é importante que você leia o documento abaixo. 
+                    Ele apresenta os padrões de qualidade e os critérios utilizados na triagem, garantindo que você esteja preparado 
+                    para exercer suas atividades com segurança e responsabilidade.
+                  </p>
+
+                  <div className="flex justify-center">
+                    <div onClick={() => window.open("/quiz/Padroes_de_Qualidade_pre_estabelecidos.pdf", "_blank")} className="flex items-center justify-between gap-4 mb-5 px-6 py-4 bg-[var(--base-10)] border border-[var(--base-40)] rounded-lg shadow-sm hover:shadow-md transition w-full max-w-xl cursor-pointer group">
+                      
+                      <div className="flex items-center gap-4 overflow-hidden">
+                        <img src={icon_documento} alt="Documento" className="w-7 h-7"/>
+
+                        <span className="truncate body-semibold-pequeno text-base">
+                          Padrões de Qualidade pré estabelecidos.pdf
+                        </span>
+                      </div>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation(); // impede de abrir o PDF
+                          const link = document.createElement("a");
+                          link.href = "/quiz/Padroes_de_Qualidade_pre_estabelecidos.pdf";
+                          link.download = "Padroes_de_Qualidade_pre_estabelecidos.pdf";
+                          link.click();
+                        }}
+                        className="p-3 rounded-full hover:bg-[var(--base-20)] transition">
+                        <img src={icon_download} alt="Download" className="w-7 h-7"/>
+                      </button>
+                    </div>
+                  </div>
+
                   <div className="flex flex-col md:flex-row gap-4 w-full">
                     <div className="flex-1">
-                      <Botao variante="quiz-voltar" aoClicar={() => setPasso(1)}>Voltar</Botao>
+                      <Botao variante="cancelar" aoClicar={() => setPasso(1)}>Voltar</Botao>
                     </div>
 
                     <div className="flex-1">
-                    <Botao variante="quiz-proximo" aoClicar={() => setPasso(3)}>Próximo</Botao>
+                      <Botao variante="confirmar" aoClicar={() => setPasso(3)}>Próximo</Botao>
                     </div>
                   </div>
                 </div>
@@ -190,12 +290,12 @@ export default function QuizVoluntario() {
                     <div key={img.id} className="flex flex-col items-center gap-3">
 
                       {/* imagem */}
-                      <img src={img.url} alt={`Teste ${img.id}`} className="max-h-56 object-contain rounded"/>
+                      <img src={img.url} alt={`Teste ${img.id}`} className="max-h-96 object-contain rounded"/>
 
                       {/* botões apto e inapto */}
                       <div className="flex gap-4 w-full max-w-xs">
-                        <Botao variante={respostas[img.id] === "apto" ? "tipo-selecionado" : "confirmar"} aoClicar={() => marcarResposta(img.id, "apto")}>Apto</Botao>
-                        <Botao variante={respostas[img.id] === "inapto" ? "tipo-selecionado" : "cancelar"} aoClicar={() => marcarResposta(img.id, "inapto")}>Inapto</Botao>
+                        <Botao variante={respostas[img.id] === "inapto" ? "inapto_selecionado" : "cancelar"} aoClicar={() => marcarResposta(img.id, "inapto")}>Inapto</Botao>
+                        <Botao variante={respostas[img.id] === "apto" ? "apto_selecionado" : "confirmar"} aoClicar={() => marcarResposta(img.id, "apto")}>Apto</Botao>
                       </div>
                     </div>
                   ))}
@@ -211,9 +311,11 @@ export default function QuizVoluntario() {
               )}
 
               {/* PASSO 4: Feedback */}
-              {passo === 4 && feedback && (
+              {passo === 4 && (
                 <div className="text-center flex flex-col gap-4">
-                  <p className="text-lg font-semibold">{feedback}</p>
+                  <p className="text-lg font-semibold">
+                    {feedback || "Processando resultado..."}
+                  </p>
 
                   <Botao variante="confirmar" aoClicar={() => navigate("/conta")}>Voltar para a conta</Botao>
                 </div>

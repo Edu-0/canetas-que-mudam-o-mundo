@@ -7,9 +7,13 @@ import EditarConta from "./pages/EditarConta";
 import CadastroBeneficiario from "./pages/CadastroBeneficiario";
 import Doar from "./pages/Doar";
 import QuizVoluntario from "./pages/QuizVoluntario";
-// import Triagem from "./pages/Triagem";
-// import Pedido from "./pages/Pedido";
-// import Relatorio from "./pages/Relatorio";
+import Triagem from "./pages/Triagem";
+import Pedido from "./pages/PedidoMaterial";
+import Relatorio from "./pages/Relatorio";
+import Auditoria from "./pages/AuditoriaVoluntario";
+import Pontos from "./pages/Pontos";
+import EditarRendaFamiliares from "./pages/EditarRendaFamiliares";
+import TrocarSenha from "./pages/TrocarSenha";
 
 function App() {
   return (
@@ -20,12 +24,16 @@ function App() {
         <Route path="/cadastro" element={<Cadastro />} />
         <Route path="/conta" element={<Conta />} />
         <Route path="/conta/editar" element={<EditarConta />} />
-        <Route path="/cadastro-beneficiario" element={<CadastroBeneficiario />} />
+        <Route path="/conta/cadastro-beneficiario" element={<CadastroBeneficiario />} />
         <Route path="/doar" element={<Doar />} />
-        <Route path="/quiz-voluntario" element={<QuizVoluntario />} />
-        {/* <Route path="/triagem" element={<Triagem />} /> */}
-        {/* <Route path="/pedido" element={<Pedido />} /> */}
-        {/* <Route path="/relatorio" element={<Relatorio />} /> */}
+        <Route path="/conta/quiz-voluntario" element={<QuizVoluntario />} />
+        <Route path="/triagem" element={<Triagem />} />
+        <Route path="/pedido" element={<Pedido />} />
+        <Route path="/relatorio" element={<Relatorio />} />
+        <Route path="/auditoria" element={<Auditoria />} />
+        <Route path="/pontos" element={<Pontos />} />
+        <Route path="/conta/editar-renda-e-familiares" element={<EditarRendaFamiliares />} />
+        <Route path="/trocar-senha" element={<TrocarSenha/>} />
       </Routes>
     </BrowserRouter>
   );

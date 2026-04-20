@@ -44,6 +44,7 @@ def get_usuario(usuario_id,db:SessionDep):
 @router.post("/generico", response_model=s.respostaUsuario)
 def criar_usuario_base(dados:s.criarUsuario, db:SessionDep):
     hash_senha = gerar_hash_senha(dados.senha)
+    agora = datetime.now()
 
     usuario = m.Usuario(
         nome_completo = dados.nome_completo,
@@ -53,7 +54,9 @@ def criar_usuario_base(dados:s.criarUsuario, db:SessionDep):
         telefone = dados.telefone,
         email = dados.email,
         senha = hash_senha,
-        ativo = True
+        ativo = True,
+        data_cadastro = agora,
+        data_edicao_conta = agora
     )
 
     try:
@@ -441,7 +444,7 @@ def atualizar_usuario_funcao(usuario_id: int,
         db.add(nova_funcao)
         funcao_usuario.append(nova_funcao)
 
-    usuario.data_edicao_conta = func.now()
+    usuario.data_edicao_conta = datetime.now()
     db.commit()
 
     for f in funcao_usuario:

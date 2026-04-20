@@ -4,8 +4,10 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import api from "../services/api";
 import logo from "../assets/logo.svg";
+import { TipoUsuario, useUsuario } from "../context/UserContext";
 
 function Logar() {
+  const { definirUsuario } = useUsuario();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [carregando, setCarregando] = useState(false);
@@ -27,8 +29,26 @@ function Logar() {
       localStorage.setItem("access_token", response.data.access_token);
       localStorage.setItem("token_type", response.data.token_type);
 
-      // Redirecionar para a página inicial ou conta
-      navigate("/");
+      const infoUsuario = await api.get("/auth/me", {
+          headers: {
+            Authorization: `${response.data.token_type} ${response.data.access_token}`,
+          },
+      });
+
+      definirUsuario({
+        id: infoUsuario.data.id,
+        nome_completo: infoUsuario.data.nome_completo,
+        data_nascimento: infoUsuario.data.data_nascimento,
+        cpf: infoUsuario.data.cpf,
+        cep: infoUsuario.data.cep,
+        telefone: infoUsuario.data.telefone,
+        email: infoUsuario.data.email,
+        tipos: infoUsuario.data.funcao?.map((f: any) => mapearTipo(f.tipo_usuario)) || [], // a pessoa pode ter mais de uma função e quero pegar todas elas
+        data_cadastro: new Date().toISOString()
+      });
+
+      // Redirecionar para a página de escolha de cadastro
+      navigate("/conta");
     } catch (err: any) {
       setErro(err.response?.data?.detail || "Erro ao fazer login. Tente novamente.");
     } finally {
@@ -41,6 +61,19 @@ function Logar() {
     setSenha("");
     setErro("");
   };
+
+  
+  const tiposValidos: TipoUsuario[] = ["Genérico", "Coordenador de Processos", "Responsável pelo beneficiário", "Doador", "Voluntário da triagem"];
+
+  // RETRABALHAR ESSA FUNÇÃO PARA O MAPEAR TIPO FICAR CENTRALIZADO EM UM ÚNICO LUGAR, POIS VOU USAR ESSA LÓGICA DE MAPEAR VÁRIAS VEZES NO FRONTEND (CONTA, CADASTRO, ETC)
+  function mapearTipo(tipo?: string): TipoUsuario {
+    if (tiposValidos.includes(tipo as TipoUsuario)) {
+      return tipo as TipoUsuario;
+    }
+
+    return "Genérico";
+  }
+  
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--base-5)]">

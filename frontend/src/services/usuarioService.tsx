@@ -62,8 +62,8 @@ export async function criarUsuarioBeneficiario(usuario_id: number, dados: DadosB
 }
 
 // Criar familiar para beneficiário
-export async function criarFamiliar(perfil_id: number, dados: DadosFamilia[]) {
-  const response = await api.post(`/usuario/${perfil_id}/familia-beneficiario`, dados);
+export async function criarFamiliar(responsavel_id: number, dados: DadosFamilia[]) {
+  const response = await api.post(`/usuario/${responsavel_id}/familia-beneficiario`, dados);
   return response.data;
 }
 // quando chamar depois usar criarFamiliar(id, [familiar1, familiar2])
@@ -86,4 +86,17 @@ export async function atualizarTiposUsuario(id: number, tipos: string[]) {
     tipo_usuario: tipos 
   });
   return response.data;
+}
+
+// Pedir para mudar a senha
+export async function solicitarRedefinicaoSenha(email: string) {
+  return api.post("/usuarios/solicitar-redefinicao-senha", { email });
+}
+
+// mudar a senha
+export async function redefinirSenha(token: string, senha: string) {
+  return api.post("/usuarios/redefinir-senha", {
+    token,
+    nova_senha: senha,
+  });
 }

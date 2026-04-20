@@ -1,37 +1,62 @@
 import { ReactNode } from "react";
+import { Link } from "react-router-dom";
 
 type PropriedadesBotao = {
   children: ReactNode; // o que tem dentro do botão
   ativo?: boolean; // se o botão está selecionado
   aoClicar?: () => void;
-  variante?: "padrao" | "confirmar" | "cancelar" | "editar" | "sair" | "tipo-selecionado" | "quiz-proximo" | "quiz-voltar" | "quiz-resposta";
+  variante?: "padrao" | "confirmar" | "cancelar" | "editar" | "sair" | "tipo-selecionado" | "apto_selecionado" | "inapto_selecionado" | "quiz-resposta";
   tipo?: "button" | "submit";
   desabilitado?: boolean;
+  navegacao?: string; // navegação ou botão
 };
 
-export default function Botao({children, ativo = false, aoClicar, variante = "padrao", tipo = "button", desabilitado = false}: PropriedadesBotao) {
+export default function Botao({children, ativo = false, aoClicar, variante = "padrao", tipo = "button", desabilitado = false, navegacao}: PropriedadesBotao) {
   
   let estilo = "btn-padrao";
 
-  if (ativo) estilo = "btn-ativado";
-  else if (variante === "confirmar") estilo = "btn-confirmar";
+  if (variante === "confirmar") estilo = "btn-confirmar";
   else if (variante === "cancelar") estilo = "btn-cancelar";
   else if (variante === "editar") estilo = "btn-editar";
   else if (variante === "sair") estilo = "btn-sair";
   else if (variante === "tipo-selecionado") estilo = "btn-tipo-selecionado";
-  else if (variante === "quiz-proximo") estilo = "btn-quiz-proximo";
-  else if (variante === "quiz-voltar") estilo = "btn-quiz-voltar";
+  else if (variante === "apto_selecionado") estilo = "btn-apto-selecionado";
+  else if (variante === "inapto_selecionado") estilo = "btn-inapto-selecionado";
   else if (variante === "quiz-resposta") estilo = "btn-quiz-resposta";
+  
+  if (ativo && variante === "padrao") {
+    estilo = "btn-ativado";
+  }
 
+  const classe = `btn-base ${estilo} focus-acessivel w-full ${desabilitado ? "cursor-not-allowed opacity-50" : "hover:brightness-95"}`;
+
+  // navergar
+  if (navegacao) {  
+    return (
+      <Link 
+        to={desabilitado ? "#" : navegacao}
+        onClick={(e) => {
+          if (desabilitado) e.preventDefault();
+          else aoClicar?.();
+        }}
+
+        className={classe}
+        aria-current={ativo ? "page" : undefined}
+        aria-disabled={desabilitado}
+        tabIndex={desabilitado ? -1 : 0}
+      >
+        {children}
+      </Link>
+    );
+  }
+
+  // para botão normal
   return (
     <button
       type={tipo}
       disabled={desabilitado}
       onClick={desabilitado ? undefined : aoClicar}
-      className={`
-        btn-base ${estilo} w-full
-        ${desabilitado ? "cursor-not-allowed opacity-50" : "hover:brightness-95"}
-      `}
+      className={classe}
     >
       {children}
     </button>
