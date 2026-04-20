@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import { Link } from "react-router-dom";
 
 type PropriedadesBotao = {
   children: ReactNode; // o que tem dentro do botão
@@ -7,9 +8,10 @@ type PropriedadesBotao = {
   variante?: "padrao" | "confirmar" | "cancelar" | "editar" | "sair" | "tipo-selecionado" | "apto_selecionado" | "inapto_selecionado" | "quiz-resposta";
   tipo?: "button" | "submit";
   desabilitado?: boolean;
+  navegacao?: string; // navegação ou botão
 };
 
-export default function Botao({children, ativo = false, aoClicar, variante = "padrao", tipo = "button", desabilitado = false}: PropriedadesBotao) {
+export default function Botao({children, ativo = false, aoClicar, variante = "padrao", tipo = "button", desabilitado = false, navegacao}: PropriedadesBotao) {
   
   let estilo = "btn-padrao";
 
@@ -26,15 +28,35 @@ export default function Botao({children, ativo = false, aoClicar, variante = "pa
     estilo = "btn-ativado";
   }
 
+  const classe = `btn-base ${estilo} focus-acessivel w-full ${desabilitado ? "cursor-not-allowed opacity-50" : "hover:brightness-95"}`;
+
+  // navergar
+  if (navegacao) {  
+    return (
+      <Link 
+        to={desabilitado ? "#" : navegacao}
+        onClick={(e) => {
+          if (desabilitado) e.preventDefault();
+          else aoClicar?.();
+        }}
+
+        className={classe}
+        aria-current={ativo ? "page" : undefined}
+        aria-disabled={desabilitado}
+        tabIndex={desabilitado ? -1 : 0}
+      >
+        {children}
+      </Link>
+    );
+  }
+
+  // para botão normal
   return (
     <button
       type={tipo}
       disabled={desabilitado}
       onClick={desabilitado ? undefined : aoClicar}
-      className={`
-        btn-base ${estilo} w-full
-        ${desabilitado ? "cursor-not-allowed opacity-50" : "hover:brightness-95"}
-      `}
+      className={classe}
     >
       {children}
     </button>

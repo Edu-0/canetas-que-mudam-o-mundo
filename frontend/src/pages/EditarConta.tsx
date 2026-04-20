@@ -13,42 +13,35 @@ function EditarConta() {
   const { usuario, definirUsuario } = useUsuario();
   const navigate = useNavigate();
   const [mensagem, setMensagem] = useState("");
-  const { alterou, setAlterou } = useAvisoAlteracoesNaoSalvas({ mensagem: "Você tem alterações não salvas. Deseja sair mesmo?" });
-  const [mostrarModal, setMostrarModal] = useState(false);
-  const [rotaDestino, setRotaDestino] = useState<string | null>(null)
+  
+  const {setAlterou, tentarSair, mostrarModal, setMostrarModal, } = useAvisoAlteracoesNaoSalvas({
+    mensagem: "Você tem alterações não salvas. Deseja sair mesmo?",});
+
+  const [tipoMensagem, setTipoMensagem] = useState<"sucesso" | "erro">("sucesso");
 
   const [erroModal, setErroModal] = useState<{
-      campo?: string;
-      mensagem: string;
-    } | null>(null);
+    campo?: string;
+    mensagem: string;
+  } | null>(null);
 
   if (!usuario) {
     return <p>Nenhum usuário</p>;
   }
 
-  function tentarSair(rota: string) {
-    if (alterou) {
-        setRotaDestino(rota);
-        setMostrarModal(true);
-    } else {
-        navigate(rota);
-    }
-  }
-
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--base-5)]">
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-[var(--base-5)]">
       
       {/* header */}
-      <Header aoNavegar={tentarSair} />
+      <Header />
 
       {/* body */}
       <main className="flex-1 pt-24 pb-10">
         <div className="w-full px-6 md:px-20 flex flex-col gap-10">
-          <Toast mensagem={mensagem} tipo="sucesso" />
+          <Toast mensagem={mensagem} tipo={tipoMensagem} />
 
           {/* título e logo da caneta */}
           <div className="flex items-center justify-center gap-4 flex-wrap text-center">
-            <img src={logo} alt="Logo" className="h-16 md:h-20" />
+            <img src={logo} alt="Logo Canetas que Mudam o Mundo" className="h-16 md:h-20" />
         
             <h1 className="header-medio text-center">
               Canetas que Mudam o Mundo
@@ -106,6 +99,7 @@ function EditarConta() {
 
                   setAlterou(false);
                   setMensagem("Alterações salvas com sucesso!");
+                  setTipoMensagem("sucesso");
 
                   setTimeout(() => {
                     setMensagem("");
@@ -124,8 +118,12 @@ function EditarConta() {
                 varianteConfirmar="cancelar"
                 onCancelar={() => setMostrarModal(false)}
                 onConfirmar={() => {
-                    setMostrarModal(false);
-                    if (rotaDestino) navigate(rotaDestino);
+                  setMostrarModal(false);
+
+                  const rota = sessionStorage.getItem("rotaDestino");
+                  sessionStorage.removeItem("rotaDestino");
+
+                  navigate(rota || "/conta");
                 }}
               />
 
