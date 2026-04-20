@@ -1,19 +1,17 @@
-import { useNavigate, useLocation } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
 import { useUsuario } from "../context/UserContext";
 import logo_titulo from "../assets/logo_titulo.png";
 import Botao from "./Botao";
 
-type Props = {
-  aoNavegar?: (rota: string) => void;
-};
 
-function Header({ aoNavegar }: Props) {
+function Header(){
   
-  const navigate = useNavigate();
   const location = useLocation(); // para saber qual página estamos e assim deixar o botão correspondente selecionado
 
   const [menuAberto, setMenuAberto] = useState(false); // controla abertura do menu mobile
+  const botaoMenuRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const { usuario } = useUsuario();
 
@@ -83,6 +81,30 @@ function Header({ aoNavegar }: Props) {
       if (e.key === "Escape") {
         setMenuAberto(false);
       }
+
+      // focus trap
+      if (menuAberto && e.key === "Tab" && menuRef.current) {
+        const focaveis = menuRef.current.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+
+        if (focaveis.length === 0) return;
+
+        const primeiro = focaveis[0];
+        const ultimo = focaveis[focaveis.length - 1];
+
+        if (e.shiftKey) {
+          if (document.activeElement === primeiro) {
+            e.preventDefault();
+            ultimo.focus();
+          }
+        } else {
+          if (document.activeElement === ultimo) {
+            e.preventDefault();
+            primeiro.focus();
+          }
+        }
+      }
     }
 
     window.addEventListener("resize", handleResize);
@@ -92,47 +114,55 @@ function Header({ aoNavegar }: Props) {
       window.removeEventListener("resize", handleResize);
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, []);
+  }, [menuAberto]);
+
+    // foco para abrir e fechar
+  useEffect(() => {
+    if (menuAberto && menuRef.current) {
+      const primeiro = menuRef.current.querySelector<HTMLElement>(
+        'button, [href]'
+      );
+      primeiro?.focus();
+    }
+
+    if (!menuAberto) {
+      botaoMenuRef.current?.focus();
+    }
+  }, [menuAberto]);
 
   function estaAtivo(rota: string) {
     if (rota === "/") return location.pathname === "/";
     return location.pathname.startsWith(rota);
   }
 
-  function navegar(rota: string) {
-    if (aoNavegar) {
-      aoNavegar(rota);
-    } else {
-      navigate(rota);
-    }
-  }
-
   return (
     <header className="w-full bg-[var(--primario-10)] shadow-sm fixed top-0 left-0 z-50">
       
       <div className="flex items-center justify-between px-4 md:px-10 py-3">
-        <img src={logo_titulo} alt="Logo" className="h-10 md:h-12 object-contain"/>
+        <img src={logo_titulo} alt="Logo Canetas que mudam o mundo" className="h-10 md:h-12 object-contain"/>
 
         {/* botões em tela de desktop */}
-        <div className="hidden md:flex items-center gap-4">
+        <nav aria-label="Menu principal" className="hidden md:flex items-center gap-4">
           {listaDeBotoes.map((botao) => (
             <Botao
               key={botao.id}
               ativo={estaAtivo(botao.rota)}
-              aoClicar={() => {navegar(botao.rota);}}
+              navegacao={botao.rota}
             >
               {botao.texto}
             </Botao>
           ))}
-        </div>
+        </nav>
 
         {/* menu hamburguer para o mobile */}
         <button
           type="button"
+          ref={botaoMenuRef}
           onClick={() => setMenuAberto(!menuAberto)}
-          className="md:hidden text-2xl hover:scale-125 transition"
+          className="md:hidden text-2xl hover:scale-125 transition focus-acessivel"
           aria-label={menuAberto ? "Fechar menu" : "Abrir menu"}
           aria-expanded={menuAberto}
+          aria-haspopup="true"
           aria-controls="menu-lateral"
         >
           ☰
@@ -146,36 +176,35 @@ function Header({ aoNavegar }: Props) {
           <div 
             className="fixed inset-0 bg-black/40 z-40"
             onClick={() => setMenuAberto(false)}
+            aria-hidden="true" /* fica ignorado por leitor de tela */
           />
 
           {/* botões na lateral */}
-          <div className="fixed top-0 right-0 h-full w-[250px] bg-[var(--primario-10)] z-50 shadow-lg flex flex-col">
+          <div id="menu-lateral" ref={menuRef} role="dialog" aria-modal="true" aria-label="Menu de navegação" className="fixed top-0 right-0 h-full w-[250px] bg-[var(--primario-10)] z-50 shadow-lg flex flex-col">
             <div className="flex justify-between px-4 py-[14px] border-b border-[var(--primario-40)]">
               <span className="body-semibold-medio">Menu</span>
               <button
                 type="button"
                 onClick={() => setMenuAberto(false)}
-                className="text-xl hover:scale-125 transition"
+                className="text-xl hover:scale-125 transition focus-acessivel"
                 aria-label="Fechar menu"
               >
                 ✕
               </button>
             </div>
 
-            <div className="flex flex-col gap-4 mt-6 px-4">
+            <nav aria-label="Menu principal" className="flex flex-col gap-4 mt-6 px-4">
               {listaDeBotoes.map((botao) => (
                 <Botao
                   key={botao.id}
                   ativo={estaAtivo(botao.rota)}
-                  aoClicar={() => {
-                    setMenuAberto(false);
-                    navegar(botao.rota);
-                  }}
+                  navegacao={botao.rota}
+                  aoClicar={() => {setMenuAberto(false);}}
                 >
                   {botao.texto}
                 </Botao>
               ))}
-            </div>
+            </nav>
           </div>
         </>
       )}

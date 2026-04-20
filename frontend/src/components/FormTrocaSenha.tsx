@@ -126,12 +126,12 @@ function FormTrocaSenha({
           <input id="senha" type={mostrarSenha ? "text" : "password"} maxLength={50} className={`input-padrao pr-10 ${tocados.senha && senha ? erros.senha ? "border-[var(--cor-resposta-errada)] focus:ring-[var(--cor-resposta-errada)]": "border-[var(--cor-resposta-correta)] focus:ring-[var(--cor-resposta-correta)]" : ""}`} 
           autoComplete="new-password" placeholder="Digite aqui a sua nova senha" value={senha} onChange={(e) => setSenha(e.target.value)} aria-invalid={!!erros.senha} aria-describedby={erros.senha ? "erro-senha" : undefined} onBlur={() => {marcarComoTocado("senha"), validarUmCampo("senha");}}/>
 
-          <button type="button" onClick={() => setMostrarSenha(!mostrarSenha)} className="absolute right-3 top-1/2 -translate-y-1/2">
-            <img src={mostrarSenha ? olho_visivel : olho_bloqueado} alt="Mostrar senha" className="w-5 h-5"/>
+          <button type="button" onClick={() => setMostrarSenha(!mostrarSenha)} className="absolute right-3 top-1/2 -translate-y-1/2 focus-acessivel" aria-label={mostrarSenha ? "Ocultar senha" : "Mostrar senha"}>
+            <img src={mostrarSenha ? olho_visivel : olho_bloqueado} alt={mostrarSenha ? "Ocultar senha" : "Mostrar senha"} className="w-5 h-5"/>
           </button>
         </div>
       </div>
-      {erros.senha && tocados.senha && <p id="erro-senha" className="text-[var(--cor-resposta-errada)] text-sm">{erros.senha}</p>}
+      {erros.senha && tocados.senha && <p id="erro-senha" aria-live="polite" className="text-[var(--cor-resposta-errada)] text-sm">{erros.senha}</p>}
       
       {senha && (
         <div className="text-sm mt-0 space-y-1">
@@ -163,12 +163,12 @@ function FormTrocaSenha({
           <input id="confirmarSenha" type={mostrarConfirmarSenha ? "text" : "password"} maxLength={50} className={`input-padrao pr-10 ${tocados.confirmarSenha && confirmarSenha ? erros.confirmarSenha ? "border-[var(--cor-resposta-errada)] focus:ring-[var(--cor-resposta-errada)]": "border-[var(--cor-resposta-correta)] focus:ring-[var(--cor-resposta-correta)]" : ""}`} 
           autoComplete="new-password" placeholder="Confirme aqui a sua nova senha" value={confirmarSenha} onChange={(e) => setConfirmarSenha(e.target.value)} aria-invalid={!!erros.confirmarSenha} aria-describedby={erros.confirmarSenha ? "erro-confirmar-senha" : undefined} onBlur={() => {marcarComoTocado("confirmarSenha"), validarUmCampo("confirmarSenha");}}/>
           
-          <button type="button" onClick={() => setMostrarConfirmarSenha(!mostrarConfirmarSenha)} className="absolute right-3 top-1/2 -translate-y-1/2">
-            <img src={mostrarConfirmarSenha ? olho_visivel : olho_bloqueado} alt="Mostrar senha" className="w-5 h-5"/>
+          <button type="button" onClick={() => setMostrarConfirmarSenha(!mostrarConfirmarSenha)} className="absolute right-3 top-1/2 -translate-y-1/2 focus-acessivel" aria-label={mostrarConfirmarSenha ? "Ocultar senha" : "Mostrar senha"}>
+            <img src={mostrarConfirmarSenha ? olho_visivel : olho_bloqueado} alt={mostrarConfirmarSenha ? "Ocultar senha" : "Mostrar senha"} className="w-5 h-5"/>
           </button>
         </div>
       </div>
-      {erros.confirmarSenha && tocados.confirmarSenha && <p id="erro-confirmar-senha" className="text-[var(--cor-resposta-errada)] text-sm">{erros.confirmarSenha}</p>}
+      {erros.confirmarSenha && tocados.confirmarSenha && <p id="erro-confirmar-senha" aria-live="polite" className="text-[var(--cor-resposta-errada)] text-sm">{erros.confirmarSenha}</p>}
       
 
       <div className="flex-1">
