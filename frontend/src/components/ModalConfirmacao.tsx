@@ -13,18 +13,7 @@ type Props = {
   varianteCancelar?: "confirmar" | "cancelar";
 };
 
-function ModalConfirmacao({
-  aberto,
-  titulo,
-  descricao,
-  botaoConfirmar,
-  botaoCancelar,
-  onConfirmar,
-  onCancelar,
-  varianteConfirmar,
-  varianteCancelar,
-}: Props) {
-  if (!aberto) return null;
+function ModalConfirmacao({aberto, titulo, descricao, botaoConfirmar, botaoCancelar, onConfirmar, onCancelar, varianteConfirmar, varianteCancelar,}: Props) {
 
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -72,6 +61,8 @@ function ModalConfirmacao({
 
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [aberto]);
+
+  if (!aberto) return null;
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">

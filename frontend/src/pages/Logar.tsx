@@ -4,7 +4,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import api from "../services/api";
 import logo from "../assets/logo.svg";
-import { TipoUsuario, useUsuario } from "../context/UserContext";
+import { mapearTipo, useUsuario } from "../context/UserContext";
 
 function Logar() {
   const { definirUsuario } = useUsuario();
@@ -62,19 +62,6 @@ function Logar() {
     setErro("");
   };
 
-  
-  const tiposValidos: TipoUsuario[] = ["Genérico", "Coordenador de Processos", "Responsável pelo beneficiário", "Doador", "Voluntário da triagem"];
-
-  // RETRABALHAR ESSA FUNÇÃO PARA O MAPEAR TIPO FICAR CENTRALIZADO EM UM ÚNICO LUGAR, POIS VOU USAR ESSA LÓGICA DE MAPEAR VÁRIAS VEZES NO FRONTEND (CONTA, CADASTRO, ETC)
-  function mapearTipo(tipo?: string): TipoUsuario {
-    if (tiposValidos.includes(tipo as TipoUsuario)) {
-      return tipo as TipoUsuario;
-    }
-
-    return "Genérico";
-  }
-  
-
   return (
     <div className="min-h-screen flex flex-col bg-[var(--base-5)]">
       {/* header */}
@@ -111,6 +98,7 @@ function Logar() {
                 </label>
                 <input
                   type="email"
+                  autoComplete="email"
                   id="email"
                   placeholder="Digite aqui o seu email"
                   value={email}
@@ -128,6 +116,7 @@ function Logar() {
                 </label>
                 <input
                   type="password"
+                  autoComplete="current-password"
                   id="senha"
                   placeholder="Digite aqui a sua senha"
                   value={senha}

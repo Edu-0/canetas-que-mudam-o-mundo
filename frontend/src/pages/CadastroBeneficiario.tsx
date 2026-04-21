@@ -6,7 +6,7 @@ import Footer from "../components/Footer";
 import Botao from "../components/Botao";
 import Toast from "../components/Toast";
 import logo from "../assets/logo.svg";
-import { atualizarTiposUsuario, DadosUsuario, obterUsuario } from "../services/usuarioService";
+import { atualizarTiposUsuario, DadosUsuario, obterPerfil } from "../services/usuarioService";
 import { mapearTipo, TipoUsuario, useUsuario } from "../context/UserContext";
 
 function CadastroBeneficiario() {
@@ -181,7 +181,7 @@ function CadastroBeneficiario() {
       if(!usuario) return;
       
       try {
-        const usuarioAtualizado: DadosUsuario = await obterUsuario(usuario.id);
+        const usuarioAtualizado: DadosUsuario = await obterPerfil();
 
         const tiposAtuais: TipoUsuario[] =
           usuarioAtualizado.funcao?.map((f: any) =>
@@ -201,7 +201,7 @@ function CadastroBeneficiario() {
         await atualizarTiposUsuario(usuario.id, novosTipos);
 
         // busca atualizado do backend
-        const atualizado = await obterUsuario(usuario.id);
+        const atualizado = await obterPerfil();
 
         // normaliza igual Conta
         const usuarioNormalizado = {
