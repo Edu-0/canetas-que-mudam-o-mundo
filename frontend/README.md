@@ -1,18 +1,23 @@
 # Frontend - Canetas que Mudam o Mundo
 
-Interface React com Vite para o projeto.
+Interface em React + TypeScript com Vite para cadastro, conta e edição de conta.
 
-## Setup
+## Stack
 
-1. Instale as dependências:
+- React 18
+- TypeScript
+- Vite
+- React Router
+- Axios
+- Tailwind CSS
+
+## Instalação
+
 ```bash
 npm install
 ```
 
-2. Crie um arquivo `.env.local` (copie de `.env.example`):
-```bash
-VITE_API_URL=http://localhost:8000/api
-```
+Não há arquivo `.env.example` atualmente. A integração com a API está configurada diretamente em [src/services/api.tsx](src/services/api.tsx).
 
 ## Desenvolvimento
 
@@ -20,33 +25,68 @@ VITE_API_URL=http://localhost:8000/api
 npm run dev
 ```
 
-A aplicação roda em `http://localhost:5173` e proxia requisições para `/api` para `http://localhost:8000`.
+O frontend sobe em `http://localhost:5173`.
 
-## Build
+## Scripts
 
-```bash
-npm run build
-```
+- `npm run dev`: inicia o Vite em modo desenvolvimento.
+- `npm run build`: gera o build de produção em `dist/`.
+- `npm run preview`: pré-visualiza o build gerado.
+- `npm run lint`: executa o ESLint no projeto.
 
-Gera arquivos otimizados em `dist/`.
+## Integração com o Backend
 
-## Lint
+O cliente HTTP usa como base `http://localhost:8000` em [src/services/api.tsx](src/services/api.tsx).
 
-```bash
-npm run lint
-```
+Se o backend estiver em outro host ou porta, ajuste esse arquivo antes de subir o frontend.
 
-## Estrutura
+## Rotas Ativas
 
-```
+As rotas atualmente registradas em [src/App.tsx](src/App.tsx) são:
+
+### Públicas
+
+- `/`
+- `/logar`
+- `/cadastro`
+
+### Conta
+
+- `/conta`
+- `/conta/editar`
+  
+#### Atribuição de tipo de usuário
+
+- `/conta/cadastro-beneficiario`
+- `/conta/quiz-voluntario`
+
+### Funcionalidades em desenvolvimento
+
+- `/doar`
+- `/triagem`
+- `/pedido`
+- `/relatorio`
+- `/auditoria`
+- `/pontos`  
+
+## Estrutura do Código
+
+```text
 src/
-├── components/    # Componentes reutilizáveis
-├── pages/         # Páginas/telas
-├── services/      # Chamadas de API
-├── hooks/         # Hooks customizados
-├── context/       # Estado global (Context API)
-├── utils/         # Funções auxiliares
-├── assets/        # Imagens, ícones
-├── App.jsx        # Componente principal
-└── main.jsx       # Ponto de entrada
+	components/
+	context/
+	hooks/
+	pages/
+	services/
+	types/
+	utils/
+	assets/
+	App.tsx
+	main.tsx
 ```
+
+## Observações
+
+- O ponto de entrada é [src/main.tsx](src/main.tsx).
+- O estado global de usuário é fornecido por [src/context/UserContext.tsx](src/context/UserContext.tsx).
+- O layout e os estilos globais ficam em [src/index.css](src/index.css).

@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useUsuario } from "../context/UserContext";
+import { useUsuario, TipoUsuario } from "../context/UserContext";
 import { useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
@@ -13,33 +13,41 @@ function Cadastro() {
   const { definirUsuario } = useUsuario();
   const navigate = useNavigate();
   const [mensagem, setMensagem] = useState("");
-  const { alterou, setAlterou } = useAvisoAlteracoesNaoSalvas({ mensagem: "Você começou o cadastro. Deseja sair mesmo?" });
-  const [mostrarModal, setMostrarModal] = useState(false);
-  const [rotaDestino, setRotaDestino] = useState<string | null>(null);
 
-  function tentarSair(rota: string) {
-    if (alterou) {
-      setRotaDestino(rota);
-      setMostrarModal(true);
-    } else {
-      navigate(rota);
+  const {setAlterou, tentarSair, mostrarModal, setMostrarModal, } = useAvisoAlteracoesNaoSalvas({
+    mensagem: "Você começou o cadastro. Deseja sair mesmo?",});
+
+  const [tipoMensagem, setTipoMensagem] = useState<"sucesso" | "erro">("sucesso");
+
+  const [erroModal, setErroModal] = useState<{
+    campo?: string;
+    mensagem: string;
+  } | null>(null);
+
+  const tiposValidos: TipoUsuario[] = ["Genérico", "Coordenador de Processos", "Responsável pelo beneficiário", "Doador", "Voluntário da triagem"];
+
+  function mapearTipo(tipo?: string): TipoUsuario {
+    if (tiposValidos.includes(tipo as TipoUsuario)) {
+      return tipo as TipoUsuario;
     }
+
+    return "Genérico";
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--base-5)]">
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-[var(--base-5)]">
       
       {/* header */}
-      <Header aoNavegar={tentarSair} />
+      <Header />
 
       {/* body */}
       <main className="flex-1 pt-24 pb-10">
         <div className="w-full px-6 md:px-20 flex flex-col gap-10">
-          <Toast mensagem={mensagem} tipo="sucesso" />
+          <Toast mensagem={mensagem} tipo={tipoMensagem} />
 
           {/* título e logo da caneta */}
           <div className="flex items-center justify-center gap-4 flex-wrap text-center">
-            <img src={logo} alt="Logo" className="h-16 md:h-20" />
+            <img src={logo} alt="Logo Canetas que Mudam o Mundo" className="h-16 md:h-20" />
         
             <h1 className="header-medio text-center">
               Canetas que Mudam o Mundo
@@ -60,8 +68,8 @@ function Cadastro() {
 
                 mudouDados={(dados) => {
                   const mudou =
-                    dados.nome.trim() !== "" ||
-                    dados.dataNascimento.trim() !== "" ||
+                    dados.nome_completo.trim() !== "" ||
+                    dados.data_nascimento.trim() !== "" ||
                     dados.cpf.trim() !== "" ||
                     dados.cep.trim() !== "" ||
                     dados.telefone.trim() !== "" ||
@@ -76,11 +84,28 @@ function Cadastro() {
                 textoBotaoEnviar="Cadastrar"
                 mostrarCancelar={true}
 
+                aoErro={(erro) => {
+                  setErroModal(erro);
+                }}
+
                 aoCancelar={() => tentarSair("/")}
 
-                aoEnviar={() => {
+                aoEnviar={(usuarioCadastrado) => {
+                  definirUsuario({
+                    id: usuarioCadastrado.id,
+                    nome_completo: usuarioCadastrado.nome_completo,
+                    data_nascimento: usuarioCadastrado.data_nascimento,
+                    cpf: usuarioCadastrado.cpf,
+                    cep: usuarioCadastrado.cep,
+                    telefone: usuarioCadastrado.telefone,
+                    email: usuarioCadastrado.email,
+                    tipos: usuarioCadastrado.funcao?.map(f => mapearTipo(f.tipo_usuario)) || [], // a pessoa pode ter mais de uma função e quero pegar todas elas
+                    data_cadastro: new Date().toISOString()
+                  });
+
                   setAlterou(false); // reseta o estado de alteração para evitar alerta ao sair depois de cadastrar
                   setMensagem("Cadastro realizado com sucesso!");
+                  setTipoMensagem("sucesso");
 
                   setTimeout(() => {
                     setMensagem(""); // some o toast
@@ -90,16 +115,32 @@ function Cadastro() {
               />
 
               <ModalConfirmacao
-                aberto={mostrarModal}
+                aberto={mostrarModal} // mostra o modal de erro se tiver erro e não estiver mostrando o modal de confirmação (para evitar os dois modais juntos)
                 titulo="Alterações não salvas"
                 descricao="Você começou o cadastro. Deseja sair mesmo?"
                 botaoCancelar="Continuar cadastro"
                 botaoConfirmar="Sair sem salvar o cadastro"
+                varianteCancelar={"confirmar"}  
+                varianteConfirmar={"cancelar"}
                 onCancelar={() => setMostrarModal(false)}
                 onConfirmar={() => {
-                    setMostrarModal(false);
-                    if (rotaDestino) navigate(rotaDestino);
+                  setMostrarModal(false);
+
+                  const rota = sessionStorage.getItem("rotaDestino");
+                  sessionStorage.removeItem("rotaDestino");
+
+                  navigate(rota || "/conta");
                 }}
+              />
+
+              <ModalConfirmacao
+                aberto={!!erroModal}
+                titulo="Erro no cadastro"
+                descricao={erroModal?.mensagem || ""}
+                varianteCancelar={"cancelar"} 
+                botaoConfirmar="Fechar"
+                onCancelar={() => setErroModal(null)}
+                onConfirmar={() => setErroModal(null)}
               />
 
             </div>

@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600&family=Potta+One&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -20,9 +18,11 @@
   --base-0: #FFFFFF;
   --base-5: #F9FAF0;
   --base-10: #F2F7E2;
+  --base-15: #EAF0D3;
   --base-20: #E4EEBF;
   --base-40: #C4D86E;
   --base-60: #838513;
+  --base-70: #5B6A0B;
   --base-80: #383B08;
   --base-100: #000000;
 
@@ -34,10 +34,26 @@
   --secundario-100: #FFF09C;
 
   --cor-resposta-obrigatoria: #ea2b2b;
-  --cor-resposta-correta: #16a34a; 
-  --cor-resposta-errada: #ef4444;
+  --cor-resposta-correta: #12823B; 
+  --cor-resposta-errada: #E11414;
 
   --cor-botao-editar: #BBE4FF;
+
+  /* cores para a tela de inicio */
+  --pastel-azul: #E3F2FD;
+  --pastel-azul-borda: #90CAF9;
+
+  --pastel-verde: #E8F5E9;
+  --pastel-verde-borda: #A5D6A7;
+
+  --pastel-rosa: #FCE4EC;
+  --pastel-rosa-borda: #F8BBD0;
+
+  --pastel-roxo: #F3E5F5;
+  --pastel-roxo-borda: #CE93D8;
+
+  --pastel-laranja: #FFF3E0;
+  --pastel-laranja-borda: #FFCC80;
 }
 
 :root {
@@ -62,6 +78,12 @@
   font-family: var(--font-header);
   font-size: 40px;
   line-height: 125%;
+}
+
+.header-pequeno-tela-inicial {
+  font-family: var(--font-header);
+  font-size: 30px;
+  line-height: 100%;
 }
 
 .body-grande {
@@ -116,6 +138,22 @@
   /* estilo base para os botões no Header*/
   .btn-base {
     @apply px-4 py-0.5 rounded-md border body-semibold-pequeno transition-all duration-300 w-[120px] text-center;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-fade-in {
+      animation: none;
+    }
+  }
+
+  button:focus,
+  a:focus {
+    outline: 2px solid #000;
+    outline-offset: 2px;
+  }
+
+  .focus-acessivel {
+    @apply focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2;
   }
 
   /* estado do botão default */
@@ -175,5 +213,37 @@
 
   .btn-sair:hover {
     @apply bg-[var(--secundario-100)] border-black;
+  }
+
+  .btn-tipo-selecionado {
+    @apply bg-[var(--base-70)] border-black text-white;
+  }
+
+  .btn-tipo-selecionado:hover {
+    @apply bg-[var(--base-80)] border-black;
+  }
+
+  .btn-quiz-resposta {
+    @apply bg-[#2196F3] border-black text-white;
+  }
+
+  .btn-quiz-resposta:hover {
+    @apply bg-[#1976D2] border-black text-white;
+  }
+
+  .btn-apto-selecionado {
+    @apply bg-[var(--cor-resposta-correta)] border-black text-white;
+  }
+
+  .btn-apto-selecionado:hover {
+    @apply bg-green-500 border-black text-white;
+  }
+
+  .btn-inapto-selecionado {
+    @apply bg-[var(--cor-resposta-errada)] border-black text-white;
+  }
+
+  .btn-inapto-selecionado:hover {
+    @apply bg-red-500 border-black text-white;
   }
 }

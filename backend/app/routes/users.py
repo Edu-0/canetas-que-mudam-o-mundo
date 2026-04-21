@@ -1,9 +1,11 @@
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
 from app.schemas import user as s
 from app.core.security import gerar_hash_senha
+from app.core.deps_auth import VerificarPermissao, get_current_user
 from app.models import user as m
 from app.database.connection import SessionDep
 from typing import List
+from app.core.enums import TipoUsuario
 from fastapi import HTTPException
 from sqlalchemy.sql import func
 from sqlalchemy.exc import IntegrityError
@@ -19,9 +21,20 @@ router = APIRouter(prefix="/usuario", tags=["usuario"])
 
 
 @router.get("/", response_model=List[s.respostaUsuario])
-def get_usuarios(db:SessionDep):
+def get_usuarios(
+    db:SessionDep, 
+    permissao = Depends(VerificarPermissao("usuario:ver_todos"))):
     usuarios = db.query(m.Usuario).all()
-    return usuarios
+    return usuarios   
+
+@router.get("/perfil/me", response_model=s.respostaUsuario)
+def get_perfil(
+    db: SessionDep,
+    usuario_atual: m.Usuario = Depends(get_current_user), 
+    ):
+    return usuario_atual
+
+""" Usuário """ 
 
 @router.get("/{usuario_id}", response_model=s.respostaUsuario)
 def get_usuario(usuario_id,db:SessionDep):
@@ -29,11 +42,11 @@ def get_usuario(usuario_id,db:SessionDep):
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuário não encontrado.")
     return usuario
-    
 
 @router.post("/generico", response_model=s.respostaUsuario)
 def criar_usuario_base(dados:s.criarUsuario, db:SessionDep):
     hash_senha = gerar_hash_senha(dados.senha)
+    agora = datetime.now()
 
     usuario = m.Usuario(
         nome_completo = dados.nome_completo,
@@ -43,7 +56,9 @@ def criar_usuario_base(dados:s.criarUsuario, db:SessionDep):
         telefone = dados.telefone,
         email = dados.email,
         senha = hash_senha,
-        ativo = True
+        ativo = True,
+        data_cadastro = agora,
+        data_edicao_conta = agora
     )
 
     try:
@@ -82,41 +97,12 @@ def criar_usuario_base(dados:s.criarUsuario, db:SessionDep):
             detail={"campo": "geral", "mensagem": "Erro ao cadastrar usuário."}
         )
 
-@router.post("/{usuario_id}/responsavel", response_model=s.respostaUsuarioResponsavel)
-def criar_usuario_responsavel(usuario_id:int, dados:s.criarUsuarioResponsavel, db:SessionDep):
-
-    usuario = m.UsuarioResponsavel(
-        usuario_id = usuario_id,
-        qtd_familiares = dados.qtd_familiares,
-        auxilio = dados.auxilio,
-        concordou_termos = dados.concordou_termos
-    )
-    db.add(usuario)
-    db.commit()
-    db.refresh(usuario)
-    return usuario
-
-@router.post("/{perfil_id}/familia-responsavel", response_model=List[s.respostaFamiliaResponsavel])
-def cadastrar_familia_responsavel(perfil_id, dados:List[s.cadastrarFamiliaResponsavel], db:SessionDep):
-    familiares = []
-    for membro in dados:
-        novo_familiar = m.FamiliaResponsavel(
-            perfil_id = perfil_id, #id do usuario na tab usuario_responsavel
-            nome = membro.nome,
-            parentesco = membro.parentesco,
-            data_nascimento = membro.data_nascimento,
-            renda = membro.renda
-        )
-        familiares.append(novo_familiar)
-
-    db.add_all(familiares)
-    db.commit()
-    for familiar in familiares:
-        db.refresh(familiar)
-    return familiares
-
 @router.put("/{usuario_id}", response_model=s.respostaUsuario)
-def atualizar_usuario(usuario_id, dados:s.atualizarUsuario, db:SessionDep):
+def atualizar_usuario(
+    usuario_id, 
+    dados:s.atualizarUsuario, 
+    db:SessionDep, 
+    permissao = Depends(VerificarPermissao("usuario:atualizar"))):
     usuario = db.get(m.Usuario, usuario_id)
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuário não encontrado.")
@@ -194,13 +180,16 @@ def criar_usuario_responsavel(
         )
 
 @router.put("/{perfil_id}/responsavel", response_model=s.respostaUsuarioResponsavel)
-def atualizar_usuario_responsavel(perfil_id, dados:s.atualizarUsuarioResponsavel, db:SessionDep):
+def atualizar_usuario_responsavel(perfil_id, 
+    dados:s.atualizarUsuarioResponsavel, 
+    db:SessionDep, 
+    permissao = Depends(VerificarPermissao("usuario_responsavel:atualizar"))):
     perfil = db.get(m.UsuarioResponsavel, perfil_id)
     if not perfil:
         raise HTTPException(status_code=404, detail="Perfil de beneficiário não encontrado.")
     for key, value in dados.model_dump(exclude_unset=True).items():
         setattr(perfil, key, value)
-    perfil.usuario.data_edicao_conta = func.now()
+    perfil.usuario.data_edicao_conta = datetime.now()
     db.commit()
     db.refresh(perfil)
     return perfil
@@ -330,13 +319,17 @@ def cadastrar_familia_responsavel(
         )
 
 @router.put("/{familia_id}/familia-responsavel", response_model=s.respostaFamiliaResponsavel)
-def atualizar_familia_responsavel(familia_id, dados:s.atualizarFamiliaResponsavel, db:SessionDep):
+def atualizar_familia_responsavel(
+    familia_id, 
+    dados:s.atualizarFamiliaResponsavel, 
+    db:SessionDep, 
+    permissao = Depends(VerificarPermissao("familia_responsavel:atualizar"))):
     familiar = db.get(m.FamiliaResponsavel, familia_id)
     if not familiar:
         raise HTTPException(status_code=404, detail="Familiar beneficiário não encontrado.")
     for key, value in dados.model_dump(exclude_unset=True).items():
         setattr(familiar, key, value)
-    familiar.perfil.usuario.data_edicao_conta = func.now()
+    familiar.perfil.usuario.data_edicao_conta = datetime.now()
     db.commit()
     db.refresh(familiar)
     return familiar

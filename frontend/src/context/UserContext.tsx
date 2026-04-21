@@ -1,18 +1,24 @@
 import { createContext, useContext, useState, ReactNode } from "react";
 
 // tipo do usuário
-type TipoUsuario = "generico" | "doador" | "voluntario" | "responsavel";
+export type TipoUsuario = 
+  | "Genérico"
+  | "Coordenador de Processos"
+  | "Responsável pelo beneficiário"
+  | "Doador"
+  | "Voluntário da triagem";
 
 export type Usuario = {
   id: number;
-  nome: string;
-  dataNascimento: string;
+  nome_completo: string;
+  data_nascimento: string;
   cpf: string;
   cep: string;
   telefone?: string;
   email: string;
-  tipo?: TipoUsuario;
-  dataCadastro: string;
+  tipos?: TipoUsuario[];
+  data_cadastro: string;
+  data_edicao_conta?: string;
 };
 
 // o que o contexto fornece
@@ -23,6 +29,23 @@ type ContextoUsuarioType = {
 
 // cria o contexto
 const ContextoUsuario = createContext<ContextoUsuarioType | undefined>(undefined);
+
+// função para mapear string do backend para TipoUsuario, garantindo que seja um valor válido
+export function mapearTipo(tipo?: string): TipoUsuario {
+  const tiposValidos: TipoUsuario[] = [
+    "Genérico",
+    "Coordenador de Processos",
+    "Responsável pelo beneficiário",
+    "Doador",
+    "Voluntário da triagem"
+  ];
+
+  if (tiposValidos.includes(tipo as TipoUsuario)) {
+    return tipo as TipoUsuario;
+  }
+
+  return "Genérico";
+}
 
 // provider
 export function ProvedorUsuario({ children }: { children: ReactNode }) {

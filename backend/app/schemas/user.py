@@ -51,7 +51,7 @@ class criarUsuarioResponsavel(BaseModel):
     qtd_familiares : int = Field(default=0, ge = 0)
     auxilio: BeneficiosUsuario = BeneficiosUsuario.NENHUM
     concordou_termos: bool 
-
+    
     @field_validator('concordou_termos')
     @classmethod
     def verificar_aceitacao_termo(cls, v:bool):
@@ -59,12 +59,22 @@ class criarUsuarioResponsavel(BaseModel):
             raise ValueError('Você deve ler e aceitar os termos de uso para prosseguir com o cadastro.')
         return v
 
+class criarUsuarioTriagem(BaseModel):
+    usuario_id: int
+    pontuacao_total: int
+
+class respostaUsuarioTriagem(criarUsuarioTriagem):
+    id:int
+    status: str
+    model_config = ConfigDict(from_attributes=True)
+
 class respostaUsuarioResponsavel(criarUsuarioResponsavel):
     id:int
     model_config = ConfigDict(from_attributes=True)
     documentacao_aprovada:bool
     data_preenchimento_termos: datetime 
-    familia: List[respostaFamiliaResponsavel] = []
+    data_edicao_conta: datetime
+    familia: List["respostaFamiliaResponsavel"] = []
 
 class respostaFuncao(BaseModel):
     tipo_usuario:TipoUsuario
@@ -81,6 +91,7 @@ class respostaUsuario(usuarioBase):
     
 class cadastrarFamiliaResponsavel(BaseModel):
     nome: str = Field(min_length=2, max_length=255)
+    cpf: str = Field(pattern=r"^\d{11}$")
     parentesco: str = Field(min_length=2, max_length=100)
     data_nascimento: date 
     renda: float = Field(default=0.0, ge=0)
@@ -109,7 +120,7 @@ class cadastrarDocumento(BaseModel):
     tipo_documento: str = Field(min_length=2,max_length=50)
     nome_original:str = Field(min_length=2, max_length=255)
     caminho_arquivo:str = Field(min_length=2, max_length=1000)
-    data_upload: date = Field(default_factory=date.today)
+    data_upload: datetime = Field(default_factory=datetime.now)
 
     @field_validator('nome_original')
     @classmethod
@@ -147,6 +158,7 @@ class atualizarUsuarioResponsavel(BaseModel):
 
 class atualizarFamiliaResponsavel(BaseModel):
     nome: Optional[str] = Field(default=None, min_length=2, max_length=255)
+    cpf: Optional[str] = Field(default=None, pattern=r"^\d{11}$")
     parentesco: Optional[str] = Field(default=None, min_length=2, max_length=100)
     data_nascimento: Optional[date] = None
     renda: Optional[float] = Field(default=None, ge=0)
@@ -156,3 +168,7 @@ class atualizarDocumento(BaseModel):
     tipo_documento: Optional[str] = Field(default=None, min_length=2,max_length=50)
     nome_original: Optional[str] = Field(default=None, min_length=2, max_length=255)
     caminho_arquivo: Optional[str] = Field(default=None, min_length=2, max_length=1000)
+
+
+class atualizarUsuarioFuncao(BaseModel):
+    tipo_usuario: list[TipoUsuario]
