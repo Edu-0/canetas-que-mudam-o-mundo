@@ -460,7 +460,7 @@ def salvar_resultado_triagem(
 def atualizar_usuario_funcao(usuario_id: int, 
     dados: s.atualizarUsuarioFuncao, 
     db: SessionDep, 
-    permissao = Depends(VerificarPermissao("usuario_funcao:atualizar"))):
+    permissao = Depends(VerificarPermissao("usuario_funcao:criar"))):
     usuario = db.get(m.Usuario, usuario_id)
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuário não encontrado.")

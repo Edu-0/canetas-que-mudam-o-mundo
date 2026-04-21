@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useUsuario, TipoUsuario, Usuario, mapearTipo } from "../context/UserContext";
 import { useEffect, useState } from "react";
-import { obterUsuario, DadosUsuario, atualizarTiposUsuario } from "../services/usuarioService";
+import { obterPerfil, DadosUsuario, atualizarTiposUsuario } from "../services/usuarioService";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Botao from "../components/Botao";
@@ -26,36 +26,34 @@ function Conta() {
   }
 
   async function confirmarTipo() {
-    if (!tipoSelecionado || !dadosNormalizados) return;
+    if (!tipoSelecionado || !dadosNormalizados?.id) return;
 
     const tiposAtuais = dadosNormalizados.tipos || [];
     const jaTemTipo = tiposAtuais.includes(tipoSelecionado as TipoUsuario);
 
+    let novosTipos: TipoUsuario[] = [];
+
     if (jaTemTipo) {
-      const novosTipos = tiposAtuais.filter(t => t !== tipoSelecionado);
+      // remove o tipo
+      novosTipos = tiposAtuais.filter(t => t !== tipoSelecionado);
 
-      if (!novosTipos.includes("Genérico")) {
-        novosTipos.push("Genérico");
-      }
-
-      try {
-        await atualizarTiposUsuario(dadosNormalizados.id, novosTipos);
-
-        const atualizado = await obterUsuario(dadosNormalizados.id);
-        setPerfil(atualizado);
-        definirUsuario(normalizarUsuario(atualizado));
-      } catch (error) {
-        console.error("Erro ao remover tipo:", error);
-      }
-
-      setModalTipo(false);
-      setTipoSelecionado(null);
-      return;
+    } else {
+      // adiciona o tipo
+      novosTipos = [...tiposAtuais, tipoSelecionado as TipoUsuario];
     }
 
+    // garante Genérico sempre
+    if (!novosTipos.includes("Genérico")) {
+      novosTipos.push("Genérico");
+    }
+
+    // evitar duplicados 
+    novosTipos = [...new Set(novosTipos)];
+
+    // tratamento especial antes de salvar
     const tiposComConfirmacao = ["Voluntário da triagem", "Responsável pelo beneficiário"];
 
-    if (tiposComConfirmacao.includes(tipoSelecionado)) {
+    if (!jaTemTipo && tiposComConfirmacao.includes(tipoSelecionado)) {
       setModalTipo(false);
 
       if (tipoSelecionado === "Voluntário da triagem") {
@@ -69,16 +67,10 @@ function Conta() {
       }
     }
 
-    let novosTipos = [...tiposAtuais, tipoSelecionado as TipoUsuario];
-
-    if (!novosTipos.includes("Genérico")) {
-      novosTipos.push("Genérico");
-    }
-
     try {
       await atualizarTiposUsuario(dadosNormalizados.id, novosTipos);
 
-      const atualizado = await obterUsuario(dadosNormalizados.id);
+      const atualizado = await obterPerfil();
       setPerfil(atualizado);
       definirUsuario(normalizarUsuario(atualizado));
 
@@ -155,7 +147,7 @@ function Conta() {
     async function carregarPerfil() {
       try {
         
-      const atualizado = await obterUsuario(id); // pega os dados atualizados do backend
+      const atualizado = await obterPerfil(); // pega os dados atualizados do backend
       console.log("Perfil atualizado carregado:", atualizado);
       setPerfil(atualizado);
 

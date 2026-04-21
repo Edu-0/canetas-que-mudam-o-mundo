@@ -8,7 +8,7 @@ import Botao from "../components/Botao";
 import { useAvisoAlteracoesNaoSalvas } from "../hooks/useAvisoAlteracoesNaoSalvas";
 import Toast from "../components/Toast";
 import ModalConfirmacao from "../components/ModalConfirmacao";
-import { DadosUsuario, obterUsuario, atualizarTiposUsuario } from "../services/usuarioService";
+import { DadosUsuario, obterPerfil, atualizarTiposUsuario } from "../services/usuarioService";
 import { enviarResultadoQuiz } from "../services/quizService";
 import icon_documento from "../assets/icon_documento.png";
 import icon_download from "../assets/icon_download.png";
@@ -36,30 +36,24 @@ export default function QuizVoluntario() {
   const navigate = useNavigate();
 
   const [mensagem, setMensagem] = useState("");
-  const [tipoMensagem, setTipoMensagem] = useState<"sucesso" | "erro">("sucesso");
+  
+  const {alterou, setAlterou, tentarSair, mostrarModal, setMostrarModal, } = useAvisoAlteracoesNaoSalvas({
+    mensagem: "Você começou o quiz do voluntário da triagem. Deseja sair mesmo?",});
 
-  const { alterou, setAlterou } = useAvisoAlteracoesNaoSalvas({ mensagem: "Você começou o quiz do voluntário da triagem. Deseja sair mesmo?" });
-  const [mostrarModal, setMostrarModal] = useState(false);
-  const [rotaDestino, setRotaDestino] = useState<string | null>(null);
+  const [tipoMensagem, setTipoMensagem] = useState<"sucesso" | "erro">("sucesso");
 
   const [passo, setPasso] = useState(1);
   const [aceitouTermos, setAceitouTermos] = useState(false);
   const [respostas, setRespostas] = useState<{[id: string]: "apto" | "inapto"}>({});
   const [feedback, setFeedback] = useState<string | null>(null);
 
-  // Função para tentar sair da página
-  function tentarSair(rota: string) {
-    if (alterou) {
-      setMostrarModal(true);
-      setRotaDestino(rota);
-    } else {
-      navigate(rota);
-    }
-  }
-
   function confirmarSair() {
     setMostrarModal(false);
-    if (rotaDestino) navigate(rotaDestino);
+
+    const rota = sessionStorage.getItem("rotaDestino");
+    sessionStorage.removeItem("rotaDestino");
+
+    navigate(rota || "/conta");
   }
 
   // marca como "alterou" se o usuário avançar no quiz
@@ -97,7 +91,7 @@ export default function QuizVoluntario() {
 
     const mensagemFinal = aprovado
       ? "Parabéns, seu perfil foi ativado!"
-      : "Você não atingiu a pontuação mínima";
+      : "Você não atingiu a pontuação mínima. Tente novamente quando estiver pronto.";
 
     setFeedback(mensagemFinal);
 
@@ -109,16 +103,22 @@ export default function QuizVoluntario() {
         await enviarResultadoQuiz(usuario.id, pontuacao);
         setMensagem("Respostas salvas com sucesso!");
         setTipoMensagem("sucesso");
-      } catch (error) {
-        console.error("Erro ao salvar resultado", error);
-        setMensagem("Erro ao salvar respostas.");
-        setTipoMensagem("erro");
+      } catch (error: any) {
+        if (error.response?.status === 400) {
+          setMensagem("Você não atingiu a pontuação mínima!");
+          setTipoMensagem("erro");
+        } else {
+          console.error("Erro ao salvar resultado", error);
+          setMensagem("Erro ao salvar respostas.");
+          setTipoMensagem("erro");
+          return; // para não tentar atualizar tipo do usuário se falhou ao salvar resultado
+        }
       }
     }
 
     if (aprovado && usuario) {
       try {
-        const usuarioAtualizado: DadosUsuario = await obterUsuario(usuario.id);
+        const usuarioAtualizado: DadosUsuario = await obterPerfil();
 
         const tiposAtuais: TipoUsuario[] =
           usuarioAtualizado.funcao?.map((f: any) =>
@@ -138,7 +138,7 @@ export default function QuizVoluntario() {
         await atualizarTiposUsuario(usuario.id, novosTipos);
 
         // busca atualizado do backend
-        const atualizado = await obterUsuario(usuario.id);
+        const atualizado = await obterPerfil();
 
         // normaliza igual Conta
         const usuarioNormalizado = {
@@ -167,7 +167,7 @@ export default function QuizVoluntario() {
   return (
     <div className="min-h-screen flex flex-col bg-[var(--base-5)]">
       {/* header */}
-      <Header aoNavegar={tentarSair} />
+      <Header />
 
       {/* body */}
       <main className="flex-1 pt-24 pb-10">
@@ -176,7 +176,7 @@ export default function QuizVoluntario() {
 
           {/* título e logo da caneta */}
           <div className="flex items-center justify-center gap-4 flex-wrap text-center">
-            <img src={logo} alt="Logo" className="h-16 md:h-20" />
+            <img src={logo} alt="Logo Canetas que Mudam o Mundo" className="h-16 md:h-20" />
             <h1 className="header-medio text-center">Canetas que Mudam o Mundo</h1>
           </div>
 
@@ -214,7 +214,7 @@ export default function QuizVoluntario() {
                     >
                       {aceitouTermos && (
                         <span className="text-white text-sm">
-                          <img src={icon_check} alt="Check" className="w-4 h-4"/>
+                          <img src={icon_check} alt="Botão de confirmação do termo" className="w-4 h-4 focus-acessivel"/>
                         </span>
                       )}
                     </div>
@@ -227,7 +227,7 @@ export default function QuizVoluntario() {
 
                   <div className="flex flex-col md:flex-row gap-4 w-full">
                     <div className="flex-1">
-                      <Botao variante="cancelar" aoClicar={() => navigate("/conta")}>Cancelar quiz</Botao>
+                      <Botao variante="cancelar" aoClicar={() => tentarSair("/conta")}>Cancelar quiz</Botao>
                     </div>
 
                     <div className="flex-1">
@@ -246,11 +246,11 @@ export default function QuizVoluntario() {
                     para exercer suas atividades com segurança e responsabilidade.
                   </p>
 
-                  <div className="flex justify-center">
+                  <div className="flex justify-center focus-acessivel">
                     <div onClick={() => window.open("/quiz/Padroes_de_Qualidade_pre_estabelecidos.pdf", "_blank")} className="flex items-center justify-between gap-4 mb-5 px-6 py-4 bg-[var(--base-10)] border border-[var(--base-40)] rounded-lg shadow-sm hover:shadow-md transition w-full max-w-xl cursor-pointer group">
                       
-                      <div className="flex items-center gap-4 overflow-hidden">
-                        <img src={icon_documento} alt="Documento" className="w-7 h-7"/>
+                      <div className="flex items-center gap-4 overflow-hidden focus-acessivel">
+                        <img src={icon_documento} alt="Documento dos Padrões de Qualidade" className="w-7 h-7"/>
 
                         <span className="truncate body-semibold-pequeno text-base">
                           Padrões de Qualidade pré estabelecidos.pdf
@@ -266,7 +266,7 @@ export default function QuizVoluntario() {
                           link.click();
                         }}
                         className="p-3 rounded-full hover:bg-[var(--base-20)] transition">
-                        <img src={icon_download} alt="Download" className="w-7 h-7"/>
+                        <img src={icon_download} alt="Download do documento dos Padrões de Qualidade" className="w-7 h-7 focus-acessivel"/>
                       </button>
                     </div>
                   </div>

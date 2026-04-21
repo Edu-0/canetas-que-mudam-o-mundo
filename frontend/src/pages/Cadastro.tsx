@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useUsuario, TipoUsuario } from "../context/UserContext";
+import { useUsuario, mapearTipo } from "../context/UserContext";
 import { useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
@@ -24,15 +24,6 @@ function Cadastro() {
     mensagem: string;
   } | null>(null);
 
-  const tiposValidos: TipoUsuario[] = ["Genérico", "Coordenador de Processos", "Responsável pelo beneficiário", "Doador", "Voluntário da triagem"];
-
-  function mapearTipo(tipo?: string): TipoUsuario {
-    if (tiposValidos.includes(tipo as TipoUsuario)) {
-      return tipo as TipoUsuario;
-    }
-
-    return "Genérico";
-  }
 
   return (
     <div className="min-h-screen flex flex-col overflow-x-hidden bg-[var(--base-5)]">

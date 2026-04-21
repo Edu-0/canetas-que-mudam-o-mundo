@@ -151,7 +151,7 @@ function Inicio() {
                   </h3>
 
                   <p className="body-pequeno text-justify">
-                    Usuário vinculado a uma ONG, e garante que apenas materiais em bom estado cheguem aos beneficiários. Ele analisa fotos e descrições enviadas pelos doadores, seguindo critérios de qualidade para aprovar ou reprovar os itens.
+                    Pessoa ligada diretamente a ONG, seu objetivo é garantir que apenas materiais de bom estado cheguem à ONG. Seu tempo no aplicativo envolve seu cadastro na plataforma, análise das fotos e descrições enviadas pelos doadores e a criação de kits de materiais. Por fim, o voluntário deve definir se aquele material está apto para ficar disponível na plataforma.
                   </p>
 
                   <div className="border-t border-[var(--pastel-roxo-borda)] my-2" />
@@ -161,7 +161,7 @@ function Inicio() {
                   </h4>
 
                   <p className="body-pequeno text-justify">
-                    É necessário ter recebido um <strong>link</strong> do coordenador de processos onde já vinculado com uma ONG podera fazer o seu cadastro e atuar na triagem dos materiais.
+                    Sua forma de ingressar na plataforma é através da sua participação direta na ONG física, onde o Coordenador de Processos irá compartilhar um <strong>link</strong> de acesso.
                   </p>
                 </article>
 
@@ -193,7 +193,7 @@ function Inicio() {
                   </h3>
 
                   <p className="body-pequeno text-justify">
-                    Usuário vinculado a uma ONG, responsável por gerenciar operações da plataforma, como pontos de coleta e entrega, validação das primeiras triagens dos voluntários e acompanhamento do impacto social.
+                    É um usuário responsável pelo cadastro de uma ONG. Seu papel inclui gerar links de cadastro para voluntários, averiguação das avaliações realizadas por voluntários da triagem iniciantes e o monitoramento do impacto social do projeto por meio de relatórios de doações e beneficiários.
                   </p>
 
                   <div className="border-t border-[var(--pastel-verde-borda)] my-2" />
@@ -203,7 +203,7 @@ function Inicio() {
                   </h4>
 
                   <p className="body-pequeno text-justify">
-                    Esse tipo é atribuído apenas a usuários vinculados a uma ONG, não podendo ser selecionado diretamente na plataforma.
+                    Esse tipo é atribuído apenas após finalizar o cadastro de uma ONG, não podendo ser selecionado diretamente na plataforma.
                   </p>
                 </article>
             </div>
