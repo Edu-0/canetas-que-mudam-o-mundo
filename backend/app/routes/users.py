@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, UploadFile,File, Form
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
 from app.schemas import user as s
 from app.core.security import gerar_hash_senha
 from app.core.deps_auth import VerificarPermissao, get_current_user
@@ -12,7 +12,9 @@ from sqlalchemy.exc import IntegrityError
 from app.services.firebase_storage import FirebaseStorageService
 from app.services.user_service import anonimizar_responsavel
 from datetime import date, datetime
-
+import logging
+from app.core.deps_auth import VerificarPermissao, get_current_user
+from app.core.enums import TipoUsuario
 
 
 router = APIRouter(prefix="/usuario", tags=["usuario"])
@@ -61,8 +63,7 @@ def criar_usuario_base(dados:s.criarUsuario, db:SessionDep):
 
     try:
         db.add(usuario)
-        db.commit()
-        db.refresh(usuario)
+        db.flush()
 
         funcao = m.UsuarioFuncao(
             usuario_id = usuario.id,
@@ -150,28 +151,33 @@ def criar_usuario_responsavel(
     dados:s.criarUsuarioResponsavel, 
     db:SessionDep,
     permissao = Depends(VerificarPermissao("usuario_responsavel:criar"))):
-
-    usuario = m.UsuarioResponsavel(
-        responsavel_id = usuario_id,
-        qtd_familiares = dados.qtd_familiares,
-        auxilio = dados.auxilio,
-        concordou_termos = dados.concordou_termos,
-        ativo = True
-    )
-
-    db.add(usuario)
-    db.commit()
-    db.refresh(usuario)
-
-    funcao = m.UsuarioFuncao(
-            usuario_id = usuario.id,
-            tipo_usuario = TipoUsuario.RESPONSAVEL_BENEFICIARIO
+    try:
+        usuario = m.UsuarioResponsavel(
+            responsavel_id = usuario_id,
+            qtd_familiares = dados.qtd_familiares,
+            auxilio = dados.auxilio,
+            concordou_termos = dados.concordou_termos,
+            ativo = True
         )
 
-    db.add(funcao)
-    db.commit()
-    db.refresh(usuario)
-    return usuario
+        db.add(usuario)
+        db.flush()
+
+        funcao = m.UsuarioFuncao(
+                usuario_id = usuario.id,
+                tipo_usuario = TipoUsuario.RESPONSAVEL_BENEFICIARIO
+            )
+
+        db.add(funcao)
+        db.commit()
+        db.refresh(usuario)
+        return usuario
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Erro interno ao cadastrar responsável: {str(e)}"
+        )
 
 @router.put("/{perfil_id}/responsavel", response_model=s.respostaUsuarioResponsavel)
 def atualizar_usuario_responsavel(perfil_id, 
@@ -184,9 +190,13 @@ def atualizar_usuario_responsavel(perfil_id,
     for key, value in dados.model_dump(exclude_unset=True).items():
         setattr(perfil, key, value)
     perfil.usuario.data_edicao_conta = datetime.now()
-    db.commit()
-    db.refresh(perfil)
-    return perfil
+    try:
+        db.commit()
+        db.refresh(perfil)
+        return perfil
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Erro ao atualizar.")
 
 @router.post("/{responsavel_id}/documentacao", response_model=s.cadastrarDocumento)
 def upload_documento_responsavel(
@@ -215,11 +225,11 @@ def upload_documento_responsavel(
             FirebaseStorageService.delete_file(url)
         except Exception as erro_firebase:
             logging.error(f"ALERTA: Arquivo órfão criado no Firebase na url {url}. Erro: {erro_firebase}")
-        
-    raise HTTPException(
-        status_code=400, 
-        detail="Erro ao registrar documento no banco de dados. O arquivo enviado foi descartado por segurança."
-    )
+        raise HTTPException(  
+        status_code=500,
+        detail="Erro ao registrar documento."
+        )    
+    return documentacao
 
 @router.get("/{responsavel_id}/documentacao", response_model=List[s.cadastrarDocumento])
 def buscar_documentos_responsavel(
@@ -246,15 +256,18 @@ def deletar_documento_usuario(
         raise HTTPException(status_code=404, detail="Documento não encontrado.")
 
     try:
+        db.delete(documentacao)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Erro ao remover registro do banco.")    
+
+    try:
         FirebaseStorageService.delete_file(documentacao.caminho_arquivo)
     except Exception as e:
-        raise HTTPException(
-            status_code=400, 
-            detail=f"Erro ao excluir o arquivo no servidor: {str(e)}"
-        )
+        logging.error(f"Erro ao excluir o arquivo no servidor: {str(e)}")
 
-    db.delete(documentacao)
-    db.commit()
+    
     return {"mensagem": "Documento excluído com sucesso."}
 
 
@@ -289,11 +302,25 @@ def cadastrar_familia_responsavel(
         )
         familiares.append(novo_familiar)
 
-    db.add_all(familiares)
-    db.commit()
-    for familiar in familiares:
-        db.refresh(familiar)
-    return familiares
+    try:
+        db.add_all(familiares)
+        db.commit()
+        for familiar in familiares:
+            db.refresh(familiar)
+        return familiares
+    except IntegrityError as e:
+        db.rollback()
+        mensagem_detalhada = str(e.orig)
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Erro de integridade. Detalhes: {mensagem_detalhada}"
+        )
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500, 
+            detail= f"Erro interno ao cadastrar familiares. Causa: {str(e)}"
+        )
 
 @router.put("/{familia_id}/familia-responsavel", response_model=s.respostaFamiliaResponsavel)
 def atualizar_familia_responsavel(
@@ -307,13 +334,18 @@ def atualizar_familia_responsavel(
     for key, value in dados.model_dump(exclude_unset=True).items():
         setattr(familiar, key, value)
     familiar.perfil.usuario.data_edicao_conta = datetime.now()
-    db.commit()
-    db.refresh(familiar)
-    return familiar
+    try:
+        db.commit()
+        db.refresh(familiar)
+        return familiar
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Erro ao atualizar.")
+
 
 @router.post("/familia/{familiar_id}/documentacao", response_model = s.cadastrarDocumento)
 def upload_documento_familiar(
-    familiar_id, 
+    familiar_id,
     db:SessionDep,
     tipo_documento:str = Form(...),
     file: UploadFile = File(...),
@@ -321,75 +353,80 @@ def upload_documento_familiar(
     ):
 
     url = FirebaseStorageService.upload_file(file)
-
     documentacao = m.DocumentoFamilia(
+
         familiar_id = familiar_id,
+
         tipo_documento = tipo_documento,
+
         nome_original = file.filename,
+
         caminho_arquivo = url
     )
     try:
         db.add(documentacao)
         db.commit()
         db.refresh(documentacao)
+
     except Exception as e:
         db.rollback()
         try:
             FirebaseStorageService.delete_file(url)
         except Exception as erro_firebase:
             logging.error(f"ALERTA: Arquivo órfão criado no Firebase na url {url}. Erro: {erro_firebase}")
-
         raise HTTPException(
-            status_code=400, 
+            status_code=400,
             detail="Erro ao registrar documento no banco de dados. O arquivo enviado foi descartado por segurança."
         )
+    return documentacao
 
 @router.get("/familia/{familiar_id}/documentacao", response_model=List[s.cadastrarDocumento])
 def buscar_documentos_familiar(
-    familiar_id: int, 
+    familiar_id: int,
     db: SessionDep,
     permissao = Depends(VerificarPermissao("documento_familia:listar"))
 ):
     documentos = db.query(m.DocumentoFamilia).filter(m.DocumentoFamilia.familiar_id == familiar_id).all()
-    
     if not documentos:
         raise HTTPException(status_code=404, detail="Nenhum documento encontrado para este familiar.")
-        
     return documentos
 
 @router.delete("/familia/{familiar_id}")
 def deletar_familiar(
-    familiar_id, 
-    db:SessionDep, 
+    familiar_id,
+    db:SessionDep,
     permissao = Depends(VerificarPermissao("familia_responsavel:deletar"))):
     familiar = db.get(m.FamiliaResponsavel,familiar_id)
+
     if not familiar:
         raise HTTPException(status_code=404, detail="Familiar não encontrado.")
+    
     db.delete(familiar)
     db.commit()
     return {"mensagem": "Familiar excluído com sucesso."}
 
 @router.delete("/familia/documentacao/{documento_id}")
 def deletar_documento_familiar(
-    documento_id: int, 
+    documento_id: int,
     db: SessionDep,
     permissao = Depends(VerificarPermissao("documento_familia:deletar"))
 ):
     documentacao = db.get(m.DocumentoFamilia, documento_id)
-    
+
     if not documentacao:
         raise HTTPException(status_code=404, detail="Documento não encontrado.")
-
     try:
         FirebaseStorageService.delete_file(documentacao.caminho_arquivo)
+
     except Exception as e:
         raise HTTPException(
-            status_code=400, 
+            status_code=400,
             detail=f"Erro ao excluir o arquivo no servidor: {str(e)}"
         )
-
+    
     db.delete(documentacao)
     db.commit()
+
     return {"mensagem": "Documento excluído com sucesso."}
 
 
@@ -415,6 +452,7 @@ def salvar_resultado_triagem(
     db.add(funcao)
     db.commit()
     db.refresh(funcao)
+    return funcao
 
 
 """ Funções de Usuário """
@@ -427,30 +465,38 @@ def atualizar_usuario_funcao(usuario_id: int,
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuário não encontrado.")
 
-    db.query(m.UsuarioFuncao).filter(
-        m.UsuarioFuncao.usuario_id == usuario_id
-    ).delete()
+    try:
+        db.query(m.UsuarioFuncao).filter(
+            m.UsuarioFuncao.usuario_id == usuario_id
+        ).delete()
 
-    funcao_usuario = []
+        funcao_usuario = []
 
-    tipos = set(dados.tipo_usuario)
-    tipos.add(TipoUsuario.GENERICO)
+        tipos = set(dados.tipo_usuario)
+        tipos.add(TipoUsuario.GENERICO)
 
-    for tipo in tipos:
-        nova_funcao = m.UsuarioFuncao(
-            usuario_id=usuario_id,
-            tipo_usuario=tipo
+        for tipo in tipos:
+            nova_funcao = m.UsuarioFuncao(
+                usuario_id=usuario_id,
+                tipo_usuario=tipo
+            )
+            db.add(nova_funcao)
+            funcao_usuario.append(nova_funcao)
+
+        usuario.data_edicao_conta = datetime.now()
+        db.commit()
+
+        for f in funcao_usuario:
+            db.refresh(f)
+
+        return funcao_usuario
+    
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Erro interno ao atualizar funções: {str(e)}"
         )
-        db.add(nova_funcao)
-        funcao_usuario.append(nova_funcao)
-
-    usuario.data_edicao_conta = datetime.now()
-    db.commit()
-
-    for f in funcao_usuario:
-        db.refresh(f)
-
-    return funcao_usuario
 
 @router.delete("/{usuario_id}/funcao/{tipo_funcao}")
 def deletar_funcao_usuario(
