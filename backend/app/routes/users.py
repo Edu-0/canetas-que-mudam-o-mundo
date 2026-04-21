@@ -190,9 +190,13 @@ def atualizar_usuario_responsavel(perfil_id,
     for key, value in dados.model_dump(exclude_unset=True).items():
         setattr(perfil, key, value)
     perfil.usuario.data_edicao_conta = datetime.now()
-    db.commit()
-    db.refresh(perfil)
-    return perfil
+    try:
+        db.commit()
+        db.refresh(perfil)
+        return perfil
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Erro ao atualizar.")
 
 @router.post("/{responsavel_id}/documentacao", response_model=s.cadastrarDocumento)
 def upload_documento_responsavel(
@@ -330,31 +334,99 @@ def atualizar_familia_responsavel(
     for key, value in dados.model_dump(exclude_unset=True).items():
         setattr(familiar, key, value)
     familiar.perfil.usuario.data_edicao_conta = datetime.now()
-    db.commit()
-    db.refresh(familiar)
-    return familiar
-
-@router.put("/{documento_id}/documento", response_model=s.respostaDocumento)
-def atualizar_documento(documento_id, dados:s.atualizarDocumento, db:SessionDep):
-    documento = db.get(m.DocumentoUsuario, documento_id)
-    if not documento:
-        raise HTTPException(status_code=404, detail="Documento não encontrado.")
-
     try:
-        db.delete(documento)
         db.commit()
+        db.refresh(familiar)
+        return familiar
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail="Erro ao remover registro do banco.")
+        raise HTTPException(status_code=500, detail="Erro ao atualizar.")
+
+
+@router.post("/familia/{familiar_id}/documentacao", response_model = s.cadastrarDocumento)
+def upload_documento_familiar(
+    familiar_id,
+    db:SessionDep,
+    tipo_documento:str = Form(...),
+    file: UploadFile = File(...),
+    permissao = Depends(VerificarPermissao("documento_familia:criar"))
+    ):
+
+    url = FirebaseStorageService.upload_file(file)
+    documentacao = m.DocumentoFamilia(
+
+        familiar_id = familiar_id,
+
+        tipo_documento = tipo_documento,
+
+        nome_original = file.filename,
+
+        caminho_arquivo = url
+    )
     try:
-        FirebaseStorageService.delete_file(documento.caminho_arquivo)
+        db.add(documentacao)
+        db.commit()
+        db.refresh(documentacao)
+
+    except Exception as e:
+        db.rollback()
+        try:
+            FirebaseStorageService.delete_file(url)
+        except Exception as erro_firebase:
+            logging.error(f"ALERTA: Arquivo órfão criado no Firebase na url {url}. Erro: {erro_firebase}")
+        raise HTTPException(
+            status_code=400,
+            detail="Erro ao registrar documento no banco de dados. O arquivo enviado foi descartado por segurança."
+        )
+    return documentacao
+
+@router.get("/familia/{familiar_id}/documentacao", response_model=List[s.cadastrarDocumento])
+def buscar_documentos_familiar(
+    familiar_id: int,
+    db: SessionDep,
+    permissao = Depends(VerificarPermissao("documento_familia:listar"))
+):
+    documentos = db.query(m.DocumentoFamilia).filter(m.DocumentoFamilia.familiar_id == familiar_id).all()
+    if not documentos:
+        raise HTTPException(status_code=404, detail="Nenhum documento encontrado para este familiar.")
+    return documentos
+
+@router.delete("/familia/{familiar_id}")
+def deletar_familiar(
+    familiar_id,
+    db:SessionDep,
+    permissao = Depends(VerificarPermissao("familia_responsavel:deletar"))):
+    familiar = db.get(m.FamiliaResponsavel,familiar_id)
+
+    if not familiar:
+        raise HTTPException(status_code=404, detail="Familiar não encontrado.")
+    
+    db.delete(familiar)
+    db.commit()
+    return {"mensagem": "Familiar excluído com sucesso."}
+
+@router.delete("/familia/documentacao/{documento_id}")
+def deletar_documento_familiar(
+    documento_id: int,
+    db: SessionDep,
+    permissao = Depends(VerificarPermissao("documento_familia:deletar"))
+):
+    documentacao = db.get(m.DocumentoFamilia, documento_id)
+
+    if not documentacao:
+        raise HTTPException(status_code=404, detail="Documento não encontrado.")
+    try:
+        FirebaseStorageService.delete_file(documentacao.caminho_arquivo)
+
     except Exception as e:
         raise HTTPException(
-            status_code=400, 
+            status_code=400,
             detail=f"Erro ao excluir o arquivo no servidor: {str(e)}"
         )
-
     
+    db.delete(documentacao)
+    db.commit()
+
     return {"mensagem": "Documento excluído com sucesso."}
 
 
