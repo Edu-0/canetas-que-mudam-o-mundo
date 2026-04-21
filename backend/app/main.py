@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import inspect
 
-from app.routes import auth, demo_files, users
+from app.routes import auth, demo_files, password, users
 from app.database.connection import engine  
 
 from app.models.user import Base
@@ -76,4 +76,5 @@ app.add_middleware(
 
 app.include_router(users.router)
 app.include_router(auth.router)
+app.include_router(password.router)
 app.include_router(demo_files.router)
