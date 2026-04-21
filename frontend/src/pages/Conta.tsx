@@ -303,17 +303,17 @@ function Conta() {
               </p>
 
               {/* botões para os tipos de cadastros */}
-              <div className="flex flex-col md:flex-row gap-4 w-full">
+              <div className="flex flex-col md:flex-row gap-4 w-full h-auto">
                 <div className="flex-1">
-                  <Botao aoClicar={() => selecionarTipo("Doador")} variante={estaComoDoador ? "tipo-selecionado" : "confirmar"} aria-label="Botão para selecionar tipo de usuário Doador">Doador</Botao>
+                  <Botao aoClicar={() => selecionarTipo("Doador")} variante={estaComoDoador ? "tipo-selecionado" : "confirmar"} aria-label="Botão para selecionar tipo de usuário Doador" className="h-full">Doador</Botao>
                 </div>
 
                 <div className="flex-1">
-                  <Botao aoClicar={() => selecionarTipo("Voluntário da triagem")} variante={estaComoVoluntario ? "tipo-selecionado" : "confirmar"} aria-label="Botão para selecionar tipo de usuário Voluntário da triagem">Voluntário da triagem</Botao>
+                  <Botao aoClicar={() => selecionarTipo("Voluntário da triagem")} variante={estaComoVoluntario ? "tipo-selecionado" : "confirmar"} aria-label="Botão para selecionar tipo de usuário Voluntário da triagem" className="h-full">Voluntário da triagem</Botao>
                 </div>
 
                 <div className="flex-1">
-                  <Botao aoClicar={() => selecionarTipo("Responsável pelo beneficiário")} variante={estaComoResponsavel ? "tipo-selecionado" : "confirmar"} aria-label="Botão para selecionar tipo de usuário Responsável pelo beneficiário">Responsável pelo beneficiário</Botao>
+                  <Botao aoClicar={() => selecionarTipo("Responsável pelo beneficiário")} variante={estaComoResponsavel ? "tipo-selecionado" : "confirmar"} aria-label="Botão para selecionar tipo de usuário Responsável pelo beneficiário" className="h-full">Responsável pelo beneficiário</Botao>
 
                   {estaComoResponsavel && (
                     <div className="mt-5 flex justify-end">

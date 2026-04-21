@@ -9,9 +9,10 @@ type PropriedadesBotao = {
   tipo?: "button" | "submit";
   desabilitado?: boolean;
   navegacao?: string; // navegação ou botão
+  className?: string; // classes adicionais
 };
 
-export default function Botao({children, ativo = false, aoClicar, variante = "padrao", tipo = "button", desabilitado = false, navegacao}: PropriedadesBotao) {
+export default function Botao({children, ativo = false, aoClicar, variante = "padrao", tipo = "button", desabilitado = false, navegacao, className}: PropriedadesBotao) {
   
   let estilo = "btn-padrao";
 
@@ -28,7 +29,7 @@ export default function Botao({children, ativo = false, aoClicar, variante = "pa
     estilo = "btn-ativado";
   }
 
-  const classe = `btn-base ${estilo} focus-acessivel w-full ${desabilitado ? "cursor-not-allowed opacity-50" : "hover:brightness-95"}`;
+  const classe = `btn-base ${estilo} focus-acessivel w-full ${desabilitado ? "cursor-not-allowed opacity-50" : "hover:brightness-95"} ${className || ""}`;
 
   // navergar
   if (navegacao) {  
