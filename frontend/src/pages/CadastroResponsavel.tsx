@@ -9,6 +9,7 @@ import { criarUsuarioResponsavel, obterPerfil } from "../services/usuarioService
 import { BeneficiosUsuario, TipoBeneficio, useUsuario } from "../context/UserContext";
 import icon_check from "../assets/icon_check.png";
 import api from "../services/api";
+import type { AxiosError } from "axios";
 
 function CadastroResponsavel() {
   
@@ -170,6 +171,18 @@ function CadastroResponsavel() {
 
     } catch (error) {
         console.error(error);
+        const erroAxios = error as AxiosError<{ detail?: string }>;
+        const detalhe = erroAxios.response?.data?.detail;
+
+        if (erroAxios.response?.status === 401) {
+          if (typeof detalhe === "string" && detalhe.includes("permissão necessária")) {
+            setMensagem("Seu perfil não tem permissão para concluir este cadastro.");
+          } else {
+            setMensagem("Sua sessão expirou ou está inválida. Faça login novamente.");
+          }
+          return;
+        }
+
         setMensagem("Erro ao cadastrar responsável.");
     } finally {
         setCarregando(false);
