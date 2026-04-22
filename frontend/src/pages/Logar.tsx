@@ -4,7 +4,10 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import api from "../services/api";
 import logo from "../assets/logo.svg";
-import { TipoUsuario, useUsuario } from "../context/UserContext";
+import { mapearTipo, useUsuario } from "../context/UserContext";
+import Toast from "../components/Toast";
+import Botao from "../components/Botao";
+import { solicitarRedefinicaoSenha } from "../services/usuarioService";
 
 function Logar() {
   const { definirUsuario } = useUsuario();
@@ -12,6 +15,9 @@ function Logar() {
   const [senha, setSenha] = useState("");
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState("");
+  const [mensagem, setMensagem] = useState("");
+  const [tipoMensagem, setTipoMensagem] = useState<"sucesso" | "erro">("sucesso");
+
   const navigate = useNavigate();
 
   const handleEntrar = async (e: React.FormEvent) => {
@@ -62,18 +68,24 @@ function Logar() {
     setErro("");
   };
 
-  
-  const tiposValidos: TipoUsuario[] = ["Genérico", "Coordenador de Processos", "Responsável pelo beneficiário", "Doador", "Voluntário da triagem"];
-
-  // RETRABALHAR ESSA FUNÇÃO PARA O MAPEAR TIPO FICAR CENTRALIZADO EM UM ÚNICO LUGAR, POIS VOU USAR ESSA LÓGICA DE MAPEAR VÁRIAS VEZES NO FRONTEND (CONTA, CADASTRO, ETC)
-  function mapearTipo(tipo?: string): TipoUsuario {
-    if (tiposValidos.includes(tipo as TipoUsuario)) {
-      return tipo as TipoUsuario;
+  const handleEsqueciSenha = async () => {
+    if (!email) {
+      setMensagem("Digite seu email para recuperar a senha.");
+      setTipoMensagem("erro");
+      return;
     }
 
-    return "Genérico";
-  }
-  
+    try {
+      await solicitarRedefinicaoSenha(email);
+
+      setMensagem("Se o email estiver cadastrado, você receberá as instruções para redefinir a senha.");
+      setTipoMensagem("sucesso");
+
+    } catch {
+      setMensagem("Erro ao solicitar recuperação de senha.");
+      setTipoMensagem("erro");
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--base-5)]">
@@ -83,9 +95,11 @@ function Logar() {
       {/* body */}
       <main className="flex-1 flex items-center justify-center py-6 sm:py-8 md:py-12 px-3 sm:px-4 md:px-6 mt-16 sm:mt-20 md:mt-24">
         <div className="w-full max-w-md sm:max-w-lg md:max-w-2xl">
+          <Toast mensagem={mensagem} tipo={tipoMensagem} />
+
          {/* título e logo da caneta */}
            <div className="flex items-center justify-center gap-3 sm:gap-4 flex-wrap text-center mb-6 sm:mb-8">
-            <img src={logo} alt="Logo" className="h-12 sm:h-16 md:h-20 flex-shrink-0" />
+            <img src={logo} alt="Logo Canetas que Mudam o Mundo" className="h-12 sm:h-16 md:h-20 flex-shrink-0" />
                  
             <h1 className="header-medio text-xl sm:text-2xl md:text-3xl leading-tight">
               Canetas que Mudam o Mundo
@@ -93,7 +107,7 @@ function Logar() {
         </div>
 
           {/* Caixa de Login */}
-          <div className="bg-white rounded-lg shadow-lg p-5 sm:p-8 md:p-12">
+          <div className="rounded-lg p-5 sm:p-8 md:p-12 bg-[var(--primario-5)] shadow-[2px_10px_40px_rgba(0,0,0,0.1)]">
             <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-center mb-6 sm:mb-8">LOGIN</h2>
 
             {/* Mensagem de erro */}
@@ -107,10 +121,11 @@ function Logar() {
               {/* Email */}
               <div>
                 <label htmlFor="email" className="block font-semibold mb-2 text-sm sm:text-base">
-                  Email: <span className="text-red-500">*</span>
+                  Email: <span className="text-[var(--cor-resposta-obrigatoria)]">*</span>
                 </label>
                 <input
                   type="email"
+                  autoComplete="email"
                   id="email"
                   placeholder="Digite aqui o seu email"
                   value={email}
@@ -124,10 +139,11 @@ function Logar() {
               {/* Senha */}
               <div>
                 <label htmlFor="senha" className="block font-semibold mb-2 text-sm sm:text-base">
-                  Senha: <span className="text-red-500">*</span>
+                  Senha: <span className="text-[var(--cor-resposta-obrigatoria)]">*</span>
                 </label>
                 <input
                   type="password"
+                  autoComplete="current-password"
                   id="senha"
                   placeholder="Digite aqui a sua senha"
                   value={senha}
@@ -141,37 +157,38 @@ function Logar() {
               {/* Links de ajuda */}
               <div className="space-y-2 text-xs sm:text-sm">
                 <p>
-                  <span className="text-gray-700">Esqueceu a sua senha? </span>
-                  <a href="#" className="text-orange-500 font-semibold hover:underline">
+                  <span className="text-black">Esqueceu a sua senha? </span>
+                  <button type="button" onClick={handleEsqueciSenha} className="text-[var(--cor-resposta-obrigatoria)] font-semibold hover:underline focus-acessivel">
                     Clique aqui
-                  </a>
+                  </button>
                 </p>
                 <p>
-                  <span className="text-gray-700">Ainda não tem um cadastro? </span>
-                  <a href="/cadastro" className="text-orange-500 font-semibold hover:underline">
+                  <span className="text-black">Ainda não tem um cadastro? </span>
+                  <a href="/cadastro" className="text-[var(--cor-resposta-obrigatoria)] font-semibold hover:underline">
                     Clique aqui
                   </a>
                 </p>
               </div>
 
               {/* Botões */}
-              <div className="flex gap-3 sm:gap-6 justify-center mt-6 sm:mt-8 flex-wrap">
-                <button
-                  type="button"
-                  onClick={handleCancelar}
-                  className="px-6 sm:px-8 py-2 bg-red-300 text-black font-semibold rounded-md hover:bg-red-400 transition-colors disabled:opacity-50 text-sm sm:text-base"
-                  disabled={carregando}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-6 sm:px-8 py-2 bg-green-300 text-black font-semibold rounded-md hover:bg-green-400 transition-colors disabled:opacity-50 text-sm sm:text-base"
-                  disabled={carregando}
-                >
-                  {carregando ? "Entrando..." : "Entrar"}
-                </button>
+              <div className="flex flex-col md:flex-row gap-4 mt-4">
+                <div className="flex-1">
+                  <Botao variante="cancelar" aoClicar={handleCancelar}>
+                    Cancelar
+                  </Botao>
+                </div>
+
+                <div className="flex-1">
+                  <Botao
+                    variante="confirmar"
+                    tipo="submit"
+                    desabilitado={carregando}
+                  >
+                    {carregando ? "Entrando..." : "Entrar"}
+                  </Botao>
+                </div>
               </div>
+
             </form>
           </div>
         </div>

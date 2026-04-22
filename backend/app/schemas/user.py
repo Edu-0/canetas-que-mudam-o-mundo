@@ -48,9 +48,11 @@ class criarUsuario(usuarioBase):
         return senha
 
 class criarUsuarioResponsavel(BaseModel):
-    qtd_familiares : int = Field(default=0, ge = 0)
+    qtd_familiares: int = Field(default=0, ge=0)
+    renda_familiar: float
+    bens_familiares: str
     auxilio: BeneficiosUsuario = BeneficiosUsuario.NENHUM
-    concordou_termos: bool 
+    concordou_termos: bool
     
     @field_validator('concordou_termos')
     @classmethod

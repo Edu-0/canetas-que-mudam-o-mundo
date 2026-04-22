@@ -19,6 +19,8 @@ type Familiar = {
   bens: string;
   documentos: File[];
 };
+import { atualizarTiposUsuario, DadosUsuario, obterPerfil } from "../services/usuarioService";
+import { mapearTipo, TipoUsuario, useUsuario } from "../context/UserContext";
 
 function CadastroBeneficiario() {
   const navigate = useNavigate();

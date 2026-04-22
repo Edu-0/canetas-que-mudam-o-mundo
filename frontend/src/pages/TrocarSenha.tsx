@@ -116,10 +116,26 @@ function TrocarSenha() {
                   setErroModal(erro);
                 }}
 
-                aoCancelar={() => tentarSair("/conta")} // Perguntar para o Lucas para onde mandar se Cancelar a troca
+                aoCancelar={() => tentarSair("/Logar")} // Perguntar para o Lucas para onde mandar se Cancelar a troca
 
                 aoEnviar={async (senha) => {
-                  await redefinirSenha(token, senha);
+                  try {
+                    await redefinirSenha(token, senha);
+
+                    setAlterou(false);
+                    setMensagem("Redefinição de senha salva com sucesso!");
+                    setTipoMensagem("sucesso");
+
+                    setTimeout(() => {
+                      setMensagem("");
+                      navigate("/Logar");
+                    }, 2000);
+
+                  } catch (error: any) {
+                    setErroModal({
+                      mensagem: error.response?.data?.detail || "Erro ao redefinir senha"
+                    });
+                  }
 
                   setAlterou(false);
                   setMensagem("Redefinição de senha salva com sucesso!");
@@ -127,7 +143,7 @@ function TrocarSenha() {
 
                   setTimeout(() => {
                     setMensagem("");
-                    navigate("/conta"); // Perguntar para o Lucas para onde mandar quando estiver pronto
+                    navigate("/Logar");
                   }, 2000);
                 }}
               />

@@ -38,7 +38,7 @@ export type AtualizarUsuarioEnvio = { // (PUT envio)
   senha?: string;
 };
 
-export type DadosBeneficiario = {
+export type DadosResponsavel = {
   qtd_familiares: number;
   auxilio: string; // "NENHUM", "BOLSA_FAMILIA" etc
   concordou_termos: boolean;
@@ -56,21 +56,20 @@ export async function criarUsuario(dados: CriarUsuarioEnvio): Promise<DadosUsuar
   const response = await api.post<DadosUsuario>("/usuario/generico", dados); 
   return response.data;
 }
-export async function criarUsuarioBeneficiario(usuario_id: number, dados: DadosBeneficiario) {
-  const response = await api.post(`/usuario/${usuario_id}/beneficiario`, dados);
+export async function criarUsuarioBeneficiario(usuario_id: number, dados: DadosResponsavel) {
+  const response = await api.post(`/usuario/${usuario_id}/responsavel`, dados);
   return response.data;
 }
 
 // Criar familiar para beneficiário
 export async function criarFamiliar(responsavel_id: number, dados: DadosFamilia[]) {
-  const response = await api.post(`/usuario/${responsavel_id}/familia-beneficiario`, dados);
+  const response = await api.post(`/usuario/${responsavel_id}/familia-responsavel`, dados);
   return response.data;
 }
-// quando chamar depois usar criarFamiliar(id, [familiar1, familiar2])
 
 // Obter perfil do usuário
-export async function obterUsuario(id: number) {
-  const response = await api.get(`/usuario/${id}`);
+export async function obterPerfil() {
+  const response = await api.get("/usuario/perfil/me");
   return response.data;
 }
 
@@ -88,14 +87,14 @@ export async function atualizarTiposUsuario(id: number, tipos: string[]) {
   return response.data;
 }
 
-// Pedir para mudar a senha
+// Pedir redefinição da senha
 export async function solicitarRedefinicaoSenha(email: string) {
-  return api.post("/usuarios/solicitar-redefinicao-senha", { email });
+  return api.post("/password/recuperar-senha", { email });
 }
 
-// mudar a senha
+// Redefinir senha
 export async function redefinirSenha(token: string, senha: string) {
-  return api.post("/usuarios/redefinir-senha", {
+  return api.post("/password/redefinir-senha", {
     token,
     nova_senha: senha,
   });

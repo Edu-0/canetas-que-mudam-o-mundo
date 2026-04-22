@@ -82,7 +82,7 @@ function FormCadastroBase(props: Props) {
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [mostrarConfirmarSenha, setMostrarConfirmarSenha] = useState(false);
 
-  // const [setEmailConfirmado] para ver sobre a confirmacao do email no futuro
+  const [enviandoEmail, setEnviandoEmail] = useState(false);
 
   const requisitosSenha = verificarRequisitosSenha(senha);
   const primeiraRenderizacao = useRef(true);
@@ -325,18 +325,36 @@ function FormCadastroBase(props: Props) {
       {erros.email && tocados.email && <p id="erro-email" aria-live="polite" className="text-[var(--cor-resposta-errada)] text-sm">{erros.email}</p>}
 
       {modo === "edicao" && (
-        <Botao variante="editar" tipo="button"    
+        <Botao
+          variante="editar"
+          tipo="button"
+          desabilitado={enviandoEmail}
           aoClicar={async () => {
-            try {
-              await solicitarRedefinicaoSenha(email); 
-
-              props.aoMensagemSucessoSenha?.("Enviamos um email para redefinir sua senha."); // faca ser uma mensagem no Toast SUCESSO
-            
-            } catch {
-              aoErro?.({mensagem: "Erro ao enviar email para redefinir a sua senha."}); // faca ser uma mensagem no Toast ERRO
+            if (!email) {
+              aoErro?.({ mensagem: "Email não informado." });
+              return;
             }
-          }} 
-        >Redefinir senha</Botao> // aoClicar={./conta}
+
+            setEnviandoEmail(true);
+
+            try {
+              await solicitarRedefinicaoSenha(email);
+
+              props.aoMensagemSucessoSenha?.(
+                "Se o email estiver cadastrado, você receberá as instruções para redefinir a senha."
+              );
+
+            } catch {
+              aoErro?.({
+                mensagem: "Erro ao enviar email para redefinir a senha.",
+              });
+            } finally {
+              setEnviandoEmail(false);
+            }
+          }}
+        >
+          {enviandoEmail ? "Enviando..." : "Redefinir senha"}
+        </Botao>
       )}
 
       {deveMostrarSenha && (
