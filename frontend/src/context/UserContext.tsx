@@ -81,6 +81,8 @@ export function ProvedorUsuario({ children }: { children: ReactNode }) {
       localStorage.setItem("usuario", JSON.stringify(usuario));
     } else {
       localStorage.removeItem("usuario");
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("token_type");
     }
   }
 

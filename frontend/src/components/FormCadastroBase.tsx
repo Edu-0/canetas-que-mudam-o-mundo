@@ -6,6 +6,7 @@ import { verificarRequisitosSenha } from "../utils/validacoes";
 import olho_visivel from "../assets/icon_olho_visivel.png";
 import olho_bloqueado from "../assets/icon_olho_bloqueado.png";
 import { criarUsuario, atualizarUsuario, DadosUsuario, AtualizarUsuarioEnvio, solicitarRedefinicaoSenha } from "../services/usuarioService";
+import api from "../services/api";
 
 type PropsCadastro = {
   modo: "cadastro";
@@ -202,6 +203,15 @@ function FormCadastroBase(props: Props) {
           email,
           senha,
         });
+
+        // Após o cadastro, autentica automaticamente para habilitar rotas protegidas.
+        const loginResponse = await api.post("/auth/login", {
+          email,
+          senha,
+        });
+
+        localStorage.setItem("access_token", loginResponse.data.access_token);
+        localStorage.setItem("token_type", loginResponse.data.token_type);
 
         propsCadastro.aoEnviar(usuarioCadastrado); // envia para o Cadastro.tsx
 
