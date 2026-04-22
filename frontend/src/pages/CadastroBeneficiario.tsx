@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { IMaskInput } from "react-imask";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
@@ -15,6 +15,8 @@ function CadastroBeneficiario() {
 
   const [mensagem, setMensagem] = useState("");
   const [carregando, setCarregando] = useState(false);
+  const location = useLocation();
+  const dadosResponsavel = location.state?.dadosResponsavel;
 
   const [familiares, setFamiliares] = useState<Familiar[]>([
     {
@@ -22,16 +24,25 @@ function CadastroBeneficiario() {
       dataNascimento: "",
       cpf: "",
       parentesco: "",
-      cep: "",
-      telefone: "",
-      email: "",
       renda: "",
-      bens: "",
       documentos: [],
+      beneficiario: false, // sim ou não
     },
   ]);
 
-  function handleChange(index: number, e: any) {
+  type ChangeLikeEvent = {
+    target: {
+      name: string;
+      value: string;
+      type?: string;
+      files?: FileList | null;
+    };
+  };
+
+  function handleChange(
+    index: number,
+    e: React.ChangeEvent<HTMLInputElement> | ChangeLikeEvent
+  ) {
     const { name, value, type, files } = e.target;
     const novos = [...familiares];
 
@@ -58,10 +69,14 @@ function CadastroBeneficiario() {
         ...arquivosValidos,
       ];
 
-      e.target.value = "";
     } else {
       const campo = name as keyof Omit<Familiar, "documentos">;
-      novos[index][campo] = value as any;
+
+      if (campo === "beneficiario") {
+        novos[index].beneficiario = value === "true";
+      } else {
+        novos[index][campo] = value as Familiar[typeof campo];
+      }
     }
 
     setFamiliares(novos);
@@ -86,12 +101,9 @@ function CadastroBeneficiario() {
         dataNascimento: "",
         cpf: "",
         parentesco: "",
-        cep: "",
-        telefone: "",
-        email: "",
         renda: "",
-        bens: "",
         documentos: [],
+        beneficiario: false, // sim ou não
       },
     ]);
   }
@@ -104,7 +116,10 @@ function CadastroBeneficiario() {
     e.preventDefault();
 
     navigate("/confirmar-familiares", {
-      state: { familiares },
+      state: { 
+        familiares,
+        dadosResponsavel
+      },
     });
   }
 
@@ -213,51 +228,6 @@ function CadastroBeneficiario() {
 
                     </div>
 
-                    {/* Contato */}
-                    <div className="grid md:grid-cols-2 gap-6 mt-4">
-
-                      <Campo  label="CEP">
-                        <IMaskInput
-                          mask="00000-000"
-                          name="cep"
-                          value={familiar.cep}
-                          onAccept={(value) =>
-                            handleChange(index, {
-                              target: { name: "cep", value },
-                            })
-                          }
-                          className="input-padrao"
-                          required
-                        />
-                      </Campo>
-
-                      <Campo  label="Telefone">
-                        <IMaskInput
-                          mask="(00) 0000-0000"
-                          name="telefone"
-                          value={familiar.telefone}
-                          onAccept={(value) =>
-                            handleChange(index, {
-                              target: { name: "telefone", value },
-                            })
-                          }
-                          className="input-padrao"
-                          required
-                        />
-                      </Campo>
-
-                    </div>
-
-                    <Campo  label="Email">
-                      <input
-                        name="email"
-                        value={familiar.email}
-                        onChange={(e) => handleChange(index, e)}
-                        className="input-padrao mt-4"
-                        required
-                      />
-                    </Campo>
-
                     {/* Financeiro */}
                     <div className="grid md:grid-cols-2 gap-6 mt-4">
 
@@ -270,17 +240,52 @@ function CadastroBeneficiario() {
                           required
                         />
                       </Campo>
+                    </div>
 
-                      <Campo label="Bens">
-                        <input
-                          name="bens"
-                          value={familiar.bens}
-                          onChange={(e) => handleChange(index, e)}
-                          className="input-padrao"
-                          required
-                        />
-                      </Campo>
+                    {/* Beneficiário */}
+                    <div className="mt-4">
+                      <label className="text-sm font-medium block mb-2">
+                        É beneficiário?
+                      </label>
 
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={familiar.beneficiario}
+                          onClick={() => {
+                            const novos = [...familiares];
+                            novos[index].beneficiario = !novos[index].beneficiario;
+                            setFamiliares(novos);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              const novos = [...familiares];
+                              novos[index].beneficiario = !novos[index].beneficiario;
+                              setFamiliares(novos);
+                            }
+                          }}
+                          className={`relative inline-flex items-center w-14 h-7 rounded-full transition-colors
+                            ${familiar.beneficiario ? "bg-[var(--base-40)]" : "bg-gray-300"}
+                            focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2
+                          `}
+                        >
+                          <span
+                            className={`inline-block w-5 h-5 transform bg-white rounded-full transition-transform
+                              ${familiar.beneficiario ? "translate-x-7" : "translate-x-1"}
+                            `}
+                          />
+                        </button>
+
+                        <span
+                          className={`text-sm font-medium leading-none
+                            ${familiar.beneficiario ? "text-black" : "text-[var(--base-70)]"}
+                          `}
+                        >
+                          {familiar.beneficiario ? "Sim" : "Não"}
+                        </span>
+                      </div>
                     </div>
 
                     {/* Upload */}

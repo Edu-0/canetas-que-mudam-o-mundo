@@ -3,7 +3,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Botao from "../components/Botao";
 import Toast from "../components/Toast";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { criarFamiliar, obterPerfil } from "../services/usuarioService";
 import { useUsuario } from "../context/UserContext";
 import api from "../services/api";
@@ -19,12 +19,31 @@ function ConfirmarFamiliares() {
   const [carregando, setCarregando] = useState(false);
 
   const { usuario } = useUsuario();
+  const dadosResponsavel = location.state?.dadosResponsavel;
+  const [responsavelId, setResponsavelId] = useState<string | null>(null);
 
   function voltar() {
-    //retorna para a página conta
-    navigate("/conta", { state: { familiares } });
-    
+    //retorna para a página anterior.
+    navigate("/cadastro-beneficiario", {
+      state: {
+        dadosResponsavel
+      }
+    });
   }
+
+  useEffect(() => {
+    async function carregarPerfil() {
+      try {
+        const perfil = await obterPerfil();
+        setResponsavelId(perfil.perfil_responsavel?.id);
+      } catch (e) {
+        console.error(e);
+        setMensagem("Erro ao carregar perfil.");
+      }
+    }
+
+    carregarPerfil();
+  }, []);
 
   function formatarData(data: string) {
     const [dia, mes, ano] = data.split("/");
@@ -52,6 +71,8 @@ function ConfirmarFamiliares() {
         parentesco: f.parentesco,
         data_nascimento: formatarData(f.dataNascimento),
         renda: Number(f.renda),
+        documentos: f.documentos,
+        beneficiario: f.beneficiario
       }));
 
       const response = await criarFamiliar(responsavelId, familiaresFormatados);
@@ -122,11 +143,8 @@ function ConfirmarFamiliares() {
                   <Info label="Data de nascimento" valor={familiar.dataNascimento} />
                   <Info label="CPF" valor={familiar.cpf} />
                   <Info label="Parentesco" valor={familiar.parentesco} />
-                  <Info label="CEP" valor={familiar.cep} />
-                  <Info label="Telefone" valor={familiar.telefone} />
-                  <Info label="Email" valor={familiar.email} />
                   <Info label="Renda" valor={familiar.renda} />
-                  <Info label="Bens" valor={familiar.bens} />
+                  <Info label="Beneficiário" valor={familiar.beneficiario ? "Sim" : "Não"} />
 
                   <div className="col-span-1 md:col-span-2">
                     <p className="body-semibold-pequeno text-[var(--base-70)]">

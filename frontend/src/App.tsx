@@ -15,6 +15,7 @@ import Pontos from "./pages/Pontos";
 import EditarRendaFamiliares from "./pages/EditarRendaFamiliares";
 import TrocarSenha from "./pages/TrocarSenha";
 import ConfirmarFamiliares from "./pages/ConfirmarCadastroFamilia";
+import CadastroResponsavel from "./pages/CadastroResponsavel";
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
         <Route path="/cadastro" element={<Cadastro />} />
         <Route path="/conta" element={<Conta />} />
         <Route path="/conta/editar" element={<EditarConta />} />
+        <Route path="/conta/cadastro-responsavel" element={<CadastroResponsavel />} />
         <Route path="/conta/cadastro-beneficiario" element={<CadastroBeneficiario />} />
         <Route path="/doar" element={<Doar />} />
         <Route path="/conta/quiz-voluntario" element={<QuizVoluntario />} />
