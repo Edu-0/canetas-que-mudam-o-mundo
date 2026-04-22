@@ -49,8 +49,7 @@ class criarUsuario(usuarioBase):
 
 class criarUsuarioResponsavel(BaseModel):
     qtd_familiares: int = Field(default=0, ge=0)
-    renda_familiar: float
-    bens_familiares: str
+    renda: float
     auxilio: BeneficiosUsuario = BeneficiosUsuario.NENHUM
     concordou_termos: bool
     
@@ -97,6 +96,7 @@ class cadastrarFamiliaResponsavel(BaseModel):
     parentesco: str = Field(min_length=2, max_length=100)
     data_nascimento: date 
     renda: float = Field(default=0.0, ge=0)
+    beneficiario:bool = False
 
     @field_validator('renda')
     @classmethod
