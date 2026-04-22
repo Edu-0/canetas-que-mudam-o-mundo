@@ -28,6 +28,8 @@ class UsuarioResponsavel(Base):
     id = Column(Integer, primary_key= True)
     responsavel_id = Column(Integer, ForeignKey('usuario.id'), nullable = False, unique = True)
     qtd_familiares = Column(Integer, nullable= False)
+    renda = Column(Float,nullable= False)
+    bens_familiares = Column(Text, nullable=False)
     auxilio = Column(Enum(BeneficiosUsuario), default = BeneficiosUsuario.NENHUM, nullable= False)
     concordou_termos = Column(Boolean, default=False, nullable= False)
     data_preenchimento_termos = Column(DateTime, default=datetime.datetime.now)
