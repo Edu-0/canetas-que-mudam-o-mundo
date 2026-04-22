@@ -95,10 +95,7 @@ function Inicio() {
               <div className="text-center body-semibold-medio mb-8">
                 <div className="flex flex-wrap justify-center gap-x-1">
                   <span className="border-b-4 border-[var(--base-40)] rounded-sm pb-1">
-                    Conheça os tipos de
-                  </span>
-                  <span className="border-b-4 border-[var(--base-40)] rounded-sm pb-1">
-                    usuários
+                    Conheça os tipos de usuários
                   </span>
                 </div>
               </div>
