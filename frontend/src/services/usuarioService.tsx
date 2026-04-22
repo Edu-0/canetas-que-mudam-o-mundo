@@ -63,7 +63,7 @@ export async function criarUsuario(dados: CriarUsuarioEnvio): Promise<DadosUsuar
 export async function criarUsuarioResponsavel(usuario_id: number, dados: DadosResponsavel) {
   const response = await api.post(`/usuario/${usuario_id}/responsavel`, {
     ...dados,
-    auxilio: BeneficiosUsuario[dados.auxilio],
+    // auxilio: BeneficiosUsuario[dados.auxilio],
   });
   return response.data;
 }
