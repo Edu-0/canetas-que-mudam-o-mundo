@@ -82,47 +82,49 @@ function Carrossel({ images, speed = 0.3 }: CarrosselProps) {
         </div>
 
 
-        <div className="w-full overflow-hidden rounded-xl shadow-[2px_8px_25px_rgba(0,0,0,0.08)] my-6 px-1">
-          <div className="w-full rounded-xl px-2 py-3 sm:px-3 bg-[var(--base-15)] border border-[rgba(0,0,0,0.04)] flex items-center">
-            {/* carrossel */}
-            <div
-              className="relative w-full overflow-hidden rounded-xl px-2 sm:px-4"
-              role="region"
-              aria-label="Carrossel de imagens"
-              tabIndex={0}
-              onKeyDown={handleKeyDown}
-            >
-
-              {/* botão pause */}
-              <button
-                onClick={() => setPaused(!paused)}
-                aria-label={paused ? "Iniciar carrossel" : "Pausar carrossel"}
-                className="absolute bottom-3 right-3 z-20 bg-[var(--base-40)] hover:bg-[var(--base-70)] text-black hover:text-white p-2 rounded-md focus-acessivel shadow-md"
-              >
-                {paused ? (
-                  <img src={icon_play} alt="Reproduzir carrossel" className="w-5 h-5" />
-                ) : (
-                  <img src={icon_pausa} alt="Pausar carrossel" className="w-5 h-5" />
-                )}
-              </button>
-
-              {/* trilho */}
+        <div className="px-1">
+          <div className="w-full overflow-hidden rounded-xl shadow-[2px_8px_25px_rgba(0,0,0,0.08)] my-6">
+            <div className="w-full rounded-xl px-2 py-3 sm:px-3 bg-[var(--base-15)] border border-[rgba(0,0,0,0.04)] flex items-center">
+              {/* carrossel */}
               <div
-                ref={trackRef}
-                className="flex gap-4"
+                className="relative w-full overflow-hidden rounded-xl px-2 sm:px-4"
+                role="region"
+                aria-label="Carrossel de imagens"
+                tabIndex={0}
+                onKeyDown={handleKeyDown}
               >
-                {extendedImages.map((image, idx) => (
-                  <div
-                    key={`${image.id}-${idx}`}
-                    className="flex-shrink-0 w-[85%] sm:w-[65%] md:w-[45%] lg:w-[30%] xl:w-[22%]"
-                  >
-                    <img
-                      src={image.url}
-                      alt={image.alt}
-                      className="w-full aspect-[4/3] object-cover rounded-lg"
-                    />
-                  </div>
-                ))}
+
+                {/* botão pause */}
+                <button
+                  onClick={() => setPaused(!paused)}
+                  aria-label={paused ? "Iniciar carrossel" : "Pausar carrossel"}
+                  className="absolute bottom-3 right-3 z-20 bg-[var(--base-40)] hover:bg-[var(--base-70)] text-black hover:text-white p-2 rounded-md focus-acessivel shadow-md"
+                >
+                  {paused ? (
+                    <img src={icon_play} alt="Reproduzir carrossel" className="w-5 h-5" />
+                  ) : (
+                    <img src={icon_pausa} alt="Pausar carrossel" className="w-5 h-5" />
+                  )}
+                </button>
+
+                {/* trilho */}
+                <div
+                  ref={trackRef}
+                  className="flex gap-4"
+                >
+                  {extendedImages.map((image, idx) => (
+                    <div
+                      key={`${image.id}-${idx}`}
+                      className="flex-shrink-0 w-[85%] sm:w-[65%] md:w-[45%] lg:w-[30%] xl:w-[22%]"
+                    >
+                      <img
+                        src={image.url}
+                        alt={image.alt}
+                        className="w-full aspect-[4/3] object-cover rounded-lg"
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

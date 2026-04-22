@@ -1,4 +1,5 @@
 import api from "./api";
+import { BeneficiosUsuario, type TipoBeneficio } from "../context/UserContext";
 
 export type DadosUsuario = { // (GET retorno)
   id: number;
@@ -40,7 +41,7 @@ export type AtualizarUsuarioEnvio = { // (PUT envio)
 
 export type DadosResponsavel = {
   qtd_familiares: number;
-  auxilio: string; // "NENHUM", "BOLSA_FAMILIA" etc
+  auxilio: TipoBeneficio; // chave do benefício no frontend
   concordou_termos: boolean;
   renda: number;
 };
@@ -60,7 +61,10 @@ export async function criarUsuario(dados: CriarUsuarioEnvio): Promise<DadosUsuar
   return response.data;
 }
 export async function criarUsuarioResponsavel(usuario_id: number, dados: DadosResponsavel) {
-  const response = await api.post(`/usuario/${usuario_id}/responsavel`, dados);
+  const response = await api.post(`/usuario/${usuario_id}/responsavel`, {
+    ...dados,
+    auxilio: BeneficiosUsuario[dados.auxilio],
+  });
   return response.data;
 }
 
