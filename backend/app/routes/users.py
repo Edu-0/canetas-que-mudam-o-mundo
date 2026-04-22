@@ -452,7 +452,12 @@ def salvar_resultado_triagem(
     db.add(funcao)
     db.commit()
     db.refresh(funcao)
-    return funcao
+    return {
+        "id": funcao.id,
+        "usuario_id": dados.usuario_id,
+        "pontuacao_total": dados.pontuacao_total,
+        "status": "aprovado"
+    }
 
 
 """ Funções de Usuário """
