@@ -155,6 +155,7 @@ def criar_usuario_responsavel(
         usuario = m.UsuarioResponsavel(
             responsavel_id = usuario_id,
             qtd_familiares = dados.qtd_familiares,
+            renda = dados.renda,
             auxilio = dados.auxilio,
             concordou_termos = dados.concordou_termos,
             ativo = True
@@ -164,7 +165,7 @@ def criar_usuario_responsavel(
         db.flush()
 
         funcao = m.UsuarioFuncao(
-                usuario_id = usuario.id,
+                usuario_id = usuario_id,
                 tipo_usuario = TipoUsuario.RESPONSAVEL_BENEFICIARIO
             )
 
@@ -298,6 +299,7 @@ def cadastrar_familia_responsavel(
             parentesco = membro.parentesco,
             data_nascimento = membro.data_nascimento,
             renda = membro.renda,
+            beneficiario=membro.beneficiario,
             ativo = True
         )
         familiares.append(novo_familiar)
