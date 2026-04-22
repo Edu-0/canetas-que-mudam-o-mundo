@@ -23,8 +23,7 @@ function CadastroResponsavel() {
   const [formData, setFormData] = useState({
     renda: "",
     quantidadeMembros: "",
-    bensFamiliares: "",
-    auxilio: "NENHUM" as TipoBeneficio,
+    auxilio: "Nenhum" as TipoBeneficio,
     documentos: null as File | null,
   });
 
@@ -162,7 +161,7 @@ function CadastroResponsavel() {
         setMensagem("Cadastro do responsável realizado!");
 
         setTimeout(() => {
-        navigate("/cadastro-beneficiario", { // próxima etapa
+        navigate("/conta/cadastro-beneficiario", { // próxima etapa
           state: {
             dadosResponsavel: formData
           }
