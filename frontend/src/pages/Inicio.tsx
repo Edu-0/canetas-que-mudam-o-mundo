@@ -34,40 +34,38 @@ function Inicio() {
             </div>
           </section>
 
-          <section aria-labelledby="sobre-projeto" className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 mb-12">
+          <section aria-labelledby="sobre-projeto" className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 mb-8">
             <div className="flex items-center gap-3 mb-6">
             
-              <div className="w-2 h-8 bg-[var(--pastel-verde-borda)] rounded-full" />
-              <h2 id="sobre-projeto" className="body-semibold-medio text-gray-800">
+              <div className="w-2 h-8 bg-[var(--base-40)] rounded-full" />
+              <h2 id="sobre-projeto" className="body-semibold-medio text-black">
                 Sobre o projeto:
               </h2>
             </div>
 
             <div className="space-y-6 text-justify">
-              <p className="body-pequeno text-gray-700 leading-relaxed">
+              <p className="body-pequeno text-black leading-relaxed">
                 Atualmente, crianças e jovens em situações de vulnerabilidade não conseguem ter seus momentos de{" "}
-                <span className="text-[var(--pastel-verde-borda)] font-semibold">estudos com qualidade</span>, 
+                <strong className="font-extrabold inline-block border-b-2 border-[var(--base-40)] pb-0.3 rounded-sm">estudos com qualidade</strong>, 
                 pois não possuem os materiais adequados e em boa qualidade.
               </p>
 
-              <p className="body-pequeno text-gray-700 leading-relaxed">
+              <p className="body-pequeno text-black leading-relaxed">
                 Somos um projeto na qual foi desenvolvido com a finalidade atender essa comunidade{" "}
-                <span className="text-[var(--pastel-verde-borda)] font-semibold">infanto juvenil </span> 
+                <strong className="font-extrabold inline-block border-b-2 border-[var(--base-40)] pb-0.3 rounded-sm"> infanto juvenil </strong>{" "}
                 mais necessitada, com o propósito de democratizar o acesso a materiais escolares de qualidade.
               </p>
 
             
-              <div className="bg-[var(--primario-5)] p-5 rounded-lg border-l-4 border-[var(--pastel-verde-borda)] my-6">
-                <p className="body-pequeno text-gray-800 italic">
-                  O projeto tem como objetivo se tornar um {" "}
-                  <span className="font-bold">intermediador</span> entre pessoas voluntárias, que querem fazer o bem para alguém em situação de carência, e voluntários que desejam realizar a entrega desses materiais para instituições e famílias mais necessitadas.
-                </p>
-              </div>
+              <p className="body-pequeno text-black">
+                O projeto tem como objetivo se tornar um {" "}
+                <strong className="font-extrabold inline-block border-b-2 border-[var(--base-40)] pb-0.3 rounded-sm">intermediador</strong>{" "} entre pessoas voluntárias, que querem fazer o bem para alguém em situação de carência, e voluntários que desejam realizar a entrega desses materiais para instituições e famílias mais necessitadas.
+              </p>
 
-              <p className="body-pequeno text-gray-700 leading-relaxed">
+              <p className="body-pequeno text-black leading-relaxed">
                 Por meio de doações, jovens podem receber{" "}
-                <span className="text-[var(--pastel-verde-borda)] font-semibold">diversos materiais escolares </span> 
-                como lápis, borracha, caderno, estojo, mochila e entre outros.
+                <strong className="font-extrabold inline-block border-b-2 border-[var(--base-40)] pb-0.3 rounded-sm">diversos materiais escolares </strong>{" "}
+                 como lápis, borracha, caderno, estojo, mochila e entre outros.
               </p>
             </div>
           </section>
@@ -94,9 +92,16 @@ function Inicio() {
           <section aria-labelledby="tipos-usuarios">
             {/* informações sobre os usuários */}
             <div>
-             <h2 className="body-semibold-medio text-center w-fit mx-auto mb-8 border-b-4 border-[var(--pastel-verde-borda)] pb-2 px-4">
-                Conheça os tipos de usuários
-              </h2>
+              <div className="text-center body-semibold-medio mb-8">
+                <div className="flex flex-wrap justify-center gap-x-1">
+                  <span className="border-b-4 border-[var(--base-40)] rounded-sm pb-1">
+                    Conheça os tipos de
+                  </span>
+                  <span className="border-b-4 border-[var(--base-40)] rounded-sm pb-1">
+                    usuários
+                  </span>
+                </div>
+              </div>
 
               <div className="grid md:grid-cols-2 gap-6">
 

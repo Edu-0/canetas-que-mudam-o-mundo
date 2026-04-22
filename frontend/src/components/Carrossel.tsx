@@ -68,7 +68,7 @@ function Carrossel({ images, speed = 0.3 }: CarrosselProps) {
   return (
     <div className="w-full flex flex-col items-center px-1">
 
-      <div className="flex items-center gap-4 w-full" role="region" aria-label="Galeria de imagens com navegação">
+      <div className="relative w-full flex items-center" role="region" aria-label="Galeria de imagens com navegação">
 
         <div className="flex items-center justify-center h-full">
           {/* botão esquerdo */}
@@ -82,8 +82,8 @@ function Carrossel({ images, speed = 0.3 }: CarrosselProps) {
         </div>
 
 
-        <div className="rounded-xl shadow-[2px_8px_25px_rgba(0,0,0,0.08)] my-6">
-          <div className="w-full rounded-xl p-3 bg-[var(--base-15)] border border-[rgba(0,0,0,0.04)] flex items-center">
+        <div className="w-full overflow-hidden rounded-xl shadow-[2px_8px_25px_rgba(0,0,0,0.08)] my-6 px-1">
+          <div className="w-full rounded-xl px-2 py-3 sm:px-3 bg-[var(--base-15)] border border-[rgba(0,0,0,0.04)] flex items-center">
             {/* carrossel */}
             <div
               className="relative w-full overflow-hidden rounded-xl px-2 sm:px-4"
@@ -114,7 +114,7 @@ function Carrossel({ images, speed = 0.3 }: CarrosselProps) {
                 {extendedImages.map((image, idx) => (
                   <div
                     key={`${image.id}-${idx}`}
-                    className="flex-shrink-0 w-[90%] sm:w-[70%] md:w-[45%] lg:w-[30%] xl:w-[22%] px-1"
+                    className="flex-shrink-0 w-[85%] sm:w-[65%] md:w-[45%] lg:w-[30%] xl:w-[22%]"
                   >
                     <img
                       src={image.url}

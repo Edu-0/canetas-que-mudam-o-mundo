@@ -6,21 +6,9 @@ import Footer from "../components/Footer";
 import Botao from "../components/Botao";
 import Toast from "../components/Toast";
 import logo from "../assets/logo.svg";
-
-type Familiar = {
-  nome: string;
-  dataNascimento: string;
-  cpf: string;
-  parentesco: string;
-  cep: string;
-  telefone: string;
-  email: string;
-  renda: string;
-  bens: string;
-  documentos: File[];
-};
-import { atualizarTiposUsuario, DadosUsuario, obterPerfil } from "../services/usuarioService";
+import { atualizarTiposUsuario, DadosUsuario, obterPerfil, criarFamiliar } from "../services/usuarioService";
 import { mapearTipo, TipoUsuario, useUsuario } from "../context/UserContext";
+import { Familiar } from "../types/Familiar";
 
 function CadastroBeneficiario() {
   const navigate = useNavigate();

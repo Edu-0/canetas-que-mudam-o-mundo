@@ -4,15 +4,21 @@ import Footer from "../components/Footer";
 import Botao from "../components/Botao";
 import Toast from "../components/Toast";
 import { useState } from "react";
+import { criarFamiliar, obterPerfil } from "../services/usuarioService";
+import { useUsuario } from "../context/UserContext";
+import api from "../services/api";
+import { Familiar } from "../types/Familiar";
 
 function ConfirmarFamiliares() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const familiares = location.state?.familiares || [];
+  const familiares = (location.state?.familiares || []) as Familiar[];
 
   const [mensagem, setMensagem] = useState("");
   const [carregando, setCarregando] = useState(false);
+
+  const { usuario } = useUsuario();
 
   function voltar() {
     //retorna para a página conta
@@ -20,21 +26,58 @@ function ConfirmarFamiliares() {
     
   }
 
+  function formatarData(data: string) {
+    const [dia, mes, ano] = data.split("/");
+    return `${ano}-${mes}-${dia}`;
+  }
+
   async function confirmarCadastro() {
     setCarregando(true);
 
     try {
-      console.log("Confirmando familiares:", familiares);
+      if (!usuario) {
+        throw new Error("Usuário não logado");
+      }
 
-   
+      const perfil = await obterPerfil();
+      const responsavelId = perfil.perfil_responsavel?.id;
+
+      if (!responsavelId) {
+        throw new Error("Usuário não é responsável");
+      }
+
+      const familiaresFormatados = familiares.map((f: Familiar) => ({
+        nome: f.nome,
+        cpf: f.cpf.replace(/\D/g, ""),
+        parentesco: f.parentesco,
+        data_nascimento: formatarData(f.dataNascimento),
+        renda: Number(f.renda),
+      }));
+
+      const response = await criarFamiliar(responsavelId, familiaresFormatados);
+
+      // upload documentos
+      for (let i = 0; i < response.length; i++) {
+        const familiarCriado = response[i];
+        const arquivos = familiares[i].documentos;
+
+        for (const file of arquivos) {
+          const formData = new FormData();
+          formData.append("tipo_documento", "OUTRO");
+          formData.append("file", file);
+
+          await api.post(
+            `/usuario/familia/${familiarCriado.id}/documentacao`,
+            formData
+          );
+        }
+      }
 
       setMensagem("Cadastro confirmado com sucesso!");
-
-      setTimeout(() => {
-        navigate("/conta");
-      }, 2000);
+      setTimeout(() => navigate("/conta"), 2000);
 
     } catch (error) {
+      console.error(error);
       setMensagem("Erro ao confirmar cadastro.");
     } finally {
       setCarregando(false);
@@ -63,7 +106,7 @@ function ConfirmarFamiliares() {
           {/* lista de familiares */}
           <div className="flex flex-col gap-6 items-center">
 
-            {familiares.map((familiar: any, index: number) => (
+            {familiares.map((familiar: Familiar, index: number) => (
               <div
                 key={index}
                 className="w-full max-w-4xl bg-[var(--primario-5)] border border-[var(--base-20)] rounded-lg p-6"
@@ -90,7 +133,9 @@ function ConfirmarFamiliares() {
                       Documento
                     </p>
                     <p className="body-pequeno text-[var(--base-80)]">
-                      {familiar.documentos?.name || "Nenhum arquivo enviado"}
+                      {familiar.documentos?.length > 0
+                        ? familiar.documentos.map((doc: File) => doc.name).join(", ")
+                        : "Nenhum arquivo enviado"}
                     </p>
                   </div>
 
