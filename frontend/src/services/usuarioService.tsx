@@ -87,14 +87,14 @@ export async function atualizarTiposUsuario(id: number, tipos: string[]) {
   return response.data;
 }
 
-// Pedir para mudar a senha
+// Pedir redefinição da senha
 export async function solicitarRedefinicaoSenha(email: string) {
-  return api.post("/usuario/solicitar-redefinicao-senha", { email });
+  return api.post("/password/recuperar-senha", { email });
 }
 
-// mudar a senha
+// Redefinir senha
 export async function redefinirSenha(token: string, senha: string) {
-  return api.post("/usuario/redefinir-senha", {
+  return api.post("/password/redefinir-senha", {
     token,
     nova_senha: senha,
   });
