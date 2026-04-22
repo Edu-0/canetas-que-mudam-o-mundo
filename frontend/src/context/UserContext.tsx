@@ -47,6 +47,15 @@ export function mapearTipo(tipo?: string): TipoUsuario {
   return "Genérico";
 }
 
+export const BeneficiosUsuario = {
+  BOLSA_FAMILIA: "Bolsa Família",
+  BPC: "Benefício de Prestação Continuada",
+  APOSENTADORIA: "Aposentadoria",
+  NENHUM: "Nenhum",
+} as const;
+
+export type TipoBeneficio = keyof typeof BeneficiosUsuario;
+
 // provider
 export function ProvedorUsuario({ children }: { children: ReactNode }) {
 

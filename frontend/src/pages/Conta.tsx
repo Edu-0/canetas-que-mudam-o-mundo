@@ -62,7 +62,7 @@ function Conta() {
       }
 
       if (tipoSelecionado === "Responsável pelo beneficiário") {
-        navigate("/conta/cadastro-beneficiario");
+        navigate("/conta/cadastro-responsavel");
         return;
       }
     }

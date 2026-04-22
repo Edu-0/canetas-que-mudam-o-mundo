@@ -42,6 +42,7 @@ export type DadosResponsavel = {
   qtd_familiares: number;
   auxilio: string; // "NENHUM", "BOLSA_FAMILIA" etc
   concordou_termos: boolean;
+  renda: number;
 };
 
 export type DadosFamilia = {
@@ -49,6 +50,8 @@ export type DadosFamilia = {
   parentesco: string;
   data_nascimento: string;
   renda: number;
+  beneficiario: boolean; // sim ou não
+  documentos: File[]; // array de arquivos para upload
 };
 
 // aqui defino que a função recebe os dados para criar o usuário (sem id e data_cadastro) e retorna os dados do usuário criado (com id e data_cadastro)
@@ -56,7 +59,7 @@ export async function criarUsuario(dados: CriarUsuarioEnvio): Promise<DadosUsuar
   const response = await api.post<DadosUsuario>("/usuario/generico", dados); 
   return response.data;
 }
-export async function criarUsuarioBeneficiario(usuario_id: number, dados: DadosResponsavel) {
+export async function criarUsuarioResponsavel(usuario_id: number, dados: DadosResponsavel) {
   const response = await api.post(`/usuario/${usuario_id}/responsavel`, dados);
   return response.data;
 }
