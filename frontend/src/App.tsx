@@ -25,7 +25,7 @@ function App() {
         <Route path="/cadastro" element={<Cadastro />} />
         <Route path="/conta" element={<Conta />} />
         <Route path="/conta/editar" element={<EditarConta />} />
-        <Route path="/conta/cadastro-familiar" element={<CadastroBeneficiario />} />
+        <Route path="/conta/cadastro-beneficiario" element={<CadastroBeneficiario />} />
         <Route path="/doar" element={<Doar />} />
         <Route path="/conta/quiz-voluntario" element={<QuizVoluntario />} />
         <Route path="/triagem" element={<Triagem />} />
