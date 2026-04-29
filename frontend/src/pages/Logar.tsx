@@ -8,6 +8,8 @@ import { mapearTipo, useUsuario } from "../context/UserContext";
 import Toast from "../components/Toast";
 import Botao from "../components/Botao";
 import { solicitarRedefinicaoSenha } from "../services/usuarioService";
+import olho_visivel from "../assets/icon_olho_visivel.png";
+import olho_bloqueado from "../assets/icon_olho_bloqueado.png";
 
 function Logar() {
   const { definirUsuario } = useUsuario();
@@ -17,6 +19,7 @@ function Logar() {
   const [erro, setErro] = useState("");
   const [mensagem, setMensagem] = useState("");
   const [tipoMensagem, setTipoMensagem] = useState<"sucesso" | "erro">("sucesso");
+  const [mostrarSenha, setMostrarSenha] = useState(false);
 
   const navigate = useNavigate();
 
@@ -141,17 +144,22 @@ function Logar() {
                 <label htmlFor="senha" className="block font-semibold mb-2 text-sm sm:text-base">
                   Senha: <span className="text-[var(--cor-resposta-obrigatoria)]">*</span>
                 </label>
-                <input
-                  type="password"
-                  autoComplete="current-password"
-                  id="senha"
-                  placeholder="Digite aqui a sua senha"
-                  value={senha}
-                  onChange={(e) => setSenha(e.target.value)}
-                  className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-400 text-sm sm:text-base"
-                  required
-                  disabled={carregando}
-                />
+                <div className="relative">
+                  <input
+                    type={mostrarSenha ? "text" : "password"}
+                    autoComplete="current-password"
+                    id="senha"
+                    placeholder="Digite aqui a sua senha"
+                    value={senha}
+                    onChange={(e) => setSenha(e.target.value)}
+                    className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-400 text-sm sm:text-base"
+                    required
+                    disabled={carregando}
+                  />
+                  <button type="button" onClick={() => setMostrarSenha(!mostrarSenha)} className="absolute right-3 top-1/2 -translate-y-1/2 focus-acessivel" aria-label={mostrarSenha ? "Ocultar senha" : "Mostrar senha"}>
+                    <img src={mostrarSenha ? olho_visivel : olho_bloqueado} alt={mostrarSenha ? "Ocultar senha" : "Mostrar senha"} className="w-5 h-5"/>
+                  </button>
+                </div>
               </div>
 
               {/* Links de ajuda */}
