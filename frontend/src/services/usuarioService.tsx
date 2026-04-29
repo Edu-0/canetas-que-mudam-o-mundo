@@ -60,12 +60,14 @@ export async function criarUsuario(dados: CriarUsuarioEnvio): Promise<DadosUsuar
   const response = await api.post<DadosUsuario>("/usuario/generico", dados); 
   return response.data;
 }
-export async function criarUsuarioResponsavel(usuario_id: number, dados: DadosResponsavel) {
-  const response = await api.post(`/usuario/${usuario_id}/responsavel`, {
-    ...dados,
-    // auxilio: BeneficiosUsuario[dados.auxilio],
-  });
-  return response.data;
+
+export async function criarUsuarioResponsavel(usuarioId: number, formData: FormData) {
+    const response = await api.post(`/usuario/${usuarioId}/responsavel`, formData, {
+        headers: {
+            "Content-Type": "multipart/form-data",
+        },
+    });
+    return response.data;
 }
 
 // Criar familiar para beneficiário

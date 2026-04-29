@@ -5,7 +5,7 @@ from app.core.deps_auth import VerificarPermissao, get_current_user
 from app.models import user as m
 from app.database.connection import SessionDep
 from typing import List
-from app.core.enums import TipoUsuario
+from app.core.enums import TipoUsuario, BeneficiosUsuario
 from fastapi import HTTPException
 from sqlalchemy.sql import func
 from sqlalchemy.exc import IntegrityError
@@ -15,6 +15,7 @@ from datetime import date, datetime
 import logging
 from app.core.deps_auth import VerificarPermissao, get_current_user
 from app.core.enums import TipoUsuario
+import json
 
 
 router = APIRouter(prefix="/usuario", tags=["usuario"])
@@ -147,37 +148,64 @@ def atualizar_usuario(
 
 @router.post("/{usuario_id}/responsavel", response_model=s.respostaUsuarioResponsavel)
 def criar_usuario_responsavel(
-    usuario_id:int, 
-    dados:s.criarUsuarioResponsavel, 
-    db:SessionDep,
-    permissao = Depends(VerificarPermissao("usuario_responsavel:criar"))):
+    usuario_id: int, 
+    db: SessionDep,
+    qtd_familiares: int = Form(...),
+    renda: float = Form(...),
+    auxilio:BeneficiosUsuario = Form(...),
+    concordou_termos: bool = Form(...),
+    tipo_documento: str = Form(...),
+    file: UploadFile = File(...),
+    permissao = Depends(VerificarPermissao("usuario_responsavel:criar"))
+):
+    url = None 
+    
     try:
         usuario = m.UsuarioResponsavel(
             responsavel_id = usuario_id,
-            qtd_familiares = dados.qtd_familiares,
-            renda = dados.renda,
-            auxilio = dados.auxilio,
-            concordou_termos = dados.concordou_termos,
+            qtd_familiares = qtd_familiares,
+            renda = renda,
+            auxilio = auxilio,
+            concordou_termos = concordou_termos,
             ativo = True
         )
 
         db.add(usuario)
-        db.flush()
+        db.flush() 
 
+        url = FirebaseStorageService.upload_file(file)
+
+        documentacao = m.DocumentoUsuario(
+            responsavel_id = usuario.id, 
+            tipo_documento = tipo_documento,
+            nome_original = file.filename,
+            caminho_arquivo = url
+        )
+
+        db.add(documentacao)
+        
         funcao = m.UsuarioFuncao(
-                usuario_id = usuario_id,
-                tipo_usuario = TipoUsuario.RESPONSAVEL_BENEFICIARIO
-            )
+            usuario_id = usuario_id,
+            tipo_usuario = TipoUsuario.RESPONSAVEL_BENEFICIARIO
+        )
 
         db.add(funcao)
+        
         db.commit()
         db.refresh(usuario)
         return usuario
+        
     except Exception as e:
-        db.rollback()
+        db.rollback() 
+        if url: 
+            try:
+                FirebaseStorageService.delete_file(url)
+            except Exception as erro_firebase:
+                logging.error(f"Erro ao apagar arquivo órfão no Firebase: {erro_firebase}")
+                
         raise HTTPException(
-            status_code=500, 
-            detail=f"Erro interno ao cadastrar responsável: {str(e)}"
+            status_code=400, 
+            detail=f"Erro ao cadastrar responsável: {str(e)}"
         )
 
 @router.put("/{perfil_id}/responsavel", response_model=s.respostaUsuarioResponsavel)
@@ -197,6 +225,7 @@ def atualizar_usuario_responsavel(perfil_id,
         return perfil
     except Exception as e:
         db.rollback()
+        
         raise HTTPException(status_code=500, detail="Erro ao atualizar.")
 
 @router.post("/{responsavel_id}/documentacao", response_model=s.cadastrarDocumento)
@@ -284,45 +313,79 @@ def get_familiares(
         raise HTTPException(status_code=404, detail="Não há familiares cadastrados.") 
     return familiares
 
+
 @router.post("/{responsavel_id}/familia-responsavel", response_model=List[s.respostaFamiliaResponsavel])
 def cadastrar_familia_responsavel(
-    responsavel_id, 
-    dados:List[s.cadastrarFamiliaResponsavel], 
-    db:SessionDep, 
-    permissao = Depends(VerificarPermissao("familia_responsavel:criar"))):
-    familiares = []
-    for membro in dados:
-        novo_familiar = m.FamiliaResponsavel(
-            responsavel_id = responsavel_id, #id do usuario na tab usuario_responsavel
-            nome = membro.nome,
-            cpf = membro.cpf,
-            parentesco = membro.parentesco,
-            data_nascimento = membro.data_nascimento,
-            renda = membro.renda,
-            beneficiario=membro.beneficiario,
-            ativo = True
-        )
-        familiares.append(novo_familiar)
+    responsavel_id: int, 
+    db: SessionDep, 
+    dados_familiares: str = Form(...), 
+    arquivos: List[UploadFile] = File([]),
+    permissao = Depends(VerificarPermissao("familia_responsavel:criar"))
+):
+    urls_geradas = [] 
 
     try:
+        try:
+            lista_dicts = json.loads(dados_familiares)
+            dados = [s.cadastrarFamiliaResponsavel(**item) for item in lista_dicts]
+        except Exception as e:
+            print("==== ERRO DE VALIDAÇÃO PYDANTIC ====")
+            print(e)
+            print("====================================")
+            raise ValueError(f"O formato dos dados dos familiares é inválido. Detalhe: {str(e)}")
+
+        familiares = []
+        for membro in dados:
+            novo_familiar = m.FamiliaResponsavel(
+                responsavel_id = responsavel_id, 
+                nome = membro.nome,
+                cpf = membro.cpf,
+                parentesco = membro.parentesco,
+                data_nascimento = membro.data_nascimento,
+                renda = membro.renda,
+                beneficiario = membro.beneficiario,
+                ativo = True
+            )
+            familiares.append(novo_familiar)
+
         db.add_all(familiares)
+        db.flush() 
+
+        documentos = []
+        for index, file in enumerate(arquivos):
+            if file and file.filename: 
+                url = FirebaseStorageService.upload_file(file)
+                urls_geradas.append(url)
+                
+                novo_doc = m.DocumentoFamilia(
+                    familiar_id = familiares[index].id, 
+                    tipo_documento = "COMPROVANTE", 
+                    nome_original = file.filename,
+                    caminho_arquivo = url
+                )
+                documentos.append(novo_doc)
+
+        db.add_all(documentos)
         db.commit()
+
         for familiar in familiares:
             db.refresh(familiar)
+            
         return familiares
-    except IntegrityError as e:
-        db.rollback()
-        mensagem_detalhada = str(e.orig)
-        raise HTTPException(
-            status_code=400, 
-            detail=f"Erro de integridade. Detalhes: {mensagem_detalhada}"
-        )
+
     except Exception as e:
         db.rollback()
-        raise HTTPException(
-            status_code=500, 
-            detail= f"Erro interno ao cadastrar familiares. Causa: {str(e)}"
-        )
+        
+        for url in urls_geradas:
+            try:
+                FirebaseStorageService.delete_file(url)
+            except Exception as erro_firebase:
+                logging.error(f"Erro ao deletar arquivo órfão: {erro_firebase}")
+                
+        if isinstance(e, IntegrityError):
+            raise HTTPException(status_code=400, detail=f"Erro de integridade no banco: {str(e.orig)}")
+            
+        raise HTTPException(status_code=400, detail=f"Erro ao cadastrar: {str(e)}")
 
 @router.put("/{familia_id}/familia-responsavel", response_model=s.respostaFamiliaResponsavel)
 def atualizar_familia_responsavel(

@@ -59,11 +59,13 @@ function ConfirmarFamiliares() {
       }
 
       const perfil = await obterPerfil();
-      const responsavelId = perfil.perfil_responsavel?.id;
+      const responsavelIdAtual = perfil.perfil_responsavel?.id;
 
-      if (!responsavelId) {
+      if (!responsavelIdAtual) {
         throw new Error("Usuário não é responsável");
       }
+
+      const formData = new FormData();
 
       const familiaresFormatados = familiares.map((f: Familiar) => ({
         nome: f.nome,
@@ -71,35 +73,31 @@ function ConfirmarFamiliares() {
         parentesco: f.parentesco,
         data_nascimento: formatarData(f.dataNascimento),
         renda: Number(f.renda),
-        documentos: f.documentos,
         beneficiario: f.beneficiario
       }));
 
-      const response = await criarFamiliar(responsavelId, familiaresFormatados);
+      formData.append("dados_familiares", JSON.stringify(familiaresFormatados));
 
-      // upload documentos
-      for (let i = 0; i < response.length; i++) {
-        const familiarCriado = response[i];
-        const arquivos = familiares[i].documentos;
-
-        for (const file of arquivos) {
-          const formData = new FormData();
-          formData.append("tipo_documento", "OUTRO");
-          formData.append("file", file);
-
-          await api.post(
-            `/usuario/familia/${familiarCriado.id}/documentacao`,
-            formData
-          );
+      familiares.forEach((f) => {
+        if (f.documentos && f.documentos.length > 0) {
+          formData.append("arquivos", f.documentos[0]); 
+        } else {
+          formData.append("arquivos", new Blob([""], { type: "application/octet-stream" }));
         }
-      }
+      });
+
+      await api.post(`usuario/${responsavelIdAtual}/familia-responsavel`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data"
+        }
+      });
 
       setMensagem("Cadastro confirmado com sucesso!");
       setTimeout(() => navigate("/conta"), 2000);
 
     } catch (error) {
       console.error(error);
-      setMensagem("Erro ao confirmar cadastro.");
+      setMensagem("Erro ao confirmar cadastro. Verifique os dados e tente novamente.");
     } finally {
       setCarregando(false);
     }
