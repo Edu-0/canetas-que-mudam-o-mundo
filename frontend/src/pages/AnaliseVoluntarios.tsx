@@ -2,7 +2,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import logo from "../assets/logo.svg";
 
-function Pontos() {
+function AnaliseVoluntarios() {
   return (
     <div className="min-h-screen flex flex-col bg-[var(--base-5)]">
       
@@ -28,7 +28,7 @@ function Pontos() {
             <div className="w-full max-w-4xl bg-[var(--primario-5)] shadow-[2px_10px_40px_rgba(0,0,0,0.1)] rounded-lg p-6">
 
               <h2 className="header-pequeno text-center mb-6">
-                PONTOS - Página em construção...
+                Análise dos Voluntários - Página em construção...
               </h2>
 
             </div>
@@ -41,4 +41,4 @@ function Pontos() {
     </div>
   );
 }
-export default Pontos;
+export default AnaliseVoluntarios;

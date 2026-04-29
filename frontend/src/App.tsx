@@ -11,11 +11,12 @@ import Triagem from "./pages/Triagem";
 import Pedido from "./pages/PedidoMaterial";
 import Relatorio from "./pages/Relatorio";
 import Auditoria from "./pages/AuditoriaVoluntario";
-import Pontos from "./pages/Pontos";
+import AnaliseVoluntarios from "./pages/AnaliseVoluntarios";
 import EditarRendaFamiliares from "./pages/EditarRendaFamiliares";
 import TrocarSenha from "./pages/TrocarSenha";
 import ConfirmarFamiliares from "./pages/ConfirmarCadastroFamilia";
 import CadastroResponsavel from "./pages/CadastroResponsavel";
+import MontarKits from "./pages/MontarKits";
 
 function App() {
   return (
@@ -34,10 +35,11 @@ function App() {
         <Route path="/pedido" element={<Pedido />} />
         <Route path="/relatorio" element={<Relatorio />} />
         <Route path="/auditoria" element={<Auditoria />} />
-        <Route path="/pontos" element={<Pontos />} />
+        <Route path="/analise_voluntarios" element={<AnaliseVoluntarios />} />
         <Route path="/conta/editar-renda-e-familiares" element={<EditarRendaFamiliares />} />
         <Route path="/trocar-senha" element={<TrocarSenha/>} />
         <Route path="/confirmar-familiares" element={<ConfirmarFamiliares />} />
+        <Route path="/montar_kits" element={<MontarKits />} />
       </Routes>
     </BrowserRouter>
   );

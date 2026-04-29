@@ -102,7 +102,9 @@ function Conta() {
   const dadosNormalizados = perfil
     ? normalizarUsuario(perfil)
     : usuario;
-
+  
+  const naoPodeAdicionarTipo = dadosNormalizados?.tipos?.includes("Coordenador de Processos") ||
+                               dadosNormalizados?.tipos?.includes("Voluntário da triagem");
   
   const tiposAtuais = dadosNormalizados?.tipos || [];
   const jaTemTipo = tipoSelecionado
@@ -256,10 +258,12 @@ function Conta() {
                     <Botao variante="editar" aria-label="Botão para editar conta" aoClicar={() => navigate("/conta/editar")}>Editar conta</Botao>
                   </div>
 
-                  <div className="flex-1">
-                    <Botao variante="cancelar" aria-label="Botão para excluir conta" aoClicar={() => setMostrarModal(true)}>Excluir conta</Botao>
-                  </div>
-  
+                  {!estaComoVoluntario && (
+                    <div className="flex-1">
+                      <Botao variante="cancelar" aria-label="Botão para excluir conta" aoClicar={() => setMostrarModal(true)}>Excluir conta</Botao>
+                    </div>
+                  )}
+
                   <div className="flex-1">
                     <Botao variante="sair" aria-label="Botão para sair da conta" aoClicar={sair}>Sair</Botao>
                   </div>
@@ -283,67 +287,71 @@ function Conta() {
                 </div>
               )}
 
-              {/* linha separadora */}
-              <div className="border-t border-[var(--primario-40)] my-6" />
+              {!naoPodeAdicionarTipo && (
+                <>
+                  {/* linha separadora */}
+                  <div className="border-t border-[var(--primario-40)] my-6" />
 
-              <h3 className="header-pequeno text-center mb-6">
-                Adicione o seu tipo de usuário
-              </h3>
+                  <h3 className="header-pequeno text-center mb-6">
+                    Adicione o seu tipo de usuário
+                  </h3>
 
-              <p className="body-pequeno text-center mb-6">
-                Com o/s tipo/s de usuário/s escolhidos, você poderá acessar as funcionalidades específicas de cada tipo de usuário!
-              </p>
+                  <p className="body-pequeno text-center mb-6">
+                    Com o/s tipo/s de usuário/s escolhidos, você poderá acessar as funcionalidades específicas de cada tipo de usuário!
+                  </p>
 
-              {/* botões para os tipos de cadastros */}
-              <div className="flex flex-col md:flex-row gap-4 w-full h-auto">
-                <div className="flex-1">
-                  <Botao aoClicar={() => selecionarTipo("Doador")} variante={estaComoDoador ? "tipo-selecionado" : "confirmar"} aria-label="Botão para selecionar tipo de usuário Doador" className="h-full">Doador</Botao>
-                </div>
-
-                <div className="flex-1">
-                  <Botao aoClicar={() => selecionarTipo("Voluntário da triagem")} variante={estaComoVoluntario ? "tipo-selecionado" : "confirmar"} aria-label="Botão para selecionar tipo de usuário Voluntário da triagem" className="h-full">Voluntário da triagem</Botao>
-                </div>
-
-                <div className="flex-1">
-                  <Botao aoClicar={() => selecionarTipo("Responsável pelo beneficiário")} variante={estaComoResponsavel ? "tipo-selecionado" : "confirmar"} aria-label="Botão para selecionar tipo de usuário Responsável pelo beneficiário" className="h-full">Responsável pelo beneficiário</Botao>
-
-                  {estaComoResponsavel && (
-                    <div className="mt-5 flex justify-end">
-                      <div className="w-auto text-sm px-1 py-0"> 
-                        <Botao
-                          aria-label="Botão para editar renda e familiares"
-                          aoClicar={() => navigate("/conta/editar-renda-e-familiares")}
-                          variante="editar"
-                        >
-                          Editar renda e familiares
-                        </Botao>
-                      </div>
+                  {/* botões para os tipos de cadastros */}
+                  <div className="flex flex-col md:flex-row gap-4 w-full h-auto">
+                    <div className="flex-1">
+                      <Botao aoClicar={() => selecionarTipo("Doador")} variante={estaComoDoador ? "tipo-selecionado" : "confirmar"} aria-label="Botão para selecionar tipo de usuário Doador" className="h-full">Doador</Botao>
                     </div>
-                  )}
-                </div>
 
-                <ModalConfirmacao
-                  aberto={modalTipo}
-                  titulo={jaTemTipo ? "Remover tipo de usuário" : "Adicionar tipo de usuário"}
-                  descricao={
-                    jaTemTipo
-                      ? `Você tem certeza que deseja deixar de ser um usuário ${tipoSelecionado}?
+                    <div className="flex-1">
+                      <Botao aoClicar={() => selecionarTipo("Voluntário da triagem")} variante={estaComoVoluntario ? "tipo-selecionado" : "confirmar"} aria-label="Botão para selecionar tipo de usuário Voluntário da triagem" className="h-full">Voluntário da triagem</Botao>
+                    </div>
+
+                    <div className="flex-1">
+                      <Botao aoClicar={() => selecionarTipo("Responsável pelo beneficiário")} variante={estaComoResponsavel ? "tipo-selecionado" : "confirmar"} aria-label="Botão para selecionar tipo de usuário Responsável pelo beneficiário" className="h-full">Responsável pelo beneficiário</Botao>
+
+                      {estaComoResponsavel && (
+                        <div className="mt-5 flex justify-end">
+                          <div className="w-auto text-sm px-1 py-0"> 
+                            <Botao
+                              aria-label="Botão para editar renda e familiares"
+                              aoClicar={() => navigate("/conta/editar-renda-e-familiares")}
+                              variante="editar"
+                            >
+                              Editar renda e familiares
+                            </Botao>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <ModalConfirmacao
+                      aberto={modalTipo}
+                      titulo={jaTemTipo ? "Remover tipo de usuário" : "Adicionar tipo de usuário"}
+                      descricao={
+                        jaTemTipo
+                          ? `Você tem certeza que deseja deixar de ser um usuário ${tipoSelecionado}?
+                          
+                            Você poderá adicionar este tipo novamente depois.`
+                          : `Você tem certeza que deseja se tornar um usuário ${tipoSelecionado}?
+
+                            Você poderá sair deste tipo depois.`
+                      }
+                      botaoCancelar="Cancelar"
+                      botaoConfirmar={jaTemTipo ? "Remover" : "Confirmar"} 
                       
-                        Você poderá adicionar este tipo novamente depois.`
-                      : `Você tem certeza que deseja se tornar um usuário ${tipoSelecionado}?
+                      varianteCancelar={jaTemTipo ? "confirmar" : "cancelar"}  
+                      varianteConfirmar={jaTemTipo ? "cancelar" : "confirmar"}
 
-                        Você poderá sair deste tipo depois.`
-                  }
-                  botaoCancelar="Cancelar"
-                  botaoConfirmar={jaTemTipo ? "Remover" : "Confirmar"} 
-                  
-                  varianteCancelar={jaTemTipo ? "confirmar" : "cancelar"}  
-                  varianteConfirmar={jaTemTipo ? "cancelar" : "confirmar"}
-
-                  onCancelar={() => setModalTipo(false)}
-                  onConfirmar={confirmarTipo}
-                />
-              </div>
+                      onCancelar={() => setModalTipo(false)}
+                      onConfirmar={confirmarTipo}
+                    />
+                  </div>
+                </>
+              )}
 
             </div>
           </div>
