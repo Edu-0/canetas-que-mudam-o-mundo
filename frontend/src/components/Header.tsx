@@ -35,7 +35,8 @@ function Header(){
     ],
 
     "Voluntário da triagem": [
-      { id: "triagem", texto: "Triagem", rota: "/triagem" }
+      { id: "triagem", texto: "Triagem", rota: "/triagem" },
+      { id: "montar_kits", texto: "Kits", rota: "/montar_kits" }
     ],
 
     "Responsável pelo beneficiário": [
@@ -44,7 +45,7 @@ function Header(){
 
     "Coordenador de Processos": [
       { id: "relatorio", texto: "Relatório", rota: "/relatorio" },
-      { id: "pontos", texto: "Pontos", rota: "/pontos" },
+      { id: "analise_voluntarios", texto: "Voluntários", rota: "/analise_voluntarios" },
       { id: "auditoria", texto: "Auditoria", rota: "/auditoria" }
     ]
   };
