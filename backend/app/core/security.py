@@ -11,6 +11,7 @@ PERMISSOES_POR_FUNCAO = {
         "usuario_triagem:atualizar",
         "usuario_responsavel:criar",
         "usuario_funcao:criar",
+        "documento_usuario:criar"
     },
     TipoUsuario.DOADOR: set(),
     TipoUsuario.TRIAGEM: {

@@ -54,10 +54,6 @@ function CadastroResponsavel() {
     }
   }
 
-  const opcoesBeneficio = Object.entries(BeneficiosUsuario).map(
-    ([value, label]) => ({ value, label })
-  );
-
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
     const { name, value } = e.target;
 
@@ -140,33 +136,36 @@ function CadastroResponsavel() {
     setCarregando(true);
 
     try {
-        await criarUsuarioResponsavel(usuario.id, {
-            qtd_familiares: Number(formData.quantidadeMembros),
-            renda: Number(formData.renda),
-            auxilio: formData.auxilio,
-            concordou_termos: aceitouTermos,
-        });
-
-        const perfilAtualizado = await obterPerfil();
-        const responsavelId = perfilAtualizado.perfil_responsavel?.id;
-
-        if (formData.documentos) {
-          const form = new FormData();
-          form.append("tipo_documento", "COMPROVANTE");
+       
+      const form = new FormData();
+      
+      form.append("qtd_familiares", formData.quantidadeMembros);
+      form.append("renda", formData.renda);
+      form.append("auxilio", formData.auxilio);
+      
+      form.append("concordou_termos", String(aceitouTermos)); 
+      
+      form.append("tipo_documento", "COMPROVANTE");
+      
+      if (formData.documentos) {
           form.append("file", formData.documentos);
+      }
 
-          await api.post(`/usuario/${responsavelId}/documentacao`, form);
-        }
-
-        setMensagem("Cadastro do responsável realizado!");
-
-        setTimeout(() => {
-        navigate("/conta/cadastro-beneficiario", { // próxima etapa
-          state: {
-            dadosResponsavel: formData
+      await api.post(`/usuario/${usuario.id}/responsavel`, form, {
+          headers: {
+              "Content-Type": "multipart/form-data"
           }
-        });
-        }, 1500);
+      });
+
+      setMensagem("Cadastro do responsável e envio de documentos realizados!");
+
+      setTimeout(() => {
+          navigate("/conta/cadastro-beneficiario", {
+              state: {
+                  dadosResponsavel: formData
+              }
+          });
+      }, 1500);
 
     } catch (error) {
         console.error(error);
@@ -271,7 +270,7 @@ function CadastroResponsavel() {
                         className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 border-gray-300 focus:ring-[var(--sucesso)]"
                     >
                         {Object.entries(BeneficiosUsuario).map(([key, label]) => (
-                        <option key={key} value={key}>
+                        <option key={key} value={label}>
                             {label}
                         </option>
                         ))}
@@ -315,7 +314,7 @@ function CadastroResponsavel() {
                 {/* Documentos */}
                 <div className="flex flex-col gap-2">
                   <label htmlFor="documentos" className="text-sm font-semibold">
-                    Anexe os documentos para comprovar todas as informações registradas <span className="text-[var(--cor-resposta-obrigatoria)]">*</span>
+                    Anexe os documentos para comprovar sua renda <span className="text-[var(--cor-resposta-obrigatoria)]">*</span>
                   </label>
                   <input
                     type="file"
