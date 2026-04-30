@@ -11,6 +11,7 @@ PERMISSOES_POR_FUNCAO = {
         "usuario_triagem:atualizar",
         "usuario_responsavel:criar",
         "usuario_funcao:criar",
+        "usuario_funcao:atualizar",
         "documento_usuario:criar"
     },
     TipoUsuario.DOADOR: set(),
@@ -18,6 +19,7 @@ PERMISSOES_POR_FUNCAO = {
         "usuario:atualizar",
         "usuario_responsavel:criar",
         "usuario_funcao:criar",
+        "usuario_funcao:atualizar",
         "usuario_funcao:deletar"
     },
     TipoUsuario.RESPONSAVEL_BENEFICIARIO: {
@@ -36,6 +38,7 @@ PERMISSOES_POR_FUNCAO = {
         "documento_familia:deletar",
         "documento_familia:listar",
         "usuario_funcao:criar",
+        "usuario_funcao:atualizar",
         "usuario_funcao:deletar"
     },
     TipoUsuario.COORDENADOR_PROCESSOS:{
