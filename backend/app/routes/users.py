@@ -530,22 +530,30 @@ def salvar_resultado_triagem(
 def atualizar_usuario_funcao(usuario_id: int, 
     dados: s.atualizarUsuarioFuncao, 
     db: SessionDep, 
-    permissao = Depends(VerificarPermissao("usuario_funcao:criar"))):
+    permissao = Depends(VerificarPermissao("usuario_funcao:atualizar"))):
     usuario = db.get(m.Usuario, usuario_id)
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuário não encontrado.")
-
+    
+    tipos_atuais = db.query(m.UsuarioFuncao).filter(
+            m.UsuarioFuncao.usuario_id == usuario_id
+        )
+    tipos_novos = dados.tipo_usuario 
+    tipos_removidos = set(tipos_atuais) - set(tipos_novos)
+    tipos_removidos = [tipo.tipo_usuario for tipo in tipos_removidos]
+    
     try:
         db.query(m.UsuarioFuncao).filter(
             m.UsuarioFuncao.usuario_id == usuario_id
         ).delete()
 
+        if TipoUsuario.RESPONSAVEL_BENEFICIARIO in tipos_removidos:
+            print("alo")
+            anonimizar_responsavel(usuario_id, db)
+
         funcao_usuario = []
 
-        tipos = set(dados.tipo_usuario)
-        tipos.add(TipoUsuario.GENERICO)
-
-        for tipo in tipos:
+        for tipo in tipos_novos:
             nova_funcao = m.UsuarioFuncao(
                 usuario_id=usuario_id,
                 tipo_usuario=tipo

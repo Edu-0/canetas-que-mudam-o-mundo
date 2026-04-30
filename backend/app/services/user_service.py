@@ -9,17 +9,18 @@ from app.core.enums import TipoUsuario
 
 
 def anonimizar_responsavel(usuario_id, db:SessionDep):
+    print("Entrou na anonimização")
     responsavel = db.query(m.UsuarioResponsavel).filter(m.UsuarioResponsavel.responsavel_id == usuario_id).first()
 
     if not responsavel:
         raise HTTPException(status_code=404, detail="Responsável não encontrado.")
-    
+        
     familiares = db.query(m.FamiliaResponsavel).filter(m.FamiliaResponsavel.responsavel_id == responsavel.id).all()
     
     for familiar in familiares:
         familiar.nome= f"Familiar #{familiar.id} desativado."
-        familiar.cpf =  ""
-        familiar.email = ""
+        familiar.cpf =  "00000000000"
+        familiar.email = f"anonimo{familiar.id}@deletado.com"
         familiar.data_edicao = datetime.now()
         familiar.ativo = False
         documentacao_familiar = db.query(m.DocumentoFamilia).filter(
@@ -49,15 +50,6 @@ def anonimizar_responsavel(usuario_id, db:SessionDep):
         db.delete(doc)
 
     responsavel.ativo = False
-
-    funcao = db.query(m.UsuarioFuncao).filter(m.UsuarioFuncao.usuario_id == usuario_id,m.UsuarioFuncao.tipo_usuario == TipoUsuario.RESPONSAVEL_BENEFICIARIO).first()
-    
-    if not funcao:
-        raise HTTPException(status_code=404, detail="Usuario não possui a função especificada.")
-    
-    db.delete(funcao)
-    
-    db.commit()
     return {"mensagem":"Reponsável e familiares excluídos com sucesso."}
     
 
