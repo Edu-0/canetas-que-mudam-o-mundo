@@ -55,6 +55,27 @@ export type DadosFamilia = {
   documentos: File[]; // array de arquivos para upload
 };
 
+export type CriarONGEnvio = {
+  nome: string;
+  cnpj: string;
+  cep?: string;
+  rua: string;
+  bairro: string;
+  cidade: string;
+  estado: string;
+  numero?: string;
+  complemento?: string;
+  telefone: string;
+  email: string;
+  diasFuncionamento: number[];
+  horarioInicio: string;
+  horarioFim: string;
+  sobre: string;
+  instagram?: string;
+  facebook?: string;
+  site?: string;
+};
+
 // aqui defino que a função recebe os dados para criar o usuário (sem id e data_cadastro) e retorna os dados do usuário criado (com id e data_cadastro)
 export async function criarUsuario(dados: CriarUsuarioEnvio): Promise<DadosUsuario> {
   const response = await api.post<DadosUsuario>("/usuario/generico", dados); 
@@ -107,4 +128,10 @@ export async function redefinirSenha(token: string, senha: string) {
     token,
     nova_senha: senha,
   });
+}
+
+// Criar ONG para usuário
+export async function criarONG(usuario_id: number, dados: CriarONGEnvio) {
+  const response = await api.post(`/usuario/${usuario_id}/ong`, dados);
+  return response.data;
 }
