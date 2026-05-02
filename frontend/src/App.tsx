@@ -17,6 +17,8 @@ import TrocarSenha from "./pages/TrocarSenha";
 import ConfirmarFamiliares from "./pages/ConfirmarCadastroFamilia";
 import CadastroResponsavel from "./pages/CadastroResponsavel";
 import MontarKits from "./pages/MontarKits";
+import CadastroONG from "./pages/CadastroONG";
+import LinkParaVoluntario from "./pages/LinkParaVoluntario";
 
 function App() {
   return (
@@ -40,6 +42,8 @@ function App() {
         <Route path="/trocar-senha" element={<TrocarSenha/>} />
         <Route path="/confirmar-familiares" element={<ConfirmarFamiliares />} />
         <Route path="/montar_kits" element={<MontarKits />} />
+        <Route path="/conta/cadastro_ong" element={<CadastroONG />} />
+        <Route path="/conta/link_para_voluntario" element={<LinkParaVoluntario />} />
       </Routes>
     </BrowserRouter>
   );

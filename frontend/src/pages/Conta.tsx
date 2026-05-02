@@ -51,13 +51,13 @@ function Conta() {
     novosTipos = [...new Set(novosTipos)];
 
     // tratamento especial antes de salvar
-    const tiposComConfirmacao = ["Voluntário da triagem", "Responsável pelo beneficiário"];
+    const tiposComConfirmacao = ["Coordenador de Processos", "Responsável pelo beneficiário"];
 
     if (!jaTemTipo && tiposComConfirmacao.includes(tipoSelecionado)) {
       setModalTipo(false);
 
-      if (tipoSelecionado === "Voluntário da triagem") {
-        navigate("/conta/quiz-voluntario");
+      if (tipoSelecionado === "Coordenador de Processos") {
+        navigate("/conta/cadastro_ong");
         return;
       }
 
@@ -111,6 +111,7 @@ function Conta() {
     ? tiposAtuais.includes(tipoSelecionado as TipoUsuario)
     : false;
   const estaComoDoador = dadosNormalizados?.tipos?.includes("Doador");
+  const estaComoCoordenador = dadosNormalizados?.tipos?.includes("Coordenador de Processos");
   const estaComoVoluntario = dadosNormalizados?.tipos?.includes("Voluntário da triagem");
   const estaComoResponsavel = dadosNormalizados?.tipos?.includes("Responsável pelo beneficiário");
 
@@ -122,7 +123,8 @@ function Conta() {
   function formatarData(data?: string) {
     if (!data) return null;
 
-    const d = new Date(data);
+    const [ano, mes, dia] = data.split("-").map(Number);
+    const d = new Date(ano, mes - 1, dia); // cria como data local
 
     return d.toLocaleDateString("pt-BR");
   }
@@ -307,7 +309,7 @@ function Conta() {
                     </div>
 
                     <div className="flex-1">
-                      <Botao aoClicar={() => selecionarTipo("Voluntário da triagem")} variante={estaComoVoluntario ? "tipo-selecionado" : "confirmar"} aria-label="Botão para selecionar tipo de usuário Voluntário da triagem" className="h-full">Voluntário da triagem</Botao>
+                      <Botao aoClicar={() => selecionarTipo("Coordenador de Processos")} variante={estaComoCoordenador ? "tipo-selecionado" : "confirmar"} aria-label="Botão para selecionar tipo de usuário Coordenador de Processos" className="h-full">Cadastro da ONG</Botao>
                     </div>
 
                     <div className="flex-1">
@@ -332,13 +334,28 @@ function Conta() {
                       aberto={modalTipo}
                       titulo={jaTemTipo ? "Remover tipo de usuário" : "Adicionar tipo de usuário"}
                       descricao={
-                        jaTemTipo
-                          ? `Você tem certeza que deseja deixar de ser um usuário ${tipoSelecionado}?
-                          
-                            Você poderá adicionar este tipo novamente depois.`
-                          : `Você tem certeza que deseja se tornar um usuário ${tipoSelecionado}?
+                        tipoSelecionado === "Coordenador de Processos"
+                          ? (
+                              jaTemTipo
+                                ? `Tem certeza que deseja deixar de ser um Coordenador de Processos?
 
-                            Você poderá sair deste tipo depois.`
+                                  Você perderá acesso ao cadastro da ONG e às funcionalidades relacionadas.
+
+                                  Você poderá adicionar este tipo novamente depois, se for cadastrar outra ONG.`
+                                : `Tem certeza que deseja Cadastrar uma ONG e assim se tornar um Coordenador de Processos?
+
+                                  Você será redirecionado para o cadastro da ONG para completar o processo.`
+                            )
+                          : (
+                            jaTemTipo
+                              ? `Você tem certeza que deseja deixar de ser um usuário ${tipoSelecionado}?
+                              
+                                Você poderá adicionar este tipo novamente depois.`
+                              : `Você tem certeza que deseja se tornar um usuário ${tipoSelecionado}?
+
+                                Você poderá sair deste tipo depois.`
+
+                          )
                       }
                       botaoCancelar="Cancelar"
                       botaoConfirmar={jaTemTipo ? "Remover" : "Confirmar"} 
