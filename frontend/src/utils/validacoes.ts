@@ -2,15 +2,46 @@ export function nomeCompletoValido(nome_completo: string) {
   return nome_completo.trim().split(" ").length >= 2;
 }
 
+function parseDataLocal(data: string): Date | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) return null;
+
+  const [anoTexto, mesTexto, diaTexto] = data.split("-");
+  const ano = Number(anoTexto);
+  const mes = Number(mesTexto);
+  const dia = Number(diaTexto);
+
+  if ([ano, mes, dia].some(Number.isNaN)) return null;
+
+  const dataLocal = new Date(ano, mes - 1, dia);
+
+  if (Number.isNaN(dataLocal.getTime())) return null;
+
+  // Garante que datas inválidas (ex.: 2026-02-31) não sejam normalizadas automaticamente.
+  if (
+    dataLocal.getFullYear() !== ano ||
+    dataLocal.getMonth() !== mes - 1 ||
+    dataLocal.getDate() !== dia
+  ) {
+    return null;
+  }
+
+  return dataLocal;
+}
+
 export function dataNaoFutura(data: string) {
-  const hoje = new Date();
-  const dataInput = new Date(data);
+  const dataInput = parseDataLocal(data);
+  if (!dataInput) return false;
+
+  const agora = new Date();
+  const hoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate()); // ignora a parte de horário para comparar apenas as datas
   return dataInput <= hoje;
 }
 
 export function idadeValida(data: string) {
+  const nascimento = parseDataLocal(data);
+  if (!nascimento) return false;
+
   const hoje = new Date();
-  const nascimento = new Date(data);
 
   let idade = hoje.getFullYear() - nascimento.getFullYear();
   const mes = hoje.getMonth() - nascimento.getMonth();
@@ -71,4 +102,104 @@ export function verificarRequisitosSenha(senha: string) { // pelo menos 8 caract
 
 export function senhasIguais(senha: string, confirmar: string) {
   return senha === confirmar;
+}
+
+export function nomeONGValido(nome: string) {
+  return nome.trim().length >= 3;
+}
+
+export function cnpjValido(cnpj: string) {
+  cnpj = cnpj.replace(/\D/g, "");
+
+  if (cnpj.length !== 14) return false;
+  if (/^(\d)\1+$/.test(cnpj)) return false;
+
+  let tamanho = cnpj.length - 2;
+  let numeros = cnpj.substring(0, tamanho);
+  let digitos = cnpj.substring(tamanho);
+
+  let soma = 0;
+  let pos = tamanho - 7;
+
+  for (let i = tamanho; i >= 1; i--) {
+    soma += Number(numeros.charAt(tamanho - i)) * pos--;
+    if (pos < 2) pos = 9;
+  }
+
+  let resultado = soma % 11 < 2 ? 0 : 11 - (soma % 11);
+  if (resultado !== Number(digitos.charAt(0))) return false;
+
+  tamanho = tamanho + 1;
+  numeros = cnpj.substring(0, tamanho);
+
+  soma = 0;
+  pos = tamanho - 7;
+
+  for (let i = tamanho; i >= 1; i--) {
+    soma += Number(numeros.charAt(tamanho - i)) * pos--;
+    if (pos < 2) pos = 9;
+  }
+
+  resultado = soma % 11 < 2 ? 0 : 11 - (soma % 11);
+
+  return resultado === Number(digitos.charAt(1));
+}
+
+export function horaValida(hora: string) {
+  return /^([01]\d|2[0-3]):[0-5]\d$/.test(hora);
+}
+
+export function horarioCoerente(inicio: string, fim: string) {
+  if (!horaValida(inicio) || !horaValida(fim)) return false;
+  return inicio < fim;
+}
+
+export function diasFuncionamentoValido(dias: number[]) {
+  return Array.isArray(dias) && dias.length > 0;
+}
+
+export function textoSobreLongoValido(texto: string) {
+  return texto.length <= 500; 
+}
+
+export function textoSobreCurtoValido(texto: string) {
+  return texto.length >= 50; 
+}
+
+export function urlValida(url: string) {
+  try {
+    const u = new URL(url);
+
+    // só aceita http e https
+    if (!["http:", "https:"].includes(u.protocol)) return false;
+
+    if (/\s/.test(url)) return false; // URLs não podem conter espaços
+
+    // precisa ter domínio com TLD (ex: .com)
+    const hostname = u.hostname;
+
+    if (!hostname.includes(".")) return false;
+
+    const partes = hostname.split(".");
+    const tld = partes[partes.length - 1];
+
+    // TLD precisa ter pelo menos 2 letras (ex: com, org)
+    if (tld.length < 2) return false;
+
+    return true;
+
+  } catch {
+    return false;
+  }
+}
+
+export function normalizarUrl(url: string) {
+  if (!url) return url;
+
+  url = url.trim(); // tira espaços no início e no fim
+
+  if (!/^https?:\/\//i.test(url)) {
+    return "https://" + url;
+  }
+  return url;
 }

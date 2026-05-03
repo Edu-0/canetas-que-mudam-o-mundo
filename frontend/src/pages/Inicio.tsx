@@ -1,8 +1,18 @@
+import { useState, useEffect } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import Carrossel from "../components/Carrossel";
 import logo from "../assets/logo.svg";
+import { loadCarrosselImages } from "../services/carrosselImages";
+import type { CarrosselImage } from "../components/Carrossel";
 
 function Inicio() {
+   const [carrosselImages, setCarrosselImages] = useState<CarrosselImage[]>([]);
+
+  useEffect(() => {
+    loadCarrosselImages().then(setCarrosselImages);
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col bg-[var(--base-5)]">
       
@@ -13,45 +23,196 @@ function Inicio() {
       <main className="flex-1 pt-24 pb-10">
         <div className="w-full px-6 md:px-20 flex flex-col gap-10">
 
-          {/* título e logo da caneta */}
-          <div className="flex items-center justify-center gap-4 flex-wrap text-center">
-            <img src={logo} alt="Logo" className="h-16 md:h-20" />
+          <section aria-label="Apresentação do projeto">
+            {/* título e logo da caneta */}
+            <div className="flex items-center justify-center gap-4 flex-wrap text-center">
+              <img src={logo} alt="Logo Canetas que Mudam o Mundo" className="h-16 md:h-20" />
 
-            <h1 className="header-medio text-center">
-              Canetas que Mudam o Mundo
-            </h1>
+              <h1 className="header-medio text-center">
+                Canetas que Mudam o Mundo
+              </h1>
+            </div>
+          </section>
+
+          <section aria-labelledby="sobre-projeto" className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 mb-8">
+            <div className="flex items-center gap-3 mb-6">
+            
+              <div className="w-2 h-8 bg-[var(--base-40)] rounded-full" />
+              <h2 id="sobre-projeto" className="body-semibold-medio text-black">
+                Sobre o projeto:
+              </h2>
+            </div>
+
+            <div className="space-y-6 text-justify">
+              <p className="body-pequeno text-black leading-relaxed">
+                Atualmente, crianças e jovens em situações de vulnerabilidade não conseguem ter seus momentos de{" "}
+                <strong className="font-extrabold inline-block border-b-2 border-[var(--base-40)] pb-0.3 rounded-sm">estudos com qualidade</strong>, 
+                pois não possuem os materiais adequados e em boa qualidade.
+              </p>
+
+              <p className="body-pequeno text-black leading-relaxed">
+                Somos um projeto na qual foi desenvolvido com a finalidade atender essa comunidade{" "}
+                <strong className="font-extrabold inline-block border-b-2 border-[var(--base-40)] pb-0.3 rounded-sm"> infanto juvenil </strong>{" "}
+                mais necessitada, com o propósito de democratizar o acesso a materiais escolares de qualidade.
+              </p>
+
+            
+              <p className="body-pequeno text-black">
+                O projeto tem como objetivo se tornar um {" "}
+                <strong className="font-extrabold inline-block border-b-2 border-[var(--base-40)] pb-0.3 rounded-sm">intermediador</strong>{" "} entre pessoas voluntárias, que querem fazer o bem para alguém em situação de carência, e voluntários que desejam realizar a entrega desses materiais para instituições e famílias mais necessitadas.
+              </p>
+
+              <p className="body-pequeno text-black leading-relaxed">
+                Por meio de doações, jovens podem receber{" "}
+                <strong className="font-extrabold inline-block border-b-2 border-[var(--base-40)] pb-0.3 rounded-sm">diversos materiais escolares </strong>{" "}
+                 como lápis, borracha, caderno, estojo, mochila e entre outros.
+              </p>
+            </div>
+          </section>
+
+          <section aria-label="Galeria de imagens do projeto">
+            <div>
+              <h2 className="body-semibold-medio text-center w-full mb-0">
+                Galeria de imagens do projeto:
+              </h2>
+            </div>
+
+            <div className="w-full overflow-hidden">
+              {/* carrossel de imagens */}
+              {carrosselImages.length > 0 && (
+                <div className="w-full max-w-full">
+                  <Carrossel
+                    images={carrosselImages}
+                  />
+                </div>
+              )}
+            </div>
+          </section>
+
+          <section aria-labelledby="tipos-usuarios">
+            {/* informações sobre os usuários */}
+            <div>
+              <div className="text-center body-semibold-medio mb-8">
+                <div className="flex flex-wrap justify-center gap-x-1">
+                  <span className="border-b-4 border-[var(--base-40)] rounded-sm pb-1">
+                    Conheça os tipos de usuários
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-6">
+
+                {/* Genérico */}
+                <article className="bg-[var(--primario-5)] border-l-4 border-[var(--pastel-azul-borda)] rounded-lg p-6 shadow-[2px_8px_25px_rgba(0,0,0,0.08)] flex flex-col gap-3">
+                  <h3 className="header-pequeno-tela-inicial text-center">
+                    Usuário Genérico
+                  </h3>
+
+                  <p className="body-pequeno text-justify">
+                    Todo usuário começa como genérico ao se cadastrar na plataforma. Esse tipo permite o acesso inicial ao sistema e aos botões para se tornar um ou mais tipos específicos de usuário. 
+                    Mesmo ao adquirir outras funções, o usuário nunca deixa de ser genérico.
+                  </p>
+
+                  <div className="border-t border-[var(--pastel-azul-borda)] my-2" />
+
+                  <h4 className="body-semibold-medio text-center">
+                    Como se tornar
+                  </h4>
+
+                  <p className="body-pequeno text-justify">
+                    Todo usuário já inicia automaticamente como genérico ao se cadastrar. Esse tipo é permanente e não pode ser removido.
+                  </p>
+                </article>
+
+                {/* Doador */}
+                <article className="bg-[var(--primario-5)] border-l-4 border-[var(--pastel-laranja-borda)] rounded-lg p-6 shadow-[2px_8px_25px_rgba(0,0,0,0.08)] flex flex-col gap-3">
+                  <h3 className="header-pequeno-tela-inicial text-center">
+                    Doador
+                  </h3>
+
+                  <p className="body-pequeno text-justify">
+                    Permite disponibilizar itens para doação de forma simples, com envio de fotos e descrições. 
+                    Os materiais passam por análise antes de ficarem disponíveis para envio ao ponto de entrega designado pelo site.
+                  </p>
+
+                  <div className="border-t border-[var(--pastel-laranja-borda)] my-2" />
+
+                  <h4 className="body-semibold-medio text-center">
+                    Como se tornar
+                  </h4>
+
+                  <p className="body-pequeno text-justify">
+                    Pode ser ativado diretamente na tela de conta, sem necessidade de etapas adicionais.
+                  </p>
+                </article>
+
+                {/* Voluntário */}
+                <article className="bg-[var(--primario-5)] border-l-4 border-[var(--pastel-roxo-borda)] rounded-lg p-6 shadow-[2px_8px_25px_rgba(0,0,0,0.08)] flex flex-col gap-3">
+                  <h3 className="header-pequeno-tela-inicial text-center">
+                    Voluntário da triagem
+                  </h3>
+
+                  <p className="body-pequeno text-justify">
+                    Pessoa ligada diretamente a ONG, seu objetivo é garantir que apenas materiais de bom estado cheguem à ONG. Seu tempo no aplicativo envolve seu cadastro na plataforma, análise das fotos e descrições enviadas pelos doadores e a criação de kits de materiais. Por fim, o voluntário deve definir se aquele material está apto para ficar disponível na plataforma.
+                  </p>
+
+                  <div className="border-t border-[var(--pastel-roxo-borda)] my-2" />
+
+                  <h4 className="body-semibold-medio text-center">
+                    Como se tornar
+                  </h4>
+
+                  <p className="body-pequeno text-justify">
+                    Sua forma de ingressar na plataforma é através da sua participação direta na ONG física, onde o Coordenador de Processos irá compartilhar um <strong>link</strong> de acesso.
+                  </p>
+                </article>
+
+                {/* Responsável */}
+                <article className="bg-[var(--primario-5)] border-l-4 border-[var(--pastel-rosa-borda)] rounded-lg p-6 shadow-[2px_8px_25px_rgba(0,0,0,0.08)] flex flex-col gap-3">
+                  <h3 className="header-pequeno-tela-inicial text-center">
+                    Responsável pelo beneficiário
+                  </h3>
+
+                  <p className="body-pequeno text-justify">
+                    Pode solicitar itens para seus dependentes e realizar a retirada no local de coleta, dentro do prazo definido pelo site.
+                  </p>
+
+                  <div className="border-t border-[var(--pastel-rosa-borda)] my-2" />
+
+                  <h4 className="body-semibold-medio text-center">
+                    Como se tornar
+                  </h4>
+
+                  <p className="body-pequeno text-justify">
+                    É necessário preencher um <strong>cadastro</strong> com renda e familiares. Após isso, é preciso aguardar a aprovação.
+                  </p>
+                </article>
+
+                {/* Coordenador */}
+                <article className="bg-[var(--primario-5)] border-l-4 border-[var(--pastel-verde-borda)] rounded-lg p-6 shadow-[2px_8px_25px_rgba(0,0,0,0.08)] flex flex-col gap-3 md:col-span-2">
+                  <h3 className="header-pequeno-tela-inicial text-center">
+                    Coordenador de processos
+                  </h3>
+
+                  <p className="body-pequeno text-justify">
+                    É um usuário responsável pelo cadastro de uma ONG. Seu papel inclui gerar links de cadastro para voluntários, averiguação das avaliações realizadas por voluntários da triagem iniciantes e o monitoramento do impacto social do projeto por meio de relatórios de doações e beneficiários.
+                  </p>
+
+                  <div className="border-t border-[var(--pastel-verde-borda)] my-2" />
+
+                  <h4 className="body-semibold-medio text-center">
+                    Como se tornar
+                  </h4>
+
+                  <p className="body-pequeno text-justify">
+                    Esse tipo é atribuído apenas após finalizar o cadastro de uma ONG, não podendo ser selecionado diretamente na plataforma.
+                  </p>
+                </article>
+            </div>
           </div>
+        </section>
 
-          {/* subtitulo */}
-          <h2 className="body-semibold-medio w-full">
-            Sobre o projeto:
-          </h2>
 
-          <p className="body-pequeno w-full text-justify">
-            Atualmente, crianças e jovens em situações de vulnerabilidade não conseguem ter seus momentos de{" "}
-            <span className="font-semibold">
-              estudos com qualidade
-            </span>
-            , pois não possuem os materiais adequados e em boa qualidade. Levando em conta este problema, será desenvolvido um projeto pensando em atender essas necessidades.
-            <br/><br/>
-            Somos um projeto na qual foi desenvolvido com a finalidade atender essa comunidade{" "}
-            <span className="font-semibold">
-              infanto juvenil
-            </span>{" "}
-            mais necessitada, com o propósito de democratizar o acesso a materiais escolares de qualidade.
-            <br/><br/>
-            O projeto tem como objetivo se tornar um{" "}
-            <span className="font-semibold">
-              intermediador
-            </span>{" "}
-            entre pessoas voluntárias, que querem fazer o bem para alguém em situação de carência, e voluntários que desejam realizar a entrega desses materiais para instituições e famílias mais necessitadas.
-            <br/><br/>
-            Por meio de doações, esses jovens poderão receber{" "}
-            <span className="font-semibold">
-              todos os tipos
-            </span>{" "}
-            de materiais escolares, incluindo: lápis, borracha, caderno, estojo, mochila e etc.
-          </p>
         </div>
       </main>
 

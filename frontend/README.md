@@ -44,12 +44,30 @@ Se o backend estiver em outro host ou porta, ajuste esse arquivo antes de subir 
 
 As rotas atualmente registradas em [src/App.tsx](src/App.tsx) são:
 
+### Públicas
+
 - `/`
+- `/logar`
 - `/cadastro`
+
+### Conta
+
 - `/conta`
 - `/conta/editar`
+  
+#### Atribuição de tipo de usuário
 
-Outras páginas já existem no projeto, mas ainda estão comentadas no roteamento.
+- `/conta/cadastro-beneficiario`
+- `/conta/quiz-voluntario`
+
+### Funcionalidades em desenvolvimento
+
+- `/doar`
+- `/triagem`
+- `/pedido`
+- `/relatorio`
+- `/auditoria`
+- `/pontos`  
 
 ## Estrutura do Código
 

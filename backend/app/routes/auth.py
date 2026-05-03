@@ -82,5 +82,11 @@ def me(current_user: Usuario = Depends(get_current_user)):
     return {
         "id": current_user.id,
         "nome_completo": current_user.nome_completo,
-        "email": current_user.email
+        "email": current_user.email,
+        "data_nascimento": current_user.data_nascimento,
+        "cpf": current_user.cpf,
+        "cep": current_user.cep,
+        "telefone": current_user.telefone,
+        "senha": current_user.senha,
+        "ativo": current_user.ativo
     }

@@ -4,10 +4,11 @@ sqlalchemy
 sqlalchemy-utils
 psycopg2-binary
 passlib[bcrypt]
-bcrypt==4.3.0
+bcrypt<4
 pydantic
 pydantic[email]
 python-dotenv
+chardet<6
 greenlet
 typing_extensions
 python-jose[cryptography]
@@ -17,3 +18,4 @@ paddleocr
 pillow
 numpy
 pypdfium2
+fastapi_mail

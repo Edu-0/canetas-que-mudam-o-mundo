@@ -34,7 +34,7 @@ def get_engine(database_url=None, user=None, passwd=None, host=None, port=None, 
 
 DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
 USUARIO = os.getenv("DB_USER", "").strip()
-SENHA = os.getenv("DB_PASSWORD", "").strip()
+SENHA = os.getenv("DB_PASS", "").strip()
 HOST = os.getenv("DB_HOST", "localhost").strip()
 PORTA = os.getenv("DB_PORT", "5432").strip()
 NOME_BANCO = os.getenv("DB_NAME", "").strip()

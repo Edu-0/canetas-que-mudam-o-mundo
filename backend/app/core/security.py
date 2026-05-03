@@ -2,6 +2,51 @@ from datetime import datetime, timedelta, timezone
 from jose import jwt, JWTError
 from passlib.context import CryptContext
 from app.core.config import settings
+from app.core.enums import TipoUsuario
+
+PERMISSOES_POR_FUNCAO = {
+    TipoUsuario.GENERICO:{
+        "usuario:atualizar",
+        "usuario_triagem:criar",
+        "usuario_triagem:atualizar",
+        "usuario_responsavel:criar",
+        "usuario_funcao:criar",
+        "usuario_funcao:atualizar",
+        "documento_usuario:criar"
+    },
+    TipoUsuario.DOADOR: set(),
+    TipoUsuario.TRIAGEM: {
+        "usuario:atualizar",
+        "usuario_responsavel:criar",
+        "usuario_funcao:criar",
+        "usuario_funcao:atualizar",
+        "usuario_funcao:deletar"
+    },
+    TipoUsuario.RESPONSAVEL_BENEFICIARIO: {
+        "usuario:atualizar",
+        "usuario_responsavel:atualizar",
+        "familia_responsavel:criar",
+        "familia_responsavel:atualizar",
+        "familia_responsavel:deletar",
+        "familia_responsavel:listar",
+        "documento_usuario:criar",
+        "documento_usuario:atualizar",
+        "documento_usuario:deletar",
+        "documento_usuario:listar",
+        "documento_familia:criar",
+        "documento_familia:atualizar",
+        "documento_familia:deletar",
+        "documento_familia:listar",
+        "usuario_funcao:criar",
+        "usuario_funcao:atualizar",
+        "usuario_funcao:deletar"
+    },
+    TipoUsuario.COORDENADOR_PROCESSOS:{
+        "usuario:ver_todos"
+    }
+}
+
+
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
