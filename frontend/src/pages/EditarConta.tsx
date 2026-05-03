@@ -19,6 +19,17 @@ function EditarConta() {
 
   const [tipoMensagem, setTipoMensagem] = useState<"sucesso" | "erro">("sucesso");
 
+  function normalizarUsuario(u: any) {
+    return {
+      nome_completo: (u.nome_completo || "").trim(),
+      data_nascimento: (u.data_nascimento || "").split("T")[0],
+      cpf: (u.cpf || "").replace(/\D/g, ""),
+      cep: (u.cep || "").replace(/\D/g, ""),
+      telefone: (u.telefone || "").replace(/\D/g, ""), // telefone é opcional, então comparo com string vazia se for undefined
+      email: (u.email || "").trim(),
+    };
+  }
+
   const [erroModal, setErroModal] = useState<{
     campo?: string;
     mensagem: string;
@@ -70,13 +81,16 @@ function EditarConta() {
                 }}
                 
                 mudouDados={(dados) => {
+                  const atual = normalizarUsuario(usuario);
+                  const novo = normalizarUsuario(dados);
+
                   const mudou =
-                    dados.nome_completo.trim() !== (usuario.nome_completo || "") ||
-                    dados.data_nascimento.trim() !== (usuario.data_nascimento || "") ||
-                    dados.cpf.replace(/\D/g, "") !== (usuario.cpf || "") ||
-                    dados.cep.replace(/\D/g, "") !== (usuario.cep || "") ||
-                    (dados.telefone || "").replace(/\D/g, "") !== (usuario.telefone || "") || // telefone é opcional, então comparo com string vazia se for undefined
-                    dados.email.trim() !== (usuario.email || "");
+                    atual.nome_completo !== novo.nome_completo ||
+                    atual.data_nascimento !== novo.data_nascimento ||
+                    atual.cpf !== novo.cpf ||
+                    atual.cep !== novo.cep ||
+                    atual.telefone !== novo.telefone ||
+                    atual.email !== novo.email;
 
                   setAlterou(mudou);
                 }}
@@ -89,7 +103,12 @@ function EditarConta() {
                   setErroModal(erro);
                 }}
 
-                aoCancelar={() => tentarSair("/conta")}
+                aoCancelar={() => {
+                  const podeSair = tentarSair("/conta");
+                  if (podeSair) {
+                    navigate("/conta");
+                  }
+                }}
 
                 aoEnviar={(usuarioAtualizado) => {
                   definirUsuario({

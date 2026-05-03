@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { useUsuario, mapearTipo, TipoUsuario } from "../context/UserContext";
-import { atualizarTiposUsuario, criarONG, obterPerfil } from "../services/usuarioService";
+import { useUsuario, mapearTipo, TipoUsuario, Usuario } from "../context/UserContext";
+import { atualizarTiposUsuario, criarONG, obterONG, obterPerfil } from "../services/usuarioService";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import logo from "../assets/logo.svg";
@@ -9,10 +9,12 @@ import FormCadastroONG from "../components/FormCadastroONG";
 import Toast from "../components/Toast";
 import { useAvisoAlteracoesNaoSalvas } from "../hooks/useAvisoAlteracoesNaoSalvas";
 import ModalConfirmacao from "../components/ModalConfirmacao";
+import {useONG } from "../context/OngContext";
 
 function CadastroONG() {
   const navigate = useNavigate();
   const { usuario, definirUsuario } = useUsuario();
+  const {ong, definirONG} = useONG();
   const [mensagem, setMensagem] = useState("");
   const [tipoMensagem, setTipoMensagem] = useState<"sucesso" | "erro">("sucesso");
 
@@ -28,6 +30,20 @@ function CadastroONG() {
     mensagem: string;
   } | null>(null);
 
+  function normalizarUsuario(dados: any): Usuario {
+    return {
+      id: dados.id,
+      nome_completo: dados.nome_completo,
+      data_nascimento: dados.data_nascimento,
+      cpf: dados.cpf,
+      cep: dados.cep,
+      telefone: dados.telefone,
+      email: dados.email,
+      data_cadastro: dados.data_cadastro,
+      data_edicao_conta: dados.data_edicao_conta,
+      tipos: dados.funcao?.map((f: any) => mapearTipo(f.tipo_usuario)) || []
+    };
+}
 
   async function colocarTipo() {
       if (usuario) {
@@ -52,6 +68,8 @@ function CadastroONG() {
           await atualizarTiposUsuario(usuario.id, novosTipos);
   
           const atualizado = await obterPerfil();
+
+          definirUsuario(normalizarUsuario(atualizado));
   
         } catch (error) {
           console.error("Erro ao atualizar tipo do usuário", error);
@@ -89,20 +107,51 @@ function CadastroONG() {
               </h2>
 
               <FormCadastroONG
-                mostrarCancelar={true}
-                aoCancelar={() => tentarSair("/conta")}
+                modo="cadastro"
 
                 mudouDados={(dados) => {
-                  const alterou = Object.values(dados).some((v) => v && v !== "");
+                  const alterou =
+                    dados.nome.trim() !== "" ||
+                    dados.cnpj.trim() !== "" ||
+                    dados.cep.trim() !== "" ||
+                    dados.rua.trim() !== "" ||
+                    dados.bairro.trim() !== "" ||
+                    dados.cidade.trim() !== "" ||
+                    dados.estado.trim() !== "" ||
+                    dados.numero.trim() !== "" ||
+                    dados.complemento.trim() !== "" ||
+                    dados.telefone.trim() !== "" ||
+                    dados.email.trim() !== "" ||
+                    dados.diasFuncionamento.length > 0 ||
+                    dados.horarioInicio.trim() !== "" ||
+                    dados.horarioFim.trim() !== "" ||
+                    dados.sobre.trim() !== "" ||
+                    dados.instagram.trim() !== "" ||
+                    dados.facebook.trim() !== "" ||
+                    dados.site.trim() !== "";
+
                   setAlterou(alterou);
+                }}
+                
+                textoBotaoCancelar="Cancelar cadastro"
+                textoBotaoEnviar="Cadastrar ONG"
+                mostrarCancelar={true}
+
+                aoErro={(erro) => {
+                  setErroModal(erro);
+                }}
+
+                aoCancelar={() => {
+                  const podeSair = tentarSair("/conta");
+                  if (podeSair) {
+                    navigate("/conta");
+                  }
                 }}
 
                 aoEnviar={async (dados) => {
                   setDadosPendentes(dados);
                   setMostrarConfirmacaoCadastro(true);
                 }}
-
-                aoErro={(erro) => setErroModal(erro)}
               />
 
               <ModalConfirmacao
@@ -141,6 +190,9 @@ function CadastroONG() {
 
                     const resposta = await criarONG(usuario.id, dadosPendentes);
 
+                    const ongCriada = await obterONG(usuario.id);
+                    definirONG(ongCriada);
+
                     await colocarTipo(); // atualizar tipos do usuário para Coordenador de Processos
 
                     setAlterou(false);
@@ -150,7 +202,7 @@ function CadastroONG() {
                     setMostrarConfirmacaoCadastro(false);
 
                     setTimeout(() => {
-                      navigate("/conta/link_para_voluntario", {
+                      navigate("/conta/link-para-voluntario", {
                         state: { link: resposta.link_convite }
                       });
                     }, 1500);
@@ -188,7 +240,3 @@ function CadastroONG() {
   );
 }
 export default CadastroONG;
-
-function definirUsuario(arg0: { id: any; nome_completo: any; data_nascimento: any; cpf: any; cep: any; telefone: any; email: any; data_cadastro: any; data_edicao_conta: any; tipos: any; }) {
-  throw new Error("Function not implemented.");
-}

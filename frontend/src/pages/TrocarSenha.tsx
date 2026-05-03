@@ -105,7 +105,6 @@ function TrocarSenha() {
               </h2>
 
               <FormTrocarSenha
-                mostrarCancelar={true}
 
                 mudouDados={(dados) => {
                   const mudou = dados.senha.trim() !== "";
@@ -115,8 +114,6 @@ function TrocarSenha() {
                 aoErro={(erro) => {
                   setErroModal(erro);
                 }}
-
-                aoCancelar={() => tentarSair("/Logar")} // Perguntar para o Lucas para onde mandar se Cancelar a troca
 
                 aoEnviar={async (senha) => {
                   try {
@@ -128,7 +125,7 @@ function TrocarSenha() {
 
                     setTimeout(() => {
                       setMensagem("");
-                      navigate("/Logar");
+                      navigate("/logar");
                     }, 2000);
 
                   } catch (error: any) {
@@ -143,7 +140,7 @@ function TrocarSenha() {
 
                   setTimeout(() => {
                     setMensagem("");
-                    navigate("/Logar");
+                    navigate("/logar");
                   }, 2000);
                 }}
               />

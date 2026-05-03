@@ -1,12 +1,26 @@
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import logo from "../assets/logo.svg";
-import icon_colar from "../assets/icon_colar.png";
-import { useLocation } from "react-router-dom";
+import icon_copiar from "../assets/icon_copiar.png";
+import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import Botao from "../components/Botao";
+import useLinkVoluntario from "../hooks/useLinkVoluntario";
 
 function LinkParaVoluntario() {
-  const location = useLocation();
-  const link = location.state?.link;
+
+  const navigate = useNavigate();
+  const { link, carregando } = useLinkVoluntario();
+  const [copiado, setCopiado] = useState(false);
+
+  function copiarLink() {
+    if (!link) return;
+
+    navigator.clipboard.writeText(link);
+    setCopiado(true);
+
+    setTimeout(() => setCopiado(false), 2000);
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--base-5)]">
@@ -36,32 +50,40 @@ function LinkParaVoluntario() {
                 LINK PARA O VOLUNTÁRIO
               </h2>
 
-              <div className="flex justify-center focus-acessivel">
-                <div className="flex items-center justify-between gap-4 mb-5 px-6 py-4 bg-[var(--base-10)] border border-[var(--base-40)] rounded-lg shadow-sm w-full max-w-xl cursor-pointer group">
-                      
-                  <div className="flex items-center gap-4 overflow-hidden focus-acessivel">
-                    <p className="text-center">
-                      O link para o cadastro do voluntário vinculado a ONG é: <br />
-                      <a href="https://canetas-que-mudam-o-mundo.vercel.app/cadastro" className="text-blue-500 hover:text-blue-800 underline focus-acessivel" target="_blank" rel="noopener noreferrer">
-                        https://canetas-que-mudam-o-mundo.vercel.app/cadastro
-                      </a>
+                {carregando ? (
+                  <p className="text-center">Carregando link...</p>
+                ) : !link ? (
+                  <p className="text-center text-[var(--cor-resposta-errada)]">
+                    Você ainda não possui uma ONG cadastrada.
+                  </p>
 
-                      <a href={link} className="text-blue-500 hover:text-blue-800 underline focus-acessivel" target="_blank" rel="noopener noreferrer">
-                        {link}
-                      </a>
-                    </p>
+                ) : (
+                  <div className="flex justify-center">
+                    <div className="flex items-center justify-between gap-4 px-6 py-4 bg-[var(--base-10)] border border-[var(--base-40)] rounded-lg shadow-sm w-full max-w-xl focus-acessivel">
+
+                      <div className="flex flex-col overflow-hidden">
+                        <p className="body-semibold-medio text-center mb-2">
+                          Este é o link para o cadastro do voluntário vinculado a ONG, compartilhe este link com o voluntário:
+                        </p>
+
+                        <a href={link} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-800 underline break-all text-center focus-acessivel">
+                          {link}
+                        </a>
+
+                        {copiado && (
+                          <span className="text-[var(--cor-resposta-sucesso)] text-xs text-center mt-1">Link copiado!</span>
+                        )}
+                      </div>
+
+                      <button onClick={copiarLink} className="p-3 rounded-full hover:bg-[var(--base-20)] transition" aria-label="Copiar link">
+                        <img src={icon_copiar} alt="Copiar link" className="w-7 h-7 focus-acessivel"/>
+                      </button>
+                    </div>
                   </div>
-                
-                  <button
-                    onClick={(e) => { // copiar link para área de transferência
-                      e.preventDefault();
-                      navigator.clipboard.writeText(link);
-                    }}
-                    className="p-3 rounded-full hover:bg-[var(--base-20)] transition">
-                    <img src={icon_colar} alt="Download do documento dos Padrões de Qualidade" className="w-7 h-7 focus-acessivel"/>
-                  </button>
+                )}
+                <div className="flex gap-4 mt-8">
+                  <Botao variante="confirmar" aoClicar={() => navigate("/conta")}>Voltar para a conta</Botao>
                 </div>
-              </div>
 
             </div>
           </div>
