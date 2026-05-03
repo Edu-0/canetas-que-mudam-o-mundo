@@ -36,32 +36,6 @@ def sync_sqlite_schema() -> None:
                 )
 
 
-        conn.exec_driver_sql(
-            'UPDATE usuario SET data_cadastro = CURRENT_TIMESTAMP WHERE data_cadastro IS NULL'
-        )
-        conn.exec_driver_sql(
-            'UPDATE usuario SET data_edicao_conta = CURRENT_TIMESTAMP WHERE data_edicao_conta IS NULL'
-        )
-        conn.exec_driver_sql(
-            'UPDATE usuario_responsavel SET data_preenchimento_termos = CURRENT_TIMESTAMP WHERE data_preenchimento_termos IS NULL'
-        )
-        conn.exec_driver_sql(
-            'UPDATE familia_responsavel SET data_cadastro = CURRENT_TIMESTAMP WHERE data_cadastro IS NULL'
-        )
-        conn.exec_driver_sql(
-            'UPDATE familia_responsavel SET data_edicao = CURRENT_TIMESTAMP WHERE data_edicao IS NULL'
-        )
-        conn.exec_driver_sql(
-            'UPDATE documento_usuario SET data_upload = CURRENT_TIMESTAMP WHERE data_upload IS NULL'
-        )
-        conn.exec_driver_sql(
-            'UPDATE documento_familia SET data_upload = CURRENT_TIMESTAMP WHERE data_upload IS NULL'
-        )
-        conn.exec_driver_sql(
-            'UPDATE usuario_triagem SET data_realizacao = CURRENT_TIMESTAMP WHERE data_realizacao IS NULL'
-        )
-
-
 sync_sqlite_schema()
 
 app = FastAPI()
