@@ -1,7 +1,7 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useUsuario, TipoUsuario, Usuario, mapearTipo } from "../context/UserContext";
 import { useEffect, useState } from "react";
-import { obterPerfil, DadosUsuario, atualizarTiposUsuario, obterLinkCadastroVoluntario } from "../services/usuarioService";
+import { obterPerfil, DadosUsuario, atualizarTiposUsuario, obterLinkCadastroVoluntario, excluirConta } from "../services/usuarioService";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Botao from "../components/Botao";
@@ -14,6 +14,7 @@ import useLinkVoluntario from "../hooks/useLinkVoluntario";
 function Conta() {
   const { usuario, definirUsuario } = useUsuario();
   const [mostrarModal, setMostrarModal] = useState(false);
+  const [carregandoExclusao, setCarregandoExclusao] = useState(false);
   const navigate = useNavigate();
   const [perfil, setPerfil] = useState<DadosUsuario | null>(null);
 
@@ -293,11 +294,21 @@ function Conta() {
                     varianteCancelar="confirmar"
                     varianteConfirmar="cancelar"
                     onCancelar={() => setMostrarModal(false)}
-                    onConfirmar={() => {
-                      setMostrarModal(false);
-                      // FUTURO: chamar API aqui para excluir conta do backend antes de deslogar
-                      definirUsuario(null);
-                      navigate("/");
+                    onConfirmar={async () => {
+                      setCarregandoExclusao(true);
+                      try {
+                        if (!usuario?.id) return;
+                        
+                        await excluirConta(usuario.id);
+                        
+                        setMostrarModal(false);
+                        definirUsuario(null);
+                        navigate("/");
+                      } catch (erro) {
+                        console.error("Erro ao excluir conta:", erro);
+                        setCarregandoExclusao(false);
+                        setMostrarModal(false);
+                      }
                     }}
                   />
                 </div>

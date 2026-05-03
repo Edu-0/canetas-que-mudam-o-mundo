@@ -35,6 +35,18 @@ def get_perfil(
     ):
     return usuario_atual
 
+
+@router.delete("/{usuario_id}")
+def excluir_conta_usuario(
+    usuario_id: int,
+    db: SessionDep,
+    usuario_atual: m.Usuario = Depends(get_current_user),
+):
+    if usuario_atual.id != usuario_id:
+        raise HTTPException(status_code=403, detail="Você só pode excluir a sua própria conta.")
+
+    return anonimizar_responsavel(usuario_id, db)
+
 """ Usuário """ 
 
 @router.get("/{usuario_id}", response_model=s.respostaUsuario)

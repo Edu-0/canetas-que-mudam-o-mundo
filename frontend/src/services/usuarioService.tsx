@@ -142,6 +142,12 @@ export async function atualizarTiposUsuario(id: number, tipos: string[]) {
   return response.data;
 }
 
+// Excluir conta (anonimização)
+export async function excluirConta(usuario_id: number) {
+  const response = await api.delete(`/usuario/${usuario_id}`);
+  return response.data;
+}
+
 // Pedir redefinição da senha
 export async function solicitarRedefinicaoSenha(email: string) {
   return api.post("/password/recuperar-senha", { email });
