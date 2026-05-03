@@ -19,6 +19,7 @@ import CadastroResponsavel from "./pages/CadastroResponsavel";
 import MontarKits from "./pages/MontarKits";
 import CadastroONG from "./pages/CadastroONG";
 import LinkParaVoluntario from "./pages/LinkParaVoluntario";
+import EditarONG from "./pages/EditarONG";
 
 function App() {
   return (
@@ -37,13 +38,14 @@ function App() {
         <Route path="/pedido" element={<Pedido />} />
         <Route path="/relatorio" element={<Relatorio />} />
         <Route path="/auditoria" element={<Auditoria />} />
-        <Route path="/analise_voluntarios" element={<AnaliseVoluntarios />} />
+        <Route path="/analise-voluntarios" element={<AnaliseVoluntarios />} />
         <Route path="/conta/editar-renda-e-familiares" element={<EditarRendaFamiliares />} />
         <Route path="/trocar-senha" element={<TrocarSenha/>} />
         <Route path="/confirmar-familiares" element={<ConfirmarFamiliares />} />
-        <Route path="/montar_kits" element={<MontarKits />} />
-        <Route path="/conta/cadastro_ong" element={<CadastroONG />} />
-        <Route path="/conta/link_para_voluntario" element={<LinkParaVoluntario />} />
+        <Route path="/montar-kits" element={<MontarKits />} />
+        <Route path="/conta/cadastro-ong" element={<CadastroONG />} />
+        <Route path="/conta/link-para-voluntario" element={<LinkParaVoluntario />} />
+        <Route path="/conta/editar-ong" element={<EditarONG />} />
       </Routes>
     </BrowserRouter>
   );

@@ -1,13 +1,15 @@
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useUsuario, TipoUsuario, Usuario, mapearTipo } from "../context/UserContext";
 import { useEffect, useState } from "react";
-import { obterPerfil, DadosUsuario, atualizarTiposUsuario } from "../services/usuarioService";
+import { obterPerfil, DadosUsuario, atualizarTiposUsuario, obterLinkCadastroVoluntario } from "../services/usuarioService";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Botao from "../components/Botao";
 import logo from "../assets/logo.svg";
 import ModalConfirmacao from "../components/ModalConfirmacao";
 import {formatarCPF, formatarCEP, formatarTelefone} from "../utils/formatarMascaraConta";
+import icon_copiar from "../assets/icon_copiar.png";
+import useLinkVoluntario from "../hooks/useLinkVoluntario";
 
 function Conta() {
   const { usuario, definirUsuario } = useUsuario();
@@ -57,7 +59,7 @@ function Conta() {
       setModalTipo(false);
 
       if (tipoSelecionado === "Coordenador de Processos") {
-        navigate("/conta/cadastro_ong");
+        navigate("/conta/cadastro-ong");
         return;
       }
 
@@ -115,6 +117,19 @@ function Conta() {
   const estaComoVoluntario = dadosNormalizados?.tipos?.includes("Voluntário da triagem");
   const estaComoResponsavel = dadosNormalizados?.tipos?.includes("Responsável pelo beneficiário");
 
+  const location = useLocation();
+  const [copiado, setCopiado] = useState(false);
+  const { link, carregando } = useLinkVoluntario();
+
+  function copiarLink() {
+    if (!link) return;
+
+    navigator.clipboard.writeText(link);
+    setCopiado(true);
+
+    setTimeout(() => setCopiado(false), 2000);
+  }
+
   function sair() {
     definirUsuario(null);
     navigate("/");
@@ -161,8 +176,7 @@ function Conta() {
     }
 
     carregarPerfil();
-
-  }, [usuario]);
+  }, [usuario?.id]); // para não precisar rondar o perfil toda vez que o usuário for atualizado, só quando o id do usuário mudar (ex: login, logout, troca de conta)
 
   return (
     <div className="min-h-screen flex flex-col overflow-x-hidden bg-[var(--base-5)]">
@@ -367,6 +381,62 @@ function Conta() {
                       onConfirmar={confirmarTipo}
                     />
                   </div>
+                </>
+              )}
+
+              {estaComoCoordenador && (
+                <>
+                  {/* linha separadora */}
+                  <div className="border-t border-[var(--primario-40)] my-6" />
+
+                    <h3 className="header-pequeno text-center mb-6">
+                      Link para o cadastro do voluntário da triagem 
+                    </h3>
+
+                    {carregando ? (
+                      <p className="text-center">Carregando link...</p>
+                    ) : !link ? (
+                      <p className="text-center text-[var(--cor-resposta-errada)]">
+                        Você ainda não possui uma ONG cadastrada.
+                      </p>
+    
+                    ) : (
+                      <div className="flex justify-center">
+                        <div className="flex items-center justify-between gap-4 px-6 py-4 bg-[var(--base-10)] border border-[var(--base-40)] rounded-lg shadow-sm w-full max-w-xl focus-acessivel">
+    
+                          <div className="flex flex-col overflow-hidden">
+                            <p className="body-semibold-medio text-center mb-2">
+                              Este é o link para o cadastro do voluntário vinculado a ONG, compartilhe este link com o voluntário:
+                            </p>
+    
+                            <a href={link} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-800 underline break-all text-center focus-acessivel">
+                              {link}
+                            </a>
+    
+                            {copiado && (
+                              <span className="text-[var(--cor-resposta-sucesso)] text-xs text-center mt-1">Link copiado!</span>
+                            )}
+                          </div>
+    
+                          <button onClick={copiarLink} className="p-3 rounded-full hover:bg-[var(--base-20)] transition" aria-label="Copiar link">
+                            <img src={icon_copiar} alt="Copiar link" className="w-7 h-7 focus-acessivel"/>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="border-t border-[var(--primario-40)] my-6" />
+
+                    <h3 className="header-pequeno text-center mb-6">
+                      Edição das informações da ONG
+                    </h3>
+
+                    <p className="body-pequeno text-center mb-6">
+                      No botão abaixo, você pode editar as informações da ONG cadastrada.
+                    </p>
+
+                    <Botao variante="editar" aria-label="Botão para ir para a edição da ONG" aoClicar={() => navigate("/conta/editar-ong")} className="h-full">Editar informações da ONG</Botao>
+
                 </>
               )}
 

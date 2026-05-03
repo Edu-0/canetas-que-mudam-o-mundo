@@ -8,16 +8,12 @@ import olho_bloqueado from "../assets/icon_olho_bloqueado.png";
 type Props = {
   aoEnviar: (senha: string) => Promise<void> | void;
   aoErro?: (erro: { campo?: string; mensagem: string }) => void;
-  aoCancelar?: () => void;
-  mostrarCancelar?: boolean;
   mudouDados?: (dados: { senha: string; confirmarSenha: string }) => void;
 };
 
 function FormTrocaSenha({
   aoEnviar,
   aoErro,
-  aoCancelar,
-  mostrarCancelar = false,
   mudouDados
 }: Props) {
   
@@ -129,10 +125,10 @@ function FormTrocaSenha({
           <button type="button" onClick={() => setMostrarSenha(!mostrarSenha)} className="absolute right-3 top-1/2 -translate-y-1/2 focus-acessivel" aria-label={mostrarSenha ? "Ocultar senha" : "Mostrar senha"}>
             <img src={mostrarSenha ? olho_visivel : olho_bloqueado} alt={mostrarSenha ? "Ocultar senha" : "Mostrar senha"} className="w-5 h-5"/>
           </button>
+
+          {erros.senha && tocados.senha && <p id="erro-senha" aria-live="polite" className="text-[var(--cor-resposta-errada)] text-sm">{erros.senha}</p>}
         </div>
       </div>
-      {erros.senha && tocados.senha && <p id="erro-senha" aria-live="polite" className="text-[var(--cor-resposta-errada)] text-sm">{erros.senha}</p>}
-      
       {senha && (
         <div className="text-sm mt-0 space-y-1">
           <p className={requisitosSenha.tamanho ? "text-[var(--cor-resposta-correta)]" : "text-[var(--cor-resposta-errada)]"}>
@@ -166,10 +162,10 @@ function FormTrocaSenha({
           <button type="button" onClick={() => setMostrarConfirmarSenha(!mostrarConfirmarSenha)} className="absolute right-3 top-1/2 -translate-y-1/2 focus-acessivel" aria-label={mostrarConfirmarSenha ? "Ocultar senha" : "Mostrar senha"}>
             <img src={mostrarConfirmarSenha ? olho_visivel : olho_bloqueado} alt={mostrarConfirmarSenha ? "Ocultar senha" : "Mostrar senha"} className="w-5 h-5"/>
           </button>
+          
+          {erros.confirmarSenha && tocados.confirmarSenha && <p id="erro-confirmar-senha" aria-live="polite" className="text-[var(--cor-resposta-errada)] text-sm">{erros.confirmarSenha}</p>}
         </div>
       </div>
-      {erros.confirmarSenha && tocados.confirmarSenha && <p id="erro-confirmar-senha" aria-live="polite" className="text-[var(--cor-resposta-errada)] text-sm">{erros.confirmarSenha}</p>}
-      
 
       <div className="flex-1">
         <Botao tipo="submit" variante="confirmar" desabilitado={carregando}>

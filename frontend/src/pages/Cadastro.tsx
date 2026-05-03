@@ -79,7 +79,12 @@ function Cadastro() {
                   setErroModal(erro);
                 }}
 
-                aoCancelar={() => tentarSair("/")}
+                aoCancelar={() => {
+                  const podeSair = tentarSair("/");
+                  if (podeSair) {
+                    navigate("/");
+                  }
+                }}
 
                 aoEnviar={(usuarioCadastrado) => {
                   definirUsuario({

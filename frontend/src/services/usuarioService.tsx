@@ -1,5 +1,6 @@
 import api from "./api";
 import { BeneficiosUsuario, type TipoBeneficio } from "../context/UserContext";
+import {ONG} from "../context/OngContext";
 
 export type DadosUsuario = { // (GET retorno)
   id: number;
@@ -9,7 +10,6 @@ export type DadosUsuario = { // (GET retorno)
   cep: string;
   telefone?: string; // telefone é opcional no backend, então aqui também
   email: string;
-  // senha não é retornada pelo backend por segurança, então não coloco aqui
   funcao: { // a pessoa pode ter mais de uma função, então é um array.
     tipo_usuario: string;
   }[];
@@ -25,8 +25,7 @@ export type CriarUsuarioEnvio = { // (POST envio)
   telefone?: string;
   email: string;
   senha: string; // senha é obrigatória para criar um usuário
-  // id é gerado pelo backend, então não precisa ser enviado
-  // ver se dá para o backend criar o data_cadastro automaticamente
+  token_convite?: string; // token de convite para o voluntário
 };
 
 export type AtualizarUsuarioEnvio = { // (PUT envio)
@@ -74,6 +73,32 @@ export type CriarONGEnvio = {
   instagram?: string;
   facebook?: string;
   site?: string;
+};
+
+export type AtualizarONGEnvio =  { // PUT editar ONG, o usuário pode enviar apenas os campos que deseja atualizar, então todos são opcionais
+  nome?: string;
+  cnpj?: string;
+  cep?: string;
+  rua?: string;
+  bairro?: string;
+  cidade?: string;
+  estado?: string;
+  numero?: string;
+  complemento?: string;
+  telefone?: string;
+  email?: string;
+  diasFuncionamento?: number[];
+  horarioInicio?: string;
+  horarioFim?: string;
+  sobre?: string;
+  instagram?: string;
+  facebook?: string;
+  site?: string;
+}; 
+
+// tipo de resposta do backend para o link de cadastro de voluntário
+type RespostaLinkVoluntario = {
+  link: string;
 };
 
 // aqui defino que a função recebe os dados para criar o usuário (sem id e data_cadastro) e retorna os dados do usuário criado (com id e data_cadastro)
@@ -134,4 +159,31 @@ export async function redefinirSenha(token: string, senha: string) {
 export async function criarONG(usuario_id: number, dados: CriarONGEnvio) {
   const response = await api.post(`/usuario/${usuario_id}/ong`, dados);
   return response.data;
+}
+
+// Atualizar dados da ONG do usuário
+export async function atualizarONG(usuario_id: number, dados: AtualizarONGEnvio) {
+  const response = await api.put(`/usuario/${usuario_id}/ong`, dados);
+  return response.data;
+}
+
+// Obter dados da ONG do usuário
+export async function obterONG(usuario_id: number): Promise<ONG> {
+  const response = await api.get(`/usuario/${usuario_id}/ong`);
+  return response.data; // se for algo como { "nome": "ONG Exemplo", "cnpj": "00.000.000/0000-00", ... }
+}
+
+// Obter todas as ONGs (para a página de listagem)
+export async function obterTodasONGs() {
+  const response = await api.get("/ong");
+  return response.data; 
+}
+
+// Obter link para cadastro de voluntário
+export async function obterLinkCadastroVoluntario(): Promise<string> {
+  const response = await api.get<RespostaLinkVoluntario>(
+    "/usuario/ong/link-voluntario"
+  );
+
+  return response.data.link; //  se for algo como { "ong_id": 1, "tipo": "Voluntário da triagem", "expira_em": "2026-05-10"}
 }

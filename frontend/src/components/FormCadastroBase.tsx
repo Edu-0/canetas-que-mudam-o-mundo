@@ -1,5 +1,6 @@
 import { IMaskInput } from "react-imask";
 import { useState, useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import Botao from "./Botao";
 import { validarCampo } from "../utils/validacoesFormulario";
 import { verificarRequisitosSenha } from "../utils/validacoes";
@@ -88,6 +89,8 @@ function FormCadastroBase(props: Props) {
   const requisitosSenha = verificarRequisitosSenha(senha);
   const primeiraRenderizacao = useRef(true);
 
+  const [alterou, setAlterou] = useState(false);
+
   const [erros, setErros] = useState({
     nome_completo: "",
     data_nascimento: "",
@@ -123,13 +126,17 @@ function FormCadastroBase(props: Props) {
     confirmarSenha,
   };
 
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const token = params.get("token");
+
   useEffect(() => {
     if (primeiraRenderizacao.current) {
       primeiraRenderizacao.current = false;
       return;
     }
 
-    mudouDados?.({
+    const dadosAtuais = {
       nome_completo,
       data_nascimento,
       cpf,
@@ -138,7 +145,24 @@ function FormCadastroBase(props: Props) {
       email,
       senha,
       confirmarSenha,
-    });
+    };
+
+    mudouDados?.(dadosAtuais);
+
+    
+    const limpar = (v: string) => v.replace(/\D/g, "");
+
+    // comparação com valores iniciais
+    const mudou =
+      nome_completo !== (valoresIniciais?.nome_completo || "") ||
+      data_nascimento !== (valoresIniciais?.data_nascimento || "") ||
+      limpar(cpf) !== (valoresIniciais?.cpf || "") ||
+      limpar(cep) !== (valoresIniciais?.cep || "") ||
+      limpar(telefone || "") !== (valoresIniciais?.telefone || "") ||
+      email !== (valoresIniciais?.email || "");
+
+    setAlterou(mudou);
+
   }, [nome_completo, data_nascimento, cpf, cep, telefone, email, senha, confirmarSenha]);
 
   function validarUmCampo(campo: keyof typeof erros) {
@@ -202,6 +226,7 @@ function FormCadastroBase(props: Props) {
           telefone: telefone ? telefone.replace(/\D/g, "") : undefined,
           email,
           senha,
+          ...(token ? { token_convite: token } : {}) // se tiver token na URL, envia para o backend para vincular à ONG e tipo de voluntário correspondente
         });
 
         // Após o cadastro, autentica automaticamente para habilitar rotas protegidas.
@@ -291,6 +316,14 @@ function FormCadastroBase(props: Props) {
         }
       }}
     >
+
+      {modo === "cadastro" && token && (
+        <div className="bg-[var(--base-10)] border border-[var(--base-40)] rounded-lg p-4 text-center">
+          <p className="body-pequeno">
+            Você está se cadastrando como <strong>Voluntário da triagem</strong> vinculado a uma ONG.
+          </p>
+        </div>
+      )}
 
       <div>
         <label className="body-semibold-pequeno" htmlFor="nome_completo">Nome completo <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
@@ -439,7 +472,7 @@ function FormCadastroBase(props: Props) {
         )}
 
         <div className="flex-1">
-          <Botao tipo="submit" variante="confirmar" desabilitado={carregando}>
+          <Botao tipo="submit" variante="confirmar" desabilitado={carregando || (modo === "edicao" && !alterou)}>
             {carregando ? "Salvando..." : textoBotaoEnviar || "Cadastrar"}
           </Botao>
         </div>
