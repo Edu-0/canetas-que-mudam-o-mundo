@@ -47,7 +47,7 @@ function App() {
         <Route path="/conta/cadastro-ong" element={<CadastroONG />} />
         <Route path="/conta/link-para-voluntario" element={<LinkParaVoluntario />} />
         <Route path="/conta/editar-ong" element={<EditarONG />} />
-        <Route path="/lista-ongs" element={<ListarONGs />} />
+        <Route path="/ongs" element={<ListarONGs />} />
       </Routes>
     </BrowserRouter>
   );

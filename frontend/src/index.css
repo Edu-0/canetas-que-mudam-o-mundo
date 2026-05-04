@@ -77,7 +77,7 @@
 
 .header-pequeno {
   font-family: var(--font-header);
-  font-size: 40px;
+  @apply text-2xl sm:text-3xl md:text-[40px];
   line-height: 125%;
 }
 
@@ -257,11 +257,11 @@
 
   /* paginação */
   .paginacao-container {
-    @apply flex flex-wrap justify-center items-center gap-2;
+    @apply flex flex-wrap justify-center items-center gap-1 sm:gap-2;
   }
 
   .paginacao-item {
-    @apply w-10 h-6 flex items-center justify-center rounded-md border border-black bg-[var(--primario-5)] body-semibold-muito-pequeno;
+    @apply min-w-[32px] px-2 h-7 flex items-center justify-center rounded-md border border-black bg-[var(--primario-5)] text-xs sm:text-sm;
   }
 
   .paginacao-item:hover {
@@ -275,7 +275,7 @@
 
   /* botão anterior / próximo */
   .paginacao-nav {
-    @apply w-24 h-6 flex items-center justify-center rounded-md border border-black bg-[var(--primario-5)] body-semibold-muito-pequeno;
+    @apply min-w-[70px] px-2 h-7 flex items-center justify-center rounded-md border border-black bg-[var(--primario-5)] text-xs sm:text-sm;
   }
 
   .paginacao-nav:hover {
@@ -289,7 +289,7 @@
 
   /* botão pequeno para ações dentro de listas */
   .btn-pequeno-editar {
-    @apply bg-[var(--cor-botao-editar)] px-3 py-1 rounded-full border border-black text-base font-semibold flex items-center justify-center;
+    @apply bg-[var(--cor-botao-editar)] px-2 py-0.5 sm:px-3 sm:py-1 text-xs sm:text-base rounded-full border border-black flex items-center justify-center w-fit max-w-full;
   }
 
   .btn-pequeno-editar:hover {
@@ -297,7 +297,7 @@
   }
 
   .btn-pequeno-desativar {
-    @apply bg-red-200 border-black px-3 py-1 rounded-full border border-black text-base font-semibold flex items-center justify-center;
+    @apply  bg-red-200 px-2 py-0.5 sm:px-3 sm:py-1 text-xs sm:text-base rounded-full border border-black flex items-center justify-center w-fit max-w-full;
   }
 
   .btn-pequeno-desativar:hover {

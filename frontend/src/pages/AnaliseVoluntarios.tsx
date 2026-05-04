@@ -33,7 +33,6 @@ function AnaliseVoluntarios() {
   const [periodo, setPeriodo] = useState<PeriodoFiltro>("todos");
 
   const [ordem, setOrdem] = useState<"nome-asc" | "nome-desc" | "data-asc" | "data-desc">("data-desc");
-  const [status, setStatus] = useState<"todos" | "ativo" | "inativo">("todos");
   const [erroBusca, setErroBusca] = useState("");
   const [tocadoBusca, setTocadoBusca] = useState(false);
 
@@ -41,11 +40,10 @@ function AnaliseVoluntarios() {
     voluntarios,
     buscaNome,
     periodo,
-    ordem,
-    status
+    ordem
   );
-
-  const totalPaginas = Math.ceil(voluntariosFiltrados.length / ITENS_POR_PAGINA);
+    
+  const totalPaginas = Math.max(1, Math.ceil(voluntariosFiltrados.length / ITENS_POR_PAGINA)); // garente pelo menos 1 página
 
   const voluntariosPagina = voluntariosFiltrados.slice(
     (paginaAtual - 1) * ITENS_POR_PAGINA,
@@ -53,7 +51,7 @@ function AnaliseVoluntarios() {
   );
 
   const validarBusca = (valor: string) => {
-    if (valor.length > 100) return "Nome muito longo (máximo 100 caracteres)";
+    if (valor.length >= 100) return "Você atingiu o limite máximo de 100 caracteres";
     if (!/^[a-zA-ZÀ-ÿ\s]*$/.test(valor)) return "Apenas letras e espaços";
     return "";
   };
@@ -117,8 +115,8 @@ function AnaliseVoluntarios() {
   useEffect(() => {
     const total = Math.ceil(voluntariosFiltrados.length / ITENS_POR_PAGINA);
 
-    if (paginaAtual > total) {
-      setPaginaAtual(total || 1);
+    if (paginaAtual > totalPaginas) {
+      setPaginaAtual(totalPaginas);
     }
   }, [voluntariosFiltrados]);
 
@@ -151,21 +149,21 @@ function AnaliseVoluntarios() {
                 ANÁLISE DOS VOLUNTÁRIOS
               </h2>
 
-              <div className="flex flex-wrap items-center gap-4 mb-6 border rounded-lg bg-[var(--base-20)] border-[var(--base-70)] p-1">
-  
+              <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch gap-3 mb-6 border rounded-lg bg-[var(--base-20)] border-[var(--base-70)] p-2">
+   
                 <div className="text-black text-2xl font-extrabold font-['Nunito']">Filtros:</div>
 
-                <div className="flex-1 min-w-[200px]">
+                <div className="flex-1 min-w-0">
                   {/* busca por nome */}
                   <input id="busca-nome" type="text" maxLength={100} placeholder="Pesquisar por nome..." value={buscaNome} onChange={(e) => { const valor = e.target.value; setBuscaNome(valor); setPaginaAtual(1); const erro = validarBusca(valor); setErroBusca(erro);}}
-                    onBlur={() => setTocadoBusca(true)} className={`input-padrao w-67 ${ tocadoBusca && erroBusca ? "border-[var(--cor-resposta-errada)] focus:ring-[var(--cor-resposta-errada)]" : ""} hover:border-2 border-[var(--base-70)] focus-acessivel`} aria-invalid={!!erroBusca} aria-label="Pesquisar por nome"/>
+                    onBlur={() => setTocadoBusca(true)} className={`input-padrao w-full ${ tocadoBusca && erroBusca ? "border-[var(--cor-resposta-errada)] focus:ring-[var(--cor-resposta-errada)]" : "hover:border-2 border-[var(--base-70)] focus-acessivel"}`} aria-invalid={!!erroBusca} aria-label="Pesquisar por nome"/>
                   
                   {tocadoBusca && erroBusca && <div className="text-[var(--cor-resposta-errada)] mt-1 text-sm">{erroBusca}</div>}
                 </div>
 
                 <div>
                   {/* período */}
-                  <select id="busca-periodo" value={periodo} onChange={(e) => { setPeriodo(e.target.value as PeriodoFiltro); setPaginaAtual(1); }} className="input-padrao w-40 hover:border-2 hover:border-[var(--base-70)] focus-acessivel" aria-label="Filtrar por período de cadastro">
+                  <select id="busca-periodo" value={periodo} onChange={(e) => { setPeriodo(e.target.value as PeriodoFiltro); setPaginaAtual(1); }} className="input-padrao w-full sm:w-48 hover:border-2 hover:border-[var(--base-70)] focus-acessivel" aria-label="Filtrar por período de cadastro">
                     <option value="todos">Período</option>
                     <option value="0-1">Até 1 mês</option>
                     <option value="2-3">2 a 3 meses</option>
@@ -181,19 +179,11 @@ function AnaliseVoluntarios() {
 
                 <div>
                   {/* ordem */}
-                  <select id="busca-ordem" value={ordem} onChange={(e) => { setOrdem(e.target.value as any); setPaginaAtual(1);}} className="input-padrao w-56 hover:border-2 border-[var(--base-70)] focus-acessivel" aria-label="Selcionar a ordem de exibição dos voluntários">
+                  <select id="busca-ordem" value={ordem} onChange={(e) => { setOrdem(e.target.value as any); setPaginaAtual(1);}} className="input-padrao w-full sm:w-48 hover:border-2 border-[var(--base-70)] focus-acessivel" aria-label="Selcionar a ordem de exibição dos voluntários">
                     <option value="nome-asc">Nome [A → Z]</option>
                     <option value="nome-desc">Nome [Z → A]</option>
                     <option value="data-desc">Voluntários mais novos</option>
                     <option value="data-asc">Voluntários mais antigos</option>
-                  </select>
-                </div>
-
-                <div>
-                  <select value={status} onChange={(e) => { setStatus(e.target.value as any); setPaginaAtual(1); }} className="input-padrao w-24 hover:border-2 border-[var(--base-70)] focus-acessivel" aria-label="Filtrar por status">
-                    <option value="todos">Status</option>
-                    <option value="ativo">Ativos</option>
-                    <option value="inativo">Inativos</option>
                   </select>
                 </div>
 
@@ -211,17 +201,17 @@ function AnaliseVoluntarios() {
                   const tempo = formatarTempo(v.data_cadastro);
 
                   return (
-                    <div key={v.id} className="flex items-center justify-between border-b py-3">
+                    <div key={v.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b py-3">
 
                       {/* Esquerda */}
-                      <div className="flex flex-col">
+                      <div className="flex flex-col min-w-0">
 
-                        <span className="body-semibold-pequeno">
+                        <span className="font-['Nunito'] font-semibold text-sm sm:text-base md:text-lg truncate">
                           {String((paginaAtual - 1) * ITENS_POR_PAGINA + index + 1).padStart(3, "0")} - {v.nome_completo} {/* número sequencial considerando a paginação */}
                         </span>
 
                         <span className={`
-                          text-xs text-center px-2 py-0.5 leading-none rounded-sm w-fit mt-1
+                          text-[10px] sm-text-[12px] px-1 py-[2px] text-center leading-none rounded-sm w-fit mt-1
                           ${
                             tempo.tipo === "novo"
                               ? "bg-[var(--base-15)] text-black"
@@ -235,7 +225,7 @@ function AnaliseVoluntarios() {
                       </div>
 
                       {/* Direita */}
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-3 sm:gap-2 sm:justify-center mt-2 sm:mt-0">
 
                         <Botao variante="botao-pequeno-editar" aoClicar={() => navigate("/auditoria")}>Analisar</Botao>
 
