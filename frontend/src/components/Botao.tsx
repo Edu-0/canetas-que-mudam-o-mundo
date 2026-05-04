@@ -5,7 +5,7 @@ type PropriedadesBotao = {
   children: ReactNode; // o que tem dentro do botão
   ativo?: boolean; // se o botão está selecionado
   aoClicar?: () => void;
-  variante?: "padrao" | "confirmar" | "cancelar" | "editar" | "sair" | "tipo-selecionado" | "apto_selecionado" | "inapto_selecionado" | "quiz-resposta";
+  variante?: "padrao" | "confirmar" | "cancelar" | "editar" | "sair" | "tipo-selecionado" | "apto_selecionado" | "inapto_selecionado" | "quiz-resposta" | "botao-pequeno-editar" | "botao-pequeno-desativar" | "paginacao";
   tipo?: "button" | "submit";
   desabilitado?: boolean;
   navegacao?: string; // navegação ou botão
@@ -24,12 +24,22 @@ export default function Botao({children, ativo = false, aoClicar, variante = "pa
   else if (variante === "apto_selecionado") estilo = "btn-apto-selecionado";
   else if (variante === "inapto_selecionado") estilo = "btn-inapto-selecionado";
   else if (variante === "quiz-resposta") estilo = "btn-quiz-resposta";
-  
+  else if (variante === "botao-pequeno-editar") estilo = "btn-pequeno-editar";
+  else if (variante === "botao-pequeno-desativar") estilo = "btn-pequeno-desativar";
+  else if (variante === "paginacao") estilo = "";
+
   if (ativo && variante === "padrao") {
     estilo = "btn-ativado";
   }
 
-  const classe = `btn-base ${estilo} focus-acessivel w-full ${desabilitado ? "cursor-not-allowed opacity-50" : "hover:brightness-95"} ${className || ""}`;
+  const usaBase = variante !== "paginacao";
+
+  const classe = 
+    `${usaBase ? "btn-base" : ""} ${estilo} 
+    focus-acessivel 
+    ${ variante === "botao-pequeno-editar" || variante === "botao-pequeno-desativar" || className?.includes("paginacao") ? "" : "w-full"}
+    ${desabilitado ? "cursor-not-allowed opacity-50" : "hover:brightness-95"} 
+    ${className || ""}`;
 
   // navergar
   if (navegacao) {  

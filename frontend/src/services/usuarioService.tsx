@@ -15,6 +15,7 @@ export type DadosUsuario = { // (GET retorno)
   }[];
   data_cadastro?: string; // não é criado no backend, criamos aqui no frontend para facilitar a manipulação, mas é opcional porque pode não vir do backend
   data_edicao_conta?: string;
+  ativo?: boolean; 
 };
 
 export type CriarUsuarioEnvio = { // (POST envio) 
@@ -126,6 +127,12 @@ export async function criarFamiliar(responsavel_id: number, dados: DadosFamilia[
 export async function obterPerfil() {
   const response = await api.get("/usuario/perfil/me");
   return response.data;
+}
+
+// Obter todos os usuários (para a página de listagem de voluntários da triagem) TESTE
+export async function obterTodosUsuarios(): Promise<DadosUsuario[]> {
+  const response = await api.get("/usuario");
+  return response.data; // se for algo como [{ "id": 1, "nome_completo": "João Silva", ... }, { "id": 2, "nome_completo": "Maria Souza", ... }]
 }
 
 // Atualizar perfil do usuário
