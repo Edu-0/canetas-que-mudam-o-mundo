@@ -19,6 +19,7 @@ function Header(){
 
   // início sempre fica no começo da lista
   listaDeBotoes.push({ id: "inicio", texto: "Início", rota: "/" });
+  listaDeBotoes.push({ id: "ongs", texto: "ONGs", rota: "/ongs" });
 
   if (!usuario) {
     listaDeBotoes.push(

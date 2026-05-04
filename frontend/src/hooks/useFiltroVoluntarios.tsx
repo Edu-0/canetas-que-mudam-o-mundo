@@ -1,23 +1,12 @@
 import { DadosUsuario } from "../services/usuarioService";
 
-type PeriodoFiltro =
-  | "todos"
-  | "0-1"
-  | "2-3"
-  | "4-5"
-  | "6-7"
-  | "8-9"
-  | "10-11"
-  | "12"
-  | "24"
-  | "25+";
+type PeriodoFiltro = | "todos" | "0-1" | "2-3" | "4-5" | "6-7" | "8-9" | "10-11" | "12" | "24" | "25+";
 
 export function useFiltroVoluntarios(
   voluntarios: DadosUsuario[],
   buscaNome: string,
   periodo: PeriodoFiltro,
   ordem: "nome-asc" | "nome-desc" | "data-asc" | "data-desc",
-  status: "todos" | "ativo" | "inativo"
 ) {
   function calcularMeses(data?: string) {
     if (!data) return 0;
@@ -78,14 +67,6 @@ export function useFiltroVoluntarios(
 
     // período
     .filter(v => filtrarPorPeriodo(calcularMeses(v.data_cadastro)))
-
-    // status
-    .filter(v => {
-      if (status === "todos") return true;
-      if (status === "ativo") return v.ativo === true;
-      if (status === "inativo") return v.ativo === false;
-      return true;
-    })
 
     // ordem
     .sort((a, b) => {
