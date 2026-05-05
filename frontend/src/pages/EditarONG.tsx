@@ -15,10 +15,11 @@ import Botao from "../components/Botao";
 function EditarONG() {
   const { usuario, definirUsuario } = useUsuario();
   const {ong, definirONG} = useONG();
+  console.log("EditarONG.render", { usuarioId: usuario?.id, ongId: ong?.id });
   const navigate = useNavigate();
   const [mensagem, setMensagem] = useState("");
   
-  const {setAlterou, tentarSair, mostrarModal, setMostrarModal, } = useAvisoAlteracoesNaoSalvas({
+  const {alterou, setAlterou, tentarSair, mostrarModal, setMostrarModal, } = useAvisoAlteracoesNaoSalvas({
     mensagem: "Você tem alterações não salvas. Deseja sair mesmo?",});
 
   const [tipoMensagem, setTipoMensagem] = useState<"sucesso" | "erro">("sucesso");
@@ -42,7 +43,9 @@ function EditarONG() {
       if (!usuario || ong) return; // se não tiver usuário ou se a ONG já estiver carregada, não precisa buscar
 
       try {
-        const dados = await obterONG(usuario.id);
+        console.log("EditarONG.carregarONG chamada", { usuarioId: usuario?.id });
+        const dados = await obterONG();
+        console.log("EditarONG.carregarONG dados recebidos", dados);
         definirONG(dados);
 
       } catch (error) {
@@ -52,6 +55,31 @@ function EditarONG() {
 
     carregarONG();
   }, [usuario, ong]);
+
+  function normalizarONG(u: any) {
+    return {
+      id: u.id,
+      nome: (u.nome || "").trim(),
+      cnpj: (u.cnpj || "").replace(/\D/g, ""),
+      cep: (u.cep || "").replace(/\D/g, ""),
+      rua: (u.rua || "").trim(),
+      bairro: (u.bairro || "").trim(),
+      cidade: (u.cidade || "").trim(),
+      estado: (u.estado || "").trim(),
+      numero: (u.numero || "").trim(),
+      complemento: (u.complemento || "").trim(),
+      telefone: (u.telefone || "").replace(/\D/g, ""),
+      email: (u.email || "").trim(),
+      diasFuncionamento: u.diasFuncionamento || [],
+      horarioInicio: (u.horarioInicio || "").trim(),
+      horarioFim: (u.horarioFim || "").trim(),
+      sobre: (u.sobre || "").trim(),
+      instagram: (u.instagram || "").trim(),
+      facebook: (u.facebook || "").trim(),
+      site: (u.site || "").trim(),
+    };
+  }
+
 
   if (!usuario) {
     return <p>Nenhum usuário</p>;
@@ -155,30 +183,57 @@ function EditarONG() {
                   facebook: ong.facebook || "",
                   site: ong.site || "",
                 }}
-                
+
                 mudouDados={(dados) => {
+                  const atual = normalizarONG(ong);
+                  const novo = normalizarONG(dados);
+
                   const mudou =
-                    dados.nome.trim() !== (ong.nome || "") ||
-                    dados.cnpj.replace(/\D/g, "") !== (ong.cnpj || "") ||
-                    (dados.cep || "").replace(/\D/g, "") !== (ong.cep || "") ||
-                    dados.rua.trim() !== (ong.rua || "") ||
-                    dados.bairro.trim() !== (ong.bairro || "") ||
-                    dados.cidade.trim() !== (ong.cidade || "") ||
-                    dados.estado.trim() !== (ong.estado || "") ||
-                    (dados.numero || "").trim() !== (ong.numero || "") ||
-                    (dados.complemento || "").trim() !== (ong.complemento || "") ||
-                    dados.telefone.replace(/\D/g, "") !== (ong.telefone || "") ||
-                    dados.email.trim() !== (ong.email || "") ||
-                    !arraysIguais(dados.diasFuncionamento, ong.diasFuncionamento || []) ||
-                    dados.horarioInicio.trim() !== (ong.horarioInicio || "") ||
-                    dados.horarioFim.trim() !== (ong.horarioFim || "") ||
-                    dados.sobre.trim() !== (ong.sobre || "") ||
-                    (dados.instagram || "").trim() !== (ong.instagram || "") ||
-                    (dados.facebook || "").trim() !== (ong.facebook || "") ||
-                    (dados.site || "").trim() !== (ong.site || "");
+                    atual.nome !== novo.nome ||
+                    atual.cnpj !== novo.cnpj ||
+                    atual.cep !== novo.cep ||
+                    atual.rua !== novo.rua ||
+                    atual.bairro !== novo.bairro ||
+                    atual.cidade !== novo.cidade ||
+                    atual.estado !== novo.estado ||
+                    atual.numero !== novo.numero ||
+                    atual.complemento !== novo.complemento ||
+                    atual.telefone !== novo.telefone ||
+                    atual.email !== novo.email ||
+                    !arraysIguais(atual.diasFuncionamento, novo.diasFuncionamento) ||
+                    atual.horarioInicio !== novo.horarioInicio ||
+                    atual.horarioFim !== novo.horarioFim ||
+                    atual.sobre !== novo.sobre ||
+                    atual.instagram !== novo.instagram ||
+                    atual.facebook !== novo.facebook ||
+                    atual.site !== novo.site;
 
                   setAlterou(mudou);
                 }}
+                
+                // mudouDados={(dados) => {
+                //   const mudou =
+                //     dados.nome.trim() !== (ong.nome || "") ||
+                //     dados.cnpj.replace(/\D/g, "") !== (ong.cnpj || "") ||
+                //     (dados.cep || "").replace(/\D/g, "") !== (ong.cep || "") ||
+                //     dados.rua.trim() !== (ong.rua || "") ||
+                //     dados.bairro.trim() !== (ong.bairro || "") ||
+                //     dados.cidade.trim() !== (ong.cidade || "") ||
+                //     dados.estado.trim() !== (ong.estado || "") ||
+                //     (dados.numero || "").trim() !== (ong.numero || "") ||
+                //     (dados.complemento || "").trim() !== (ong.complemento || "") ||
+                //     dados.telefone.replace(/\D/g, "") !== (ong.telefone || "") ||
+                //     dados.email.trim() !== (ong.email || "") ||
+                //     !arraysIguais(dados.diasFuncionamento, ong.diasFuncionamento || []) ||
+                //     dados.horarioInicio.trim() !== (ong.horarioInicio || "") ||
+                //     dados.horarioFim.trim() !== (ong.horarioFim || "") ||
+                //     dados.sobre.trim() !== (ong.sobre || "") ||
+                //     (dados.instagram || "").trim() !== (ong.instagram || "") ||
+                //     (dados.facebook || "").trim() !== (ong.facebook || "") ||
+                //     (dados.site || "").trim() !== (ong.site || "");
+
+                //   setAlterou(mudou);
+                // }}
 
                 textoBotaoCancelar="Cancelar edição"
                 textoBotaoEnviar="Salvar alterações"
@@ -188,14 +243,65 @@ function EditarONG() {
                   setErroModal(erro);
                 }}
 
-                aoCancelar={() => tentarSair("/conta")}
+                aoCancelar={() => {
+                  const podeSair = tentarSair("/conta");
+                  if (podeSair) {
+                    navigate("/conta");
+                  }
+                }}
 
-                aoEnviar={async (usuarioAtualizado) => {
+                // aoEnviar={async (usuarioAtualizado) => {
+                //   try {
+                //     await atualizarONG(usuarioAtualizado); // atualizar no backend
+
+                //     const ongAtualizada = await obterONG(); // pegar dados atualizados do backend para garantir que esteja tudo certo
+                //     definirONG(ongAtualizada); // atualizar no contexto
+
+                //     setAlterou(false);
+                //     setMensagem("Alterações salvas com sucesso!");
+                //     setTipoMensagem("sucesso");
+
+                //     setTimeout(() => {
+                //       setMensagem("");
+                //       navigate("/conta");
+                //     }, 2000);
+
+                //   } catch (error: any) {
+                //     const erroBackend = error.response?.data?.detail;
+
+                //     if (erroBackend) {
+                //       setErroModal(erroBackend);
+                //     } else {
+                //       setErroModal({ mensagem: "Erro ao atualizar ONG." });
+                //     }
+                //   }
+                //}}
+
+                // aoEnviar={(usuarioAtualizado) => {
+                //   definirONG({
+                //     ...ong,
+                //     ...usuarioAtualizado,
+                //   });
+
+                //   setAlterou(false);
+                //   setMensagem("Alterações salvas com sucesso!");
+                //   setTipoMensagem("sucesso");
+
+                //   setTimeout(() => {
+                //     setMensagem("");
+                //     navigate("/conta");
+                //   }, 2000);
+                // }}
+
+                aoEnviar={async (dadosAtualizados) => {
                   try {
-                    await atualizarONG(usuario.id, usuarioAtualizado); // atualizar no backend
+                    console.log("EditarONG.aoEnviar recebido", dadosAtualizados);
 
-                    const ongAtualizada = await obterONG(usuario.id); // pegar dados atualizados do backend para garantir que esteja tudo certo
-                    definirONG(ongAtualizada); // atualizar no contexto
+                    const ongAtualizada = await atualizarONG(dadosAtualizados);
+
+                    console.log("EditarONG.aoEnviar atualizada", ongAtualizada);
+                    
+                    definirONG(ongAtualizada);
 
                     setAlterou(false);
                     setMensagem("Alterações salvas com sucesso!");
@@ -210,12 +316,13 @@ function EditarONG() {
                     const erroBackend = error.response?.data?.detail;
 
                     if (erroBackend) {
-                      setErroModal(erroBackend);
+                      setErroModal({ mensagem: erroBackend });
                     } else {
                       setErroModal({ mensagem: "Erro ao atualizar ONG." });
                     }
                   }
                 }}
+
               />
 
               <ModalConfirmacao

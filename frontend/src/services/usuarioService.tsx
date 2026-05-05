@@ -176,8 +176,18 @@ export async function criarONG(dados: CriarONGEnvio) {
 
 // Atualizar dados da ONG do usuário
 export async function atualizarONG(dados: AtualizarONGEnvio) {
-  const response = await api.put(`/ong/editar-ong`, dados);
-  return response.data;
+  console.log("usuarioService.atualizarONG dados:", dados);
+  // const response = await api.put(`/ong/editar-ong`, dados);
+  // console.log("usuarioService.atualizarONG resposta:", response.data);
+  // return response.data;
+  try {
+    const response = await api.put(`/ong/editar-ong`, dados);
+    console.log("usuarioService.atualizarONG resposta:", response.data);
+    return response.data;
+  } catch (err: any) {
+    console.error("usuarioService.atualizarONG erro:", err?.response?.status, err?.response?.data);
+    throw err;
+  }
 }
 
 // Obter dados da ONG do usuário
