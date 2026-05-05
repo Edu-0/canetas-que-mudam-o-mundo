@@ -179,12 +179,15 @@ def anonimizar_responsavel(usuario_id, db: SessionDep): # Função principal que
             detail=f"Erro ao anonimizar a conta: {str(e)}"
         )
 
-def processar_exclusao_conta(usuario_id: int, db: SessionDep):
+def processar_exclusao_conta(usuario_id, db: SessionDep):
     
     funcoes_do_usuario = db.query(UsuarioFuncao).filter(UsuarioFuncao.usuario_id == usuario_id).all()
     tipos_cadastrados = [f.tipo for f in funcoes_do_usuario]
 
+    db.query(UsuarioFuncao).filter(UsuarioFuncao.usuario_id == usuario_id).delete()
+
     if TipoUsuario.COORDENADOR_PROCESSOS in tipos_cadastrados:
+        
         usuario_deletado = db.query(Usuario).filter(Usuario.id == usuario_id).delete()
     
         if usuario_deletado == 0:
@@ -193,9 +196,8 @@ def processar_exclusao_conta(usuario_id: int, db: SessionDep):
             
     elif TipoUsuario.RESPONSAVEL_BENEFICIARIO in tipos_cadastrados:
         anonimizar_responsavel(db, usuario_id)
+        
     else:
         anonimizar_usuario(db, usuario_id)
-
-    db.query(UsuarioFuncao).filter(UsuarioFuncao.usuario_id == usuario_id).delete()
 
     db.commit()
