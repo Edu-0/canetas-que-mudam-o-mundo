@@ -184,11 +184,11 @@ def processar_exclusao_conta(usuario_id, db: SessionDep):
     funcoes_do_usuario = db.query(UsuarioFuncao).filter(UsuarioFuncao.usuario_id == usuario_id).all()
     tipos_cadastrados = [f.tipo for f in funcoes_do_usuario]
 
-    db.query(UsuarioFuncao).filter(UsuarioFuncao.usuario_id == usuario_id).delete()
+    db.query(m.UsuarioFuncao).filter(m.UsuarioFuncao.usuario_id == usuario_id).delete()
 
     if TipoUsuario.COORDENADOR_PROCESSOS in tipos_cadastrados:
         
-        usuario_deletado = db.query(Usuario).filter(Usuario.id == usuario_id).delete()
+        usuario_deletado = db.query(m.Usuario).filter(m.Usuario.id == usuario_id).delete()
     
         if usuario_deletado == 0:
             db.rollback()
