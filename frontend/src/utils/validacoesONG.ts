@@ -152,17 +152,21 @@ export function validarCampo(
       if (!dadosLimpos.horarioInicio) 
         return "Campo obrigatório, informe o horário de início";
       if (!horaValida(dadosLimpos.horarioInicio))
-        return "Horário inválido";
+        return "Horário de abertura inválido";
+      if (horaValida(dadosLimpos.horarioInicio) && horaValida(dadosLimpos.horarioFim)) { 
+        if (!horarioCoerente(dadosLimpos.horarioInicio, dadosLimpos.horarioFim))
+          return "O horário de abertura deve ser antes do fechamento";
+      }
       break;
 
     case "horarioFim":
       if (!dadosLimpos.horarioFim) 
         return "Campo obrigatório, informe o horário de fim";
       if (!horaValida(dadosLimpos.horarioFim))
-        return "Horário inválido";
-      if (dadosLimpos.horarioInicio && dadosLimpos.horarioFim) {
+        return "Horário de fechamento inválido";
+      if (horaValida(dadosLimpos.horarioInicio) && horaValida(dadosLimpos.horarioFim)) { // se os dois horários forem válidos
         if (!horarioCoerente(dadosLimpos.horarioInicio, dadosLimpos.horarioFim))
-          return "O horário final deve ser depois do inicial";
+          return "O horário de fechamento deve ser depois da abertura";
       }
       break;
 

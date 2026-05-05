@@ -15,6 +15,7 @@ export type DadosUsuario = { // (GET retorno)
   }[];
   data_cadastro?: string; // não é criado no backend, criamos aqui no frontend para facilitar a manipulação, mas é opcional porque pode não vir do backend
   data_edicao_conta?: string;
+  ativo?: boolean; 
 };
 
 export type CriarUsuarioEnvio = { // (POST envio) 
@@ -128,6 +129,12 @@ export async function obterPerfil() {
   return response.data;
 }
 
+// Obter todos os usuários (para a página de listagem de voluntários da triagem) TESTE
+export async function obterTodosUsuarios(): Promise<DadosUsuario[]> {
+  const response = await api.get("/usuario");
+  return response.data; // se for algo como [{ "id": 1, "nome_completo": "João Silva", ... }, { "id": 2, "nome_completo": "Maria Souza", ... }]
+}
+
 // Atualizar perfil do usuário
 export async function atualizarUsuario(id: number, dados: AtualizarUsuarioEnvio) {
   const response = await api.put(`/usuario/${id}`, dados); 
@@ -162,20 +169,30 @@ export async function redefinirSenha(token: string, senha: string) {
 }
 
 // Criar ONG para usuário
-export async function criarONG(usuario_id: number, dados: CriarONGEnvio) {
-  const response = await api.post(`/usuario/${usuario_id}/ong`, dados);
+export async function criarONG(dados: CriarONGEnvio) {
+  const response = await api.post(`/ong/cadastro-ong`, dados);
   return response.data;
 }
 
 // Atualizar dados da ONG do usuário
-export async function atualizarONG(usuario_id: number, dados: AtualizarONGEnvio) {
-  const response = await api.put(`/usuario/${usuario_id}/ong`, dados);
-  return response.data;
+export async function atualizarONG(dados: AtualizarONGEnvio) {
+  console.log("usuarioService.atualizarONG dados:", dados);
+  // const response = await api.put(`/ong/editar-ong`, dados);
+  // console.log("usuarioService.atualizarONG resposta:", response.data);
+  // return response.data;
+  try {
+    const response = await api.put(`/ong/editar-ong`, dados);
+    console.log("usuarioService.atualizarONG resposta:", response.data);
+    return response.data;
+  } catch (err: any) {
+    console.error("usuarioService.atualizarONG erro:", err?.response?.status, err?.response?.data);
+    throw err;
+  }
 }
 
 // Obter dados da ONG do usuário
-export async function obterONG(usuario_id: number): Promise<ONG> {
-  const response = await api.get(`/usuario/${usuario_id}/ong`);
+export async function obterONG(): Promise<ONG> {
+  const response = await api.get(`/ong/minha-ong`);
   return response.data; // se for algo como { "nome": "ONG Exemplo", "cnpj": "00.000.000/0000-00", ... }
 }
 

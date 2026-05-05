@@ -151,7 +151,14 @@ export function horaValida(hora: string) {
 
 export function horarioCoerente(inicio: string, fim: string) {
   if (!horaValida(inicio) || !horaValida(fim)) return false;
-  return inicio < fim;
+
+  const [h1, m1] = inicio.split(":").map(Number);
+  const [h2, m2] = fim.split(":").map(Number);
+
+  const minutosInicio = h1 * 60 + m1;
+  const minutosFim = h2 * 60 + m2;
+
+  return minutosInicio < minutosFim;
 }
 
 export function diasFuncionamentoValido(dias: number[]) {

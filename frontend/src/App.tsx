@@ -20,6 +20,7 @@ import MontarKits from "./pages/MontarKits";
 import CadastroONG from "./pages/CadastroONG";
 import LinkParaVoluntario from "./pages/LinkParaVoluntario";
 import EditarONG from "./pages/EditarONG";
+import ListarONGs from "./pages/ListaONGs";
 
 function App() {
   return (
@@ -46,6 +47,7 @@ function App() {
         <Route path="/conta/cadastro-ong" element={<CadastroONG />} />
         <Route path="/conta/link-para-voluntario" element={<LinkParaVoluntario />} />
         <Route path="/conta/editar-ong" element={<EditarONG />} />
+        <Route path="/ongs" element={<ListarONGs />} />
       </Routes>
     </BrowserRouter>
   );
