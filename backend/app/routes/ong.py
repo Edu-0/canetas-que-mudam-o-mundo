@@ -7,7 +7,7 @@ from app.schemas import ong as s
 from app.models import ong as m
 from app.models import user as u
 from typing import List
-from app.services.user_service.anonimizar_usuario
+from app.services.ong_service import remover_voluntario_ong
 
 router = APIRouter(prefix="/ong", tags=["ong"])
 
@@ -91,43 +91,39 @@ def atualizar_ong(
 
 @router.delete("/deletar-voluntario/{voluntario_id}")
 def deletar_voluntario(voluntario_id, db:SessionDep, usuario_atual: u.Usuario = Depends(get_current_user)):
-
     try:
-        vinculo_deletado = db.query(VoluntarioOng).filter(
-                VoluntarioOng.ong_id == usuario_atual.ong.id, 
-                VoluntarioOng.usuario_id == voluntario_id   
-            ).delete()
-
-        if vinculo_deletado == 0:
-            db.rollback()
-            raise HTTPException(status_code=404, detail="Voluntário não encontrado nesta ONG.")
-
-        funcao_deletada = db.query(UsuarioFuncao).filter(UsuarioFuncao.usuario_id == voluntario_id).delete()
+        remover_voluntario_ong(
+            db=db, 
+            voluntario_id=voluntario_id, 
+            ong_id=usuario_atual.ong.id, 
+            ong_ativa=usuario_atual.ong.ativa
+        )
         
-        if usuario_atual.ong.ativa == True:
-            voluntario = db.query(Usuario).filter(Usuario.id == voluntario_id).delete()
-            anonimizar_usuario(voluntario)
-        else:
-            voluntario_deletado = db.query(Usuario).filter(Usuario.id == voluntario_id).delete() 
-            if voluntario_deletado == 0:
-                db.rollback()
-                raise HTTPException(status_code=404, detail="Cadastro do voluntário não encontrado.")
-        
-        db.commit()
-
         return {"mensagem": "Voluntário removido com sucesso!"}
 
     except HTTPException as http_e:
         raise http_e
+
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail="Erro interno ao tentar remover voluntário.")
         print(f"Erro ao deletar: {e}")
 
-@router.put("/deletar-ong", response_model = s.RespostaOng)
+@router.put("/deletar-ong/{ong_id}")
 def deletar_ong(
     db: SessionDep,
     usuario_atual: u.Usuario = Depends(get_current_user)):
     
-    
-    return {"mensagem: Usuário deletado com sucesso"}
+    try:
+        usuario_atual.ong.ativa = False
+
+        remover_voluntario_ong(db,voluntario_id,usuario_atual.ong,usuario_atual.ong.ativa)
+        
+        ong_deletada = db.query(Ong).filter(
+        usuario_atual.ong.id == ong_id).delete()
+
+        return {"mensagem: ONG deletada com sucesso"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Erro interno ao tentar remover voluntário.")
+        print(f"Erro ao deletar: {e}")
