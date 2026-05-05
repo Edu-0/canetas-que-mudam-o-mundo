@@ -145,6 +145,8 @@ def deletar_ong(
         
         funcao = db.query(u.UsuarioFuncao).filter(u.UsuarioFuncao.usuario_id == usuario_atual.id, u.UsuarioFuncao.tipo_usuario == TipoUsuario.COORDENADOR_PROCESSOS).delete()
 
+        db.query(u.Usuario).filter(u.Usuario.id == usuario_atual.id).delete()
+             
         db.commit()
         return {"mensagem": "ONG e todos os seus vínculos deletados com sucesso"} 
 
