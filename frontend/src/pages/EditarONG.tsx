@@ -11,6 +11,7 @@ import ModalConfirmacao from "../components/ModalConfirmacao";
 import { atualizarONG, obterONG } from "../services/usuarioService";
 import { useONG } from "../context/OngContext";
 import Botao from "../components/Botao";
+import { excluirONG } from "../services/usuarioService";
 
 function EditarONG() {
   const { usuario, definirUsuario } = useUsuario();
@@ -29,6 +30,9 @@ function EditarONG() {
     mensagem: string;
   } | null>(null);
 
+  const [mostrarModalExcluir, setMostrarModalExcluir] = useState(false);
+  const [carregandoExclusao, setCarregandoExclusao] = useState(false);
+
   function arraysIguais(a: number[], b: number[]) {
     if (a.length !== b.length) return false;
 
@@ -38,14 +42,52 @@ function EditarONG() {
     return aOrdenado.every((v, i) => v === bOrdenado[i]);
   }
 
+  async function handleExcluirONG() {
+    if (!ong?.id) return;
+
+    try {
+      setCarregandoExclusao(true);
+
+      await excluirONG(ong.id);
+
+      definirONG(null); // limpa ONG do contexto
+
+      setMensagem("ONG excluída com sucesso!");
+      setTipoMensagem("sucesso");
+
+      setTimeout(() => {
+        definirONG(null);
+
+        // limpa os tokens e dados do usuário, deslogando-o
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("token_type");
+        localStorage.removeItem("usuario");
+
+        definirUsuario(null); // desloga o coordenador, já que a ONG foi excluída
+        navigate("/login");
+      }, 1500);
+
+    } catch (error: any) {
+      console.error("Erro ao excluir ONG", error);
+
+      const erroBackend = error.response?.data?.detail;
+
+      setErroModal({
+        mensagem: erroBackend || "Erro ao excluir ONG.",
+      });
+
+    } finally {
+      setCarregandoExclusao(false);
+      setMostrarModalExcluir(false);
+    }
+  }
+
   useEffect(() => {
     async function carregarONG() {
       if (!usuario || ong) return; // se não tiver usuário ou se a ONG já estiver carregada, não precisa buscar
 
       try {
-        console.log("EditarONG.carregarONG chamada", { usuarioId: usuario?.id });
         const dados = await obterONG();
-        console.log("EditarONG.carregarONG dados recebidos", dados);
         definirONG(dados);
 
       } catch (error) {
@@ -210,30 +252,6 @@ function EditarONG() {
 
                   setAlterou(mudou);
                 }}
-                
-                // mudouDados={(dados) => {
-                //   const mudou =
-                //     dados.nome.trim() !== (ong.nome || "") ||
-                //     dados.cnpj.replace(/\D/g, "") !== (ong.cnpj || "") ||
-                //     (dados.cep || "").replace(/\D/g, "") !== (ong.cep || "") ||
-                //     dados.rua.trim() !== (ong.rua || "") ||
-                //     dados.bairro.trim() !== (ong.bairro || "") ||
-                //     dados.cidade.trim() !== (ong.cidade || "") ||
-                //     dados.estado.trim() !== (ong.estado || "") ||
-                //     (dados.numero || "").trim() !== (ong.numero || "") ||
-                //     (dados.complemento || "").trim() !== (ong.complemento || "") ||
-                //     dados.telefone.replace(/\D/g, "") !== (ong.telefone || "") ||
-                //     dados.email.trim() !== (ong.email || "") ||
-                //     !arraysIguais(dados.diasFuncionamento, ong.diasFuncionamento || []) ||
-                //     dados.horarioInicio.trim() !== (ong.horarioInicio || "") ||
-                //     dados.horarioFim.trim() !== (ong.horarioFim || "") ||
-                //     dados.sobre.trim() !== (ong.sobre || "") ||
-                //     (dados.instagram || "").trim() !== (ong.instagram || "") ||
-                //     (dados.facebook || "").trim() !== (ong.facebook || "") ||
-                //     (dados.site || "").trim() !== (ong.site || "");
-
-                //   setAlterou(mudou);
-                // }}
 
                 textoBotaoCancelar="Cancelar edição"
                 textoBotaoEnviar="Salvar alterações"
@@ -249,49 +267,6 @@ function EditarONG() {
                     navigate("/conta");
                   }
                 }}
-
-                // aoEnviar={async (usuarioAtualizado) => {
-                //   try {
-                //     await atualizarONG(usuarioAtualizado); // atualizar no backend
-
-                //     const ongAtualizada = await obterONG(); // pegar dados atualizados do backend para garantir que esteja tudo certo
-                //     definirONG(ongAtualizada); // atualizar no contexto
-
-                //     setAlterou(false);
-                //     setMensagem("Alterações salvas com sucesso!");
-                //     setTipoMensagem("sucesso");
-
-                //     setTimeout(() => {
-                //       setMensagem("");
-                //       navigate("/conta");
-                //     }, 2000);
-
-                //   } catch (error: any) {
-                //     const erroBackend = error.response?.data?.detail;
-
-                //     if (erroBackend) {
-                //       setErroModal(erroBackend);
-                //     } else {
-                //       setErroModal({ mensagem: "Erro ao atualizar ONG." });
-                //     }
-                //   }
-                //}}
-
-                // aoEnviar={(usuarioAtualizado) => {
-                //   definirONG({
-                //     ...ong,
-                //     ...usuarioAtualizado,
-                //   });
-
-                //   setAlterou(false);
-                //   setMensagem("Alterações salvas com sucesso!");
-                //   setTipoMensagem("sucesso");
-
-                //   setTimeout(() => {
-                //     setMensagem("");
-                //     navigate("/conta");
-                //   }, 2000);
-                // }}
 
                 aoEnviar={async (dadosAtualizados) => {
                   try {
@@ -344,6 +319,18 @@ function EditarONG() {
                 }}
               />
 
+              {/* linha separadora */}
+              <div className="mt-12 border-t border-[var(--base-40)] my-2" />
+
+              <div>
+                <p className="mt-8 body-semibold-pequeno text-center">Gostaria de excluir a ONG?</p>
+              </div>
+              <div className="flex align-center mt-4 w-48 mx-auto">
+                <Botao variante="cancelar"  aria-label="Botão para excluir ONG"  aoClicar={() => setMostrarModalExcluir(true)}>
+                  Excluir ONG
+                </Botao>
+              </div>
+
               <ModalConfirmacao
                 aberto={!!erroModal}
                 titulo="Erro na edição"
@@ -351,6 +338,17 @@ function EditarONG() {
                 botaoConfirmar="Fechar"
                 onCancelar={() => setErroModal(null)}
                 onConfirmar={() => setErroModal(null)}
+              />
+              <ModalConfirmacao
+                aberto={mostrarModalExcluir}
+                titulo="Excluir ONG"
+                descricao={`Tem certeza que deseja excluir a ONG "${ong.nome}"? Essa ação não pode ser desfeita e os usuários associados a ONG serão excluídos também. Isso inclui a sua conta de coordenador, já que uma conta só pode estar associada a uma ONG. Se você deseja apenas sair da ONG, exclua a conta de coordenador.`}
+                botaoCancelar="Cancelar"
+                botaoConfirmar={carregandoExclusao ? "Excluindo..." : "Excluir"}
+                varianteCancelar="confirmar"
+                varianteConfirmar="cancelar"
+                onCancelar={() => setMostrarModalExcluir(false)}
+                onConfirmar={handleExcluirONG}
               />
 
             </div>

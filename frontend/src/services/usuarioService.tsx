@@ -151,7 +151,7 @@ export async function atualizarTiposUsuario(id: number, tipos: string[]) {
 
 // Excluir conta (anonimização)
 export async function excluirConta(usuario_id: number) {
-  const response = await api.delete(`/usuario/${usuario_id}`);
+  const response = await api.delete(`/usuario/deletar-conta/${usuario_id}`);
   return response.data;
 }
 
@@ -176,18 +176,19 @@ export async function criarONG(dados: CriarONGEnvio) {
 
 // Atualizar dados da ONG do usuário
 export async function atualizarONG(dados: AtualizarONGEnvio) {
-  console.log("usuarioService.atualizarONG dados:", dados);
-  // const response = await api.put(`/ong/editar-ong`, dados);
-  // console.log("usuarioService.atualizarONG resposta:", response.data);
-  // return response.data;
   try {
     const response = await api.put(`/ong/editar-ong`, dados);
-    console.log("usuarioService.atualizarONG resposta:", response.data);
     return response.data;
   } catch (err: any) {
     console.error("usuarioService.atualizarONG erro:", err?.response?.status, err?.response?.data);
     throw err;
   }
+}
+
+// Excluir ONG do usuário
+export async function excluirONG(ong_id: number) {
+  const response = await api.delete(`/ong/deletar-ong/${ong_id}`);
+  return response.data;
 }
 
 // Obter dados da ONG do usuário
