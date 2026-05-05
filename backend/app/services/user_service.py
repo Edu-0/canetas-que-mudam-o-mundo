@@ -11,17 +11,10 @@ from app.core.security import gerar_hash_senha
 from app.database.connection import SessionDep
 from app.models import user as m
 from app.services.firebase_storage import FirebaseStorageService
+from app.utils import gerar_codigo_numerico, gerar_email_anonimo
 
 
 # As conversões para hash e aleatoriedade servem para manter a privacidades dos dados e conformidade com a LGPD, garantindo que as informações originais não possam ser recuperadas.
-
-def gerar_codigo_numerico(base: str, tamanho: int) -> str:
-    numero = int(hashlib.sha256(base.encode("utf-8")).hexdigest(), 16)
-    return str(numero % (10 ** tamanho)).zfill(tamanho)
-
-
-def gerar_email_anonimo(usuario_id: int) -> str: # Mantém formato de email, irreversível e único, sem revelar informações pessoais.
-    return f"anonimo.{usuario_id}.{uuid.uuid4().hex[:12]}@deletado.com"
 
 
 def obter_caminho_storage(file_url: str) -> str: # Extrai o caminho do arquivo a partir da URL completa, considerando o nome do bucket para garantir compatibilidade com diferentes configurações de Firebase Storage.
@@ -185,3 +178,4 @@ def anonimizar_responsavel(usuario_id, db: SessionDep): # Função principal que
             status_code=500,
             detail=f"Erro ao anonimizar a conta: {str(e)}"
         )
+

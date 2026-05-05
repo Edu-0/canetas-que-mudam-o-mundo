@@ -3,9 +3,9 @@ from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy.sql import func
 import datetime
 from app.core.enums import BeneficiosUsuario, TipoUsuario
+from app.database.connection import Base
 
 # Traduz as classes para SQL
-Base = declarative_base()
 
 class Usuario(Base):
     __tablename__ = 'usuario'
@@ -22,7 +22,9 @@ class Usuario(Base):
     ativo = Column(Boolean, nullable=False)
     funcao = relationship("UsuarioFuncao", back_populates="usuario")
     perfil_responsavel = relationship("UsuarioResponsavel", back_populates="usuario", uselist=False)
-
+    ong = relationship("Ong", back_populates="dono", uselist=False)
+    vinculo_voluntario = relationship("VoluntarioOng", back_populates="usuario", uselist=False)
+    
 class UsuarioResponsavel(Base):
     __tablename__ = 'usuario_responsavel'
     id = Column(Integer, primary_key= True)
