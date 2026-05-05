@@ -7,20 +7,18 @@ from app.core.enums import TipoUsuario
 PERMISSOES_POR_FUNCAO = {
     TipoUsuario.GENERICO:{
         "usuario:atualizar",
-        "usuario_triagem:criar",
         "usuario_triagem:atualizar",
         "usuario_responsavel:criar",
         "usuario_funcao:criar",
         "usuario_funcao:atualizar",
-        "documento_usuario:criar"
+        "documento_usuario:criar",
+        "ong:criar"
     },
-    TipoUsuario.DOADOR: set(),
+    TipoUsuario.DOADOR: {
+        "ong:listar"
+    },
     TipoUsuario.TRIAGEM: {
-        "usuario:atualizar",
-        "usuario_responsavel:criar",
-        "usuario_funcao:criar",
-        "usuario_funcao:atualizar",
-        "usuario_funcao:deletar"
+        "usuario:atualizar"
     },
     TipoUsuario.RESPONSAVEL_BENEFICIARIO: {
         "usuario:atualizar",
@@ -39,10 +37,15 @@ PERMISSOES_POR_FUNCAO = {
         "documento_familia:listar",
         "usuario_funcao:criar",
         "usuario_funcao:atualizar",
-        "usuario_funcao:deletar"
+        "usuario_funcao:deletar",
+        "ong:listar"
     },
     TipoUsuario.COORDENADOR_PROCESSOS:{
-        "usuario:ver_todos"
+        "ong:editar",
+        "ong:deletar",
+        "ong:listar",
+        "voluntario_ong:gerar-link-voluntario"
+        "voluntario_ong:deletar-voluntario"
     }
 }
 
