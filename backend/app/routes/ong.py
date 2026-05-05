@@ -13,14 +13,17 @@ router = APIRouter(prefix="/ong", tags=["ong"])
 
 # Rota get
 @router.get("/", response_model=List[s.RespostaOng])
-def get_ongs(db:SessionDep):
+def get_ongs(
+    db:SessionDep,
+    permissao = Depends(VerificarPermissao("ong:listar"))):
     ongs = db.query(m.Ong).all()
     return ongs   
 
 @router.get("/minha-ong", response_model=s.RespostaOng)
 def get_ong(
     db:SessionDep,
-    usuario_atual: u.Usuario = Depends(get_current_user)):
+    usuario_atual: u.Usuario = Depends(get_current_user),
+    permissao = Depends(VerificarPermissao("ong:listar"))):
     if not usuario_atual.ong:
         raise HTTPException(status_code=404, detail="Você ainda não possui uma ONG cadastrada.")
     return usuario_atual.ong
@@ -30,7 +33,8 @@ def get_ong(
 def cadastrar_ong(
     dados:s.CriarOng, 
     db:SessionDep,
-    usuario_atual: u.Usuario = Depends(get_current_user)):
+    usuario_atual: u.Usuario = Depends(get_current_user),
+    permissao = Depends(VerificarPermissao("ong:criar"))):
     
     ong_dict = dados.model_dump(
         by_alias=False 
@@ -68,7 +72,8 @@ def cadastrar_ong(
 def atualizar_ong(
     dados: s.AtualizarOng,
     db: SessionDep,
-    usuario_atual: u.Usuario = Depends(get_current_user)):
+    usuario_atual: u.Usuario = Depends(get_current_user),
+    permissao = Depends(VerificarPermissao("ong:editar"))):
     ong = usuario_atual.ong
 
     ong_dict = dados.model_dump(exclude_unset=True, by_alias=False)
@@ -91,7 +96,10 @@ def atualizar_ong(
 
 
 @router.delete("/deletar-voluntario/{voluntario_id}")
-def deletar_voluntario(voluntario_id, db:SessionDep, usuario_atual: u.Usuario = Depends(get_current_user)):
+def deletar_voluntario(
+    voluntario_id, db:SessionDep, 
+    usuario_atual: u.Usuario = Depends(get_current_user),
+    permissao = Depends(VerificarPermissao("voluntario_ong:deletar-voluntario"))):
     try:
         remover_voluntario_ong(
             db=db, 
@@ -114,7 +122,8 @@ def deletar_voluntario(voluntario_id, db:SessionDep, usuario_atual: u.Usuario = 
 def deletar_ong(
     ong_id: int,  
     db: SessionDep,
-    usuario_atual: u.Usuario = Depends(get_current_user)
+    usuario_atual: u.Usuario = Depends(get_current_user),
+    permissao = Depends(VerificarPermissao("ong:deletar"))
 ):
     if not usuario_atual.ong or usuario_atual.ong.id != ong_id:
         raise HTTPException(status_code=403, detail="Você não tem permissão para deletar esta ONG.")
