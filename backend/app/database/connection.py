@@ -7,7 +7,9 @@ from sqlalchemy.orm import Session
 from sqlalchemy_utils import database_exists, create_database
 from typing import Annotated
 from fastapi import Depends
+from sqlalchemy.orm import declarative_base
 
+Base = declarative_base()
 load_dotenv()
 
 
