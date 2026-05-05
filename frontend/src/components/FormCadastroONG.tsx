@@ -269,7 +269,6 @@ function FormCadastroONG(props: Props) {
         site,
       });
 
-      console.log("01alterou:", alterou);
     }, [nome, cnpj, cep, rua, bairro, cidade, estado, numero, complemento, telefone, email, diasFuncionamento, horarioInicio, horarioFim, sobre, instagram, facebook, site]);
 
 
@@ -301,8 +300,6 @@ function FormCadastroONG(props: Props) {
         site !== (iniciais?.site || "");
 
       setAlterou(mudou);
-
-      console.log("02alterou:", alterou);
 
     }, [nome, cnpj, cep, rua, bairro, cidade, estado, numero, complemento, telefone, email, diasFuncionamento, horarioInicio, horarioFim, sobre, instagram, facebook, site]);
 
@@ -456,8 +453,8 @@ function FormCadastroONG(props: Props) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    console.log("FormCadastroONG.handleSubmit inicio", { modo, carregando, alterou, valoresIniciais: valoresIniciaisRef.current });
-    console.log("FormCadastroONG.dados atuais", dados);
+    // console.log("FormCadastroONG.handleSubmit inicio", { modo, carregando, alterou, valoresIniciais: valoresIniciaisRef.current });
+    // console.log("FormCadastroONG.dados atuais", dados);
 
     if (carregando) return;
 
@@ -485,7 +482,7 @@ function FormCadastroONG(props: Props) {
     setErros(novosErros);
     if (Object.values(novosErros).some((erro) => erro !== "")) {
       const camposComErro = Object.entries(novosErros).filter(([, v]) => v && v !== "");
-      console.log("FormCadastroONG.camposComErro", camposComErro);
+      // console.log("FormCadastroONG.camposComErro", camposComErro);
       setTocados({
         nome: true,
         cnpj: true,
@@ -506,7 +503,7 @@ function FormCadastroONG(props: Props) {
         facebook: true,
         site: true,
       });
-      console.log("FormCadastroONG.validation falhou", novosErros);
+      // console.log("FormCadastroONG.validation falhou", novosErros);
       return;
     }
 
@@ -539,36 +536,9 @@ function FormCadastroONG(props: Props) {
 
       } else if (modo === "edicao") {
 
-        console.log("FormCadastroONG.chamando aoEnviar (edicao)", dadosFormatados);
+        // console.log("FormCadastroONG.chamando aoEnviar (edicao)", dadosFormatados);
 
         await aoEnviar(dadosFormatados);
-
-        // const propsEdicao = { aoEnviar } as PropsEdicao;
-
-        // const dadosAtualizados: AtualizarONGEnvio = {
-        //   nome,
-        //   cnpj: cnpj.replace(/\D/g, ""),
-        //   cep: cep ? cep.replace(/\D/g, "") : undefined,
-        //   rua,
-        //   bairro,
-        //   cidade,
-        //   estado,
-        //   numero: numero || undefined,
-        //   complemento: complemento || undefined,
-        //   telefone: telefone.replace(/\D/g, ""),
-        //   email,
-        //   diasFuncionamento,
-        //   horarioInicio,
-        //   horarioFim,
-        //   sobre,
-        //   instagram: instagram || undefined,
-        //   facebook: facebook || undefined,
-        //   site: site || undefined,
-        // };
-
-        // // const ongAtualizada = await atualizarONG(dadosAtualizados);
-
-        // propsEdicao.aoEnviar(dadosAtualizados);
       }
 
     } catch (error: any) {
@@ -601,7 +571,7 @@ function FormCadastroONG(props: Props) {
       }
 
     } finally {
-      console.log("FormCadastroONG.handleSubmit finalizando");
+      // console.log("FormCadastroONG.handleSubmit finalizando");
       setCarregando(false);
     }
   }
