@@ -5,6 +5,7 @@ import { validarCampo } from "../utils/validacoesONG";
 import { normalizarUrl } from "../utils/validacoes";
 import { useUsuario } from "../context/UserContext";
 import { useONG } from "../context/OngContext";
+import { atualizarONG, AtualizarONGEnvio } from "../services/usuarioService";
 
 type PropsCadastro = {
   modo: "cadastro";
@@ -93,7 +94,6 @@ function FormCadastroONG(props: Props) {
   const [carregando, setCarregando] = useState(false);
   const { usuario, definirUsuario } = useUsuario();
   const { ong, definirONG } = useONG();
-
   const [alterou, setAlterou] = useState(false);
 
   // estado dos campos do formulário
@@ -104,8 +104,10 @@ function FormCadastroONG(props: Props) {
   const [email, setEmail] = useState(valoresIniciais?.email || "");
 
   const [diasFuncionamento, setDiasFuncionamento] = useState<number[]>(valoresIniciais?.diasFuncionamento || []);
-  const [horarioInicio, setHorarioInicio] = useState(valoresIniciais?.horarioInicio || "");
-  const [horarioFim, setHorarioFim] = useState(valoresIniciais?.horarioFim || "");
+  const inicialHorarioInicio = valoresIniciais?.horarioInicio ? String(valoresIniciais.horarioInicio).slice(0,5) : "";
+  const inicialHorarioFim = valoresIniciais?.horarioFim ? String(valoresIniciais.horarioFim).slice(0,5) : "";
+  const [horarioInicio, setHorarioInicio] = useState(inicialHorarioInicio);
+  const [horarioFim, setHorarioFim] = useState(inicialHorarioFim);
   const [sobre, setSobre] = useState(valoresIniciais?.sobre || "");
 
   const [instagram, setInstagram] = useState(valoresIniciais?.instagram || "");
@@ -207,8 +209,8 @@ function FormCadastroONG(props: Props) {
     telefone: valoresIniciais?.telefone || "",
     email: valoresIniciais?.email || "",
     diasFuncionamento: valoresIniciais?.diasFuncionamento || [],
-    horarioInicio: valoresIniciais?.horarioInicio || "",
-    horarioFim: valoresIniciais?.horarioFim || "",
+    horarioInicio: valoresIniciais?.horarioInicio ? String(valoresIniciais.horarioInicio).slice(0,5) : "",
+    horarioFim: valoresIniciais?.horarioFim ? String(valoresIniciais.horarioFim).slice(0,5) : "",
     sobre: valoresIniciais?.sobre || "",
     instagram: valoresIniciais?.instagram || "",
     facebook: valoresIniciais?.facebook || "",
@@ -266,6 +268,42 @@ function FormCadastroONG(props: Props) {
         facebook,
         site,
       });
+
+      console.log("01alterou:", alterou);
+    }, [nome, cnpj, cep, rua, bairro, cidade, estado, numero, complemento, telefone, email, diasFuncionamento, horarioInicio, horarioFim, sobre, instagram, facebook, site]);
+
+
+    useEffect(() => {
+      if (primeiraRenderizacao.current) return;
+
+      const limpar = (v: string) => v.replace(/\D/g, "");
+
+      const iniciais = valoresIniciais;
+
+      const mudou =
+        nome !== (iniciais?.nome || "") ||
+        limpar(cnpj) !== (iniciais?.cnpj || "") ||
+        limpar(cep || "") !== (iniciais?.cep || "") ||
+        rua !== (iniciais?.rua || "") ||
+        bairro !== (iniciais?.bairro || "") ||
+        cidade !== (iniciais?.cidade || "") ||
+        estado !== (iniciais?.estado || "") ||
+        numero !== (iniciais?.numero || "") ||
+        complemento !== (iniciais?.complemento || "") ||
+        limpar(telefone || "") !== (iniciais?.telefone || "") ||
+        email !== (iniciais?.email || "") ||
+        JSON.stringify(diasFuncionamento) !== JSON.stringify(iniciais?.diasFuncionamento || []) ||
+        horarioInicio !== (iniciais?.horarioInicio ? String(iniciais.horarioInicio).slice(0,5) : "") ||
+        horarioFim !== (iniciais?.horarioFim ? String(iniciais.horarioFim).slice(0,5) : "") ||
+        sobre !== (iniciais?.sobre || "") ||
+        instagram !== (iniciais?.instagram || "") ||
+        facebook !== (iniciais?.facebook || "") ||
+        site !== (iniciais?.site || "");
+
+      setAlterou(mudou);
+
+      console.log("02alterou:", alterou);
+
     }, [nome, cnpj, cep, rua, bairro, cidade, estado, numero, complemento, telefone, email, diasFuncionamento, horarioInicio, horarioFim, sobre, instagram, facebook, site]);
 
     function validarUmCampo(campo: keyof typeof erros) {
@@ -331,10 +369,10 @@ function FormCadastroONG(props: Props) {
           estado: data.uf || "",
         };
 
-        setRua(novosDados.rua);
-        setBairro(novosDados.bairro);
-        setCidade(novosDados.cidade);
-        setEstado(novosDados.estado);
+        if (!rua) setRua(novosDados.rua); // só preenche os campos de endereço se eles estiverem vazios, para não sobrescrever possíveis correções manuais do usuário
+        if (!bairro) setBairro(novosDados.bairro);
+        if (!cidade) setCidade(novosDados.cidade);
+        if (!estado) setEstado(novosDados.estado);
 
         // marca como tocado
         setTocados((prev) => ({
@@ -374,8 +412,35 @@ function FormCadastroONG(props: Props) {
       case "estado": setEstado(valor); break;
       case "numero": setNumero(valor); break;
       case "complemento": setComplemento(valor); break;
-      case "horarioInicio": setHorarioInicio(valor); break;
-      case "horarioFim": setHorarioFim(valor); break;
+
+      case "horarioInicio":
+        // normaliza para HH:MM (remove segundos se existirem)
+        const horarioInicioNormalizado = typeof valor === "string" && valor.length >= 5 ? valor.slice(0,5) : valor;
+        setHorarioInicio(horarioInicioNormalizado as string);
+
+        if (tocados.horarioInicio || tocados.horarioFim) { // valida ambos os campos para garantir que sejam coerentes entre si
+          setErros((prev) => ({
+            ...prev,
+            horarioInicio: validarCampo("horarioInicio", novoDados),
+            horarioFim: validarCampo("horarioFim", novoDados), 
+          }));
+        }
+        break;
+
+      case "horarioFim":
+        // normaliza para HH:MM (remove segundos se existirem)
+        const horarioFimNormalizado = typeof valor === "string" && valor.length >= 5 ? valor.slice(0,5) : valor;
+        setHorarioFim(horarioFimNormalizado as string);
+
+        if (tocados.horarioFim || tocados.horarioInicio) {
+          setErros((prev) => ({
+            ...prev,
+            horarioFim: validarCampo("horarioFim", novoDados),
+            horarioInicio: validarCampo("horarioInicio", novoDados), 
+          }));
+        }
+        break;
+
       case "sobre": setSobre(valor); break;
       case "instagram": setInstagram(valor); break;
       case "facebook": setFacebook(valor); break;
@@ -390,6 +455,9 @@ function FormCadastroONG(props: Props) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    console.log("FormCadastroONG.handleSubmit inicio", { modo, carregando, alterou, valoresIniciais: valoresIniciaisRef.current });
+    console.log("FormCadastroONG.dados atuais", dados);
 
     if (carregando) return;
 
@@ -415,8 +483,9 @@ function FormCadastroONG(props: Props) {
     };
 
     setErros(novosErros);
-
     if (Object.values(novosErros).some((erro) => erro !== "")) {
+      const camposComErro = Object.entries(novosErros).filter(([, v]) => v && v !== "");
+      console.log("FormCadastroONG.camposComErro", camposComErro);
       setTocados({
         nome: true,
         cnpj: true,
@@ -437,6 +506,7 @@ function FormCadastroONG(props: Props) {
         facebook: true,
         site: true,
       });
+      console.log("FormCadastroONG.validation falhou", novosErros);
       return;
     }
 
@@ -456,8 +526,8 @@ function FormCadastroONG(props: Props) {
         telefone: telefone.replace(/\D/g, ""),
         email,
         diasFuncionamento,
-        horarioInicio,
-        horarioFim,
+        horarioInicio: horarioInicio ? String(horarioInicio).slice(0,5) : undefined,
+        horarioFim: horarioFim ? String(horarioFim).slice(0,5) : undefined,
         sobre,
         instagram,
         facebook,
@@ -468,21 +538,41 @@ function FormCadastroONG(props: Props) {
         await aoEnviar(dadosFormatados);
 
       } else if (modo === "edicao") {
-        const propsEdicao = { aoEnviar } as PropsEdicao;
 
-        if (!valoresIniciais?.id) {
-          throw new Error("ID da ONG não encontrado para atualização");
-        }
+        console.log("FormCadastroONG.chamando aoEnviar (edicao)", dadosFormatados);
 
-        await aoEnviar({
-          id: valoresIniciais.id,
-          ...dadosFormatados,
-        });
+        await aoEnviar(dadosFormatados);
 
+        // const propsEdicao = { aoEnviar } as PropsEdicao;
+
+        // const dadosAtualizados: AtualizarONGEnvio = {
+        //   nome,
+        //   cnpj: cnpj.replace(/\D/g, ""),
+        //   cep: cep ? cep.replace(/\D/g, "") : undefined,
+        //   rua,
+        //   bairro,
+        //   cidade,
+        //   estado,
+        //   numero: numero || undefined,
+        //   complemento: complemento || undefined,
+        //   telefone: telefone.replace(/\D/g, ""),
+        //   email,
+        //   diasFuncionamento,
+        //   horarioInicio,
+        //   horarioFim,
+        //   sobre,
+        //   instagram: instagram || undefined,
+        //   facebook: facebook || undefined,
+        //   site: site || undefined,
+        // };
+
+        // // const ongAtualizada = await atualizarONG(dadosAtualizados);
+
+        // propsEdicao.aoEnviar(dadosAtualizados);
       }
 
     } catch (error: any) {
-      console.error(error);
+      console.error("FormCadastroONG.handleSubmit erro", error);
 
       const erroBackend = error.response?.data?.detail;
 
@@ -511,17 +601,10 @@ function FormCadastroONG(props: Props) {
       }
 
     } finally {
+      console.log("FormCadastroONG.handleSubmit finalizando");
       setCarregando(false);
     }
   }
-
-  useEffect(() => {
-    if (modo !== "edicao") return;
-
-    const atual = JSON.stringify(dados);
-
-    setAlterou(atual !== valoresIniciaisRef.current);
-  }, [dados, modo]);
 
   type Campo = keyof typeof erros; // para garantir que usamos os campos definidos em erros
 
@@ -592,7 +675,7 @@ function FormCadastroONG(props: Props) {
         <label className="body-semibold-pequeno" htmlFor="cnpj">CNPJ <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
 
         <IMaskInput mask="00.000.000/0000-00" id="cnpj" type="text" required className={inputClass("cnpj", cnpj)} 
-        autoComplete="off" placeholder="Digite aqui o CNPJ da ONG 00.000.000/0000-00" value={cnpj} onAccept={(value) => atualizarCampo("cnpj", value)} onBlur={() => {marcarComoTocado("cnpj"), validarUmCampo("cnpj");}} aria-invalid={!!erros.cnpj} aria-describedby={erros.cnpj ? "erro-cnpj" : undefined}/>
+        autoComplete="off" placeholder="Digite aqui o CNPJ da ONG 00.000.000/0000-00" value={cnpj} onAccept={(value) => atualizarCampo("cnpj", value)} onBlur={() => {marcarComoTocado("cnpj"); validarUmCampo("cnpj");}} aria-invalid={!!erros.cnpj} aria-describedby={erros.cnpj ? "erro-cnpj" : undefined}/>
 
         {erros.cnpj && tocados.cnpj && <p id="erro-cnpj" aria-live="polite" className="text-[var(--cor-resposta-errada)] text-sm">{erros.cnpj}</p>}
       </div>
@@ -609,7 +692,7 @@ function FormCadastroONG(props: Props) {
         <label className="body-semibold-pequeno" htmlFor="cep">CEP</label>
 
         <IMaskInput mask="00000-000" id="cep" type="text" className={inputClass("cep", cep)} 
-        autoComplete="postal-code" placeholder="Digite aqui o CEP da ONG 00000-000" value={cep} onAccept={(value) => atualizarCampo("cep", value)} onBlur={() => {marcarComoTocado("cep"), validarUmCampo("cep"); buscarCep(cep);}} aria-invalid={!!erros.cep} aria-describedby={erros.cep ? "erro-cep" : undefined}/>
+        autoComplete="postal-code" placeholder="Digite aqui o CEP da ONG 00000-000" value={cep} onAccept={(value) => atualizarCampo("cep", value)} onBlur={() => {marcarComoTocado("cep"); validarUmCampo("cep"); buscarCep(cep);}} aria-invalid={!!erros.cep} aria-describedby={erros.cep ? "erro-cep" : undefined}/>
 
         {erros.cep && tocados.cep && <p id="erro-cep" aria-live="polite" className="text-[var(--cor-resposta-errada)] text-sm">{erros.cep}</p>}
       </div>
@@ -672,7 +755,7 @@ function FormCadastroONG(props: Props) {
         <div>
           <label className="body-semibold-pequeno" htmlFor="bairro">Bairro <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
 
-          <input id="bairro" type="text" maxLength={100} required className={inputClass("bairro", bairro)} autoComplete="street-address" placeholder="Digite aqui o nome do bairro onde está a ONG" value={bairro} onChange={(e) => atualizarCampo("bairro", e.target.value)} aria-invalid={!!erros.bairro} aria-describedby={erros.bairro ? "erro-bairro" : undefined} onBlur={() => {marcarComoTocado("bairro"), validarUmCampo("bairro");}}/>
+          <input id="bairro" type="text" maxLength={100} required className={inputClass("bairro", bairro)} autoComplete="address-line1" placeholder="Digite aqui o nome do bairro onde está a ONG" value={bairro} onChange={(e) => atualizarCampo("bairro", e.target.value)} aria-invalid={!!erros.bairro} aria-describedby={erros.bairro ? "erro-bairro" : undefined} onBlur={() => {marcarComoTocado("bairro"); validarUmCampo("bairro");}}/>
 
           {erros.bairro && tocados.bairro && (<p id="erro-bairro" aria-live="polite" className="text-[var(--cor-resposta-errada)] text-sm">{erros.bairro}</p>)}
         </div>
@@ -680,7 +763,7 @@ function FormCadastroONG(props: Props) {
         <div>
           <label className="body-semibold-pequeno" htmlFor="rua">Rua <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
 
-          <input id="rua" type="text" maxLength={100} required className={inputClass("rua", rua)} autoComplete="street-address" placeholder="Digite aqui o nome da rua onde está a ONG" value={rua} onChange={(e) => {atualizarCampo("rua", e.target.value); if (tocados.rua) validarUmCampo("rua"); }} aria-invalid={!!erros.rua} aria-describedby={erros.rua ? "erro-rua" : undefined} onBlur={() => {marcarComoTocado("rua"), validarUmCampo("rua");}}/>
+          <input id="rua" type="text" maxLength={100} required className={inputClass("rua", rua)} autoComplete="street-address" placeholder="Digite aqui o nome da rua onde está a ONG" value={rua} onChange={(e) => {atualizarCampo("rua", e.target.value); if (tocados.rua) validarUmCampo("rua"); }} aria-invalid={!!erros.rua} aria-describedby={erros.rua ? "erro-rua" : undefined} onBlur={() => {marcarComoTocado("rua"); validarUmCampo("rua");}}/>
 
           {erros.rua && tocados.rua && (<p id="erro-rua" aria-live="polite" className="text-[var(--cor-resposta-errada)] text-sm">{erros.rua}</p>)}
         </div>
@@ -688,7 +771,7 @@ function FormCadastroONG(props: Props) {
         <div>
           <label className="body-semibold-pequeno" htmlFor="numero">Número </label>
 
-          <input id="numero" type="text" maxLength={10} className={inputClass("numero", numero)} autoComplete="street-address" placeholder="Digite aqui o número do endereço onde está a ONG" value={numero} onChange={(e) => atualizarCampo("numero", e.target.value)} aria-invalid={!!erros.numero} aria-describedby={erros.numero ? "erro-numero" : undefined} onBlur={() => {marcarComoTocado("numero"), validarUmCampo("numero");}}/>
+          <input id="numero" type="text" maxLength={10} className={inputClass("numero", numero)} autoComplete="address-line2" placeholder="Digite aqui o número do endereço onde está a ONG" value={numero} onChange={(e) => atualizarCampo("numero", e.target.value)} aria-invalid={!!erros.numero} aria-describedby={erros.numero ? "erro-numero" : undefined} onBlur={() => {marcarComoTocado("numero"); validarUmCampo("numero");}}/>
 
           {erros.numero && tocados.numero && (<p id="erro-numero" aria-live="polite" className="text-[var(--cor-resposta-errada)] text-sm">{erros.numero}</p>)}
         </div>
@@ -696,7 +779,7 @@ function FormCadastroONG(props: Props) {
         <div>
           <label className="body-semibold-pequeno" htmlFor="complemento">Complemento</label>
           
-          <textarea id="complemento" maxLength={100} className={inputClass("complemento", complemento)} autoComplete="off" placeholder="Digite aqui o complemento do endereço onde está a ONG" value={complemento} onChange={(e) => atualizarCampo("complemento", e.target.value)} aria-invalid={!!erros.complemento} aria-describedby={erros.complemento ? "erro-complemento" : undefined} onBlur={() => {marcarComoTocado("complemento"), validarUmCampo("complemento");}}/>
+          <textarea id="complemento" maxLength={100} className={inputClass("complemento", complemento)} autoComplete="off" placeholder="Digite aqui o complemento do endereço onde está a ONG" value={complemento} onChange={(e) => atualizarCampo("complemento", e.target.value)} aria-invalid={!!erros.complemento} aria-describedby={erros.complemento ? "erro-complemento" : undefined} onBlur={() => {marcarComoTocado("complemento"); validarUmCampo("complemento");}}/>
                 
           {erros.complemento && tocados.complemento && (<p id="erro-complemento" aria-live="polite" className="text-[var(--cor-resposta-errada)] text-sm">{erros.complemento}</p>)}
         </div>
@@ -713,7 +796,7 @@ function FormCadastroONG(props: Props) {
       <div>
         <label className="body-semibold-pequeno" htmlFor="telefone">Telefone <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
         <IMaskInput mask="(00) 00000-0000" id="telefone" type="tel" className={inputClass("telefone", telefone)} 
-        autoComplete="tel" placeholder="Digite aqui o telefone da ONG (00) 00000-0000" value={telefone} onAccept={(value) => atualizarCampo("telefone", value)} onBlur={() => {marcarComoTocado("telefone"), validarUmCampo("telefone");}} aria-invalid={!!erros.telefone} aria-describedby={erros.telefone ? "erro-telefone" : undefined} />
+        autoComplete="tel" placeholder="Digite aqui o telefone da ONG (00) 00000-0000" value={telefone} onAccept={(value) => atualizarCampo("telefone", value)} onBlur={() => {marcarComoTocado("telefone"); validarUmCampo("telefone");}} aria-invalid={!!erros.telefone} aria-describedby={erros.telefone ? "erro-telefone" : undefined} />
 
         {erros.telefone && tocados.telefone && <p id="erro-telefone" aria-live="polite" className="text-[var(--cor-resposta-errada)] text-sm">{erros.telefone}</p>}
       </div>
@@ -722,7 +805,7 @@ function FormCadastroONG(props: Props) {
       <div>
         <label className="body-semibold-pequeno" htmlFor="email">Email <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
         <input id="email" type="email" maxLength={254} required className={inputClass("email", email)} 
-        autoComplete="email" placeholder="Digite aqui o email da ONG" value={email} onChange={(e) => atualizarCampo("email", e.target.value)} aria-invalid={!!erros.email} aria-describedby={erros.email ? "erro-email" : undefined} onBlur={() => {marcarComoTocado("email"), validarUmCampo("email");}}/> 
+        autoComplete="email" placeholder="Digite aqui o email da ONG" value={email} onChange={(e) => atualizarCampo("email", e.target.value)} aria-invalid={!!erros.email} aria-describedby={erros.email ? "erro-email" : undefined} onBlur={() => {marcarComoTocado("email"); validarUmCampo("email");}}/> 
       
         {erros.email && tocados.email && <p id="erro-email" aria-live="polite" className="text-[var(--cor-resposta-errada)] text-sm">{erros.email}</p>}
       </div>
