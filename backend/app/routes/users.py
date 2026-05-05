@@ -39,6 +39,7 @@ def get_perfil(
 def deletar_conta(
     usuario_id: int,
     db: SessionDep,
+    usuario_atual: m.Usuario = Depends(get_current_user)
 ):  
     if usuario_atual.id != usuario_id:
         raise HTTPException(status_code=403, detail="Você só pode excluir a sua própria conta.")

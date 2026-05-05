@@ -89,6 +89,7 @@ def atualizar_ong(
             detail=f"Erro ao cadastrar ONG: {str(e)}"
         )
 
+
 @router.delete("/deletar-voluntario/{voluntario_id}")
 def deletar_voluntario(voluntario_id, db:SessionDep, usuario_atual: u.Usuario = Depends(get_current_user)):
     try:
@@ -106,24 +107,41 @@ def deletar_voluntario(voluntario_id, db:SessionDep, usuario_atual: u.Usuario = 
 
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail="Erro interno ao tentar remover voluntário.")
         print(f"Erro ao deletar: {e}")
+        raise HTTPException(status_code=500, detail="Erro interno ao tentar remover voluntário.")
 
-@router.put("/deletar-ong/{ong_id}")
+@router.delete("/deletar-ong/{ong_id}")
 def deletar_ong(
+    ong_id: int,  
     db: SessionDep,
-    usuario_atual: u.Usuario = Depends(get_current_user)):
-    
+    usuario_atual: u.Usuario = Depends(get_current_user)
+):
+    if not usuario_atual.ong or usuario_atual.ong.id != ong_id:
+        raise HTTPException(status_code=403, detail="Você não tem permissão para deletar esta ONG.")
+
     try:
-        usuario_atual.ong.ativa = False
+        ids_voluntarios = [vinculo.usuario_id for vinculo in usuario_atual.ong.voluntarios]
 
-        remover_voluntario_ong(db,voluntario_id,usuario_atual.ong,usuario_atual.ong.ativa)
+        db.query(m.VoluntarioOng).filter(m.VoluntarioOng.ong_id == ong_id).delete()
+
+        if ids_voluntarios:
+            db.query(u.UsuarioFuncao).filter(u.UsuarioFuncao.usuario_id.in_(ids_voluntarios)).delete(synchronize_session=False)
+            db.query(u.Usuario).filter(u.Usuario.id.in_(ids_voluntarios)).delete(synchronize_session=False)
+
+        ong_apagada = db.query(m.Ong).filter(m.Ong.id == ong_id).delete()
+
+        if ong_apagada == 0:
+            db.rollback()
+            raise HTTPException(status_code=404, detail="ONG não encontrada no banco de dados.")
         
-        ong_deletada = db.query(Ong).filter(
-        usuario_atual.ong.id == ong_id).delete()
+        funcao = db.query(u.UsuarioFuncao).filter(u.UsuarioFuncao.usuario_id == usuario_atual.id, u.UsuarioFuncao.tipo_usuario == TipoUsuario.COORDENADOR_PROCESSOS).delete()
 
-        return {"mensagem: ONG deletada com sucesso"}
+        db.commit()
+        return {"mensagem": "ONG e todos os seus vínculos deletados com sucesso"} 
+
+    except HTTPException as http_e:
+        raise http_e
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail="Erro interno ao tentar remover voluntário.")
-        print(f"Erro ao deletar: {e}")
+        print(f"Erro ao deletar ONG: {e}") 
+        raise HTTPException(status_code=500, detail="Erro interno ao tentar remover a ONG.")
