@@ -30,53 +30,6 @@ function CadastroONG() {
     mensagem: string;
   } | null>(null);
 
-  function normalizarUsuario(dados: any): Usuario {
-    return {
-      id: dados.id,
-      nome_completo: dados.nome_completo,
-      data_nascimento: dados.data_nascimento,
-      cpf: dados.cpf,
-      cep: dados.cep,
-      telefone: dados.telefone,
-      email: dados.email,
-      data_cadastro: dados.data_cadastro,
-      data_edicao_conta: dados.data_edicao_conta,
-      tipos: dados.funcao?.map((f: any) => mapearTipo(f.tipo_usuario)) || []
-    };
-}
-
-  async function colocarTipo() {
-      if (usuario) {
-        try {
-          const usuarioAtualizado = await obterPerfil();
-  
-          const tiposAtuais: TipoUsuario[] =
-            usuarioAtualizado.funcao?.map((f: any) =>
-              mapearTipo(f.tipo_usuario)
-            ) ||
-            (usuarioAtualizado as any).tipos ||
-            [];
-  
-          let novosTipos: TipoUsuario[] = tiposAtuais.includes("Coordenador de Processos")
-            ? tiposAtuais
-            : [...tiposAtuais, "Coordenador de Processos"];
-  
-          if (!novosTipos.includes("Genérico")) {
-            novosTipos.push("Genérico");
-          }
-  
-          await atualizarTiposUsuario(usuario.id, novosTipos);
-  
-          const atualizado = await obterPerfil();
-
-          definirUsuario(normalizarUsuario(atualizado));
-  
-        } catch (error) {
-          console.error("Erro ao atualizar tipo do usuário", error);
-        }
-      }
-    }
-
   return (
     <div className="min-h-screen flex flex-col bg-[var(--base-5)]">
       
@@ -188,12 +141,13 @@ function CadastroONG() {
                   try {
                     setCarregandoCadastro(true);
 
-                    const resposta = await criarONG(usuario.id, dadosPendentes);
+                    const resposta = await criarONG(dadosPendentes);
 
-                    const ongCriada = await obterONG(usuario.id);
+                    const ongCriada = await obterONG();
                     definirONG(ongCriada);
 
-                    await colocarTipo(); // atualizar tipos do usuário para Coordenador de Processos
+                    const perfilAtualizado = await obterPerfil();
+                    definirUsuario(perfilAtualizado);
 
                     setAlterou(false);
                     setMensagem("ONG cadastrada com sucesso!");

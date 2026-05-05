@@ -169,20 +169,20 @@ export async function redefinirSenha(token: string, senha: string) {
 }
 
 // Criar ONG para usuário
-export async function criarONG(usuario_id: number, dados: CriarONGEnvio) {
-  const response = await api.post(`/usuario/${usuario_id}/ong`, dados);
+export async function criarONG(dados: CriarONGEnvio) {
+  const response = await api.post(`/ong/cadastro-ong`, dados);
   return response.data;
 }
 
 // Atualizar dados da ONG do usuário
-export async function atualizarONG(usuario_id: number, dados: AtualizarONGEnvio) {
-  const response = await api.put(`/usuario/${usuario_id}/ong`, dados);
+export async function atualizarONG(dados: AtualizarONGEnvio) {
+  const response = await api.put(`/ong/editar-ong`, dados);
   return response.data;
 }
 
 // Obter dados da ONG do usuário
-export async function obterONG(usuario_id: number): Promise<ONG> {
-  const response = await api.get(`/usuario/${usuario_id}/ong`);
+export async function obterONG(): Promise<ONG> {
+  const response = await api.get(`/ong/minha-ong`);
   return response.data; // se for algo como { "nome": "ONG Exemplo", "cnpj": "00.000.000/0000-00", ... }
 }
 
