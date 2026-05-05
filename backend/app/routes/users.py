@@ -10,7 +10,7 @@ from fastapi import HTTPException
 from sqlalchemy.sql import func
 from sqlalchemy.exc import IntegrityError
 from app.services.firebase_storage import FirebaseStorageService
-from app.services.user_service import anonimizar_responsavel
+from app.services.user_service import anonimizar_responsavel, processar_exclusao_conta
 from datetime import date, datetime
 import logging
 from app.core.deps_auth import VerificarPermissao, get_current_user
@@ -35,17 +35,26 @@ def get_perfil(
     ):
     return usuario_atual
 
-
-@router.delete("/{usuario_id}")
-def excluir_conta_usuario(
+@router.delete("/deletar-conta/{usuario_id}")
+def deletar_conta(
     usuario_id: int,
     db: SessionDep,
-    usuario_atual: m.Usuario = Depends(get_current_user),
-):
+):  
     if usuario_atual.id != usuario_id:
         raise HTTPException(status_code=403, detail="Você só pode excluir a sua própria conta.")
 
-    return anonimizar_responsavel(usuario_id, db)
+    try:
+        processar_exclusao_conta(usuario_id,db)
+
+        return {"mensagem": "Conta excluída com sucesso."}
+
+    except HTTPException as http_e:
+        raise http_e
+    except Exception as e:
+        db.rollback()
+        print(f"Erro ao deletar: {e}")
+        raise HTTPException(status_code=500, detail="Erro interno ao tentar remover usuário.")
+
 
 """ Usuário """ 
 
