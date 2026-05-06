@@ -93,6 +93,12 @@ function formatarDias(dias: number[]) {
   return `${partes.slice(0, -1).join(", ")} e ${partes[partes.length - 1]}`;
 }
 
+function formatarHorario(horario?: string) {
+  if (!horario) return "Não informado";
+
+  return horario.slice(0, 5);
+}
+
 function CardONG({ ong }: Props) {
   const [expandido, setExpandido] = useState(false);
   const { usuario } = useUsuario();
@@ -157,7 +163,7 @@ function CardONG({ ong }: Props) {
             </h4>
 
             <p className="body-muito-pequeno sm:body-pequeno"><strong className="body-semibold-pequeno sm:body-semibold-muito-pequeno">Dias da semana:</strong> {formatarDias(ong.diasFuncionamento)}</p>
-            <p className="body-muito-pequeno sm:body-pequeno"><strong className="body-semibold-pequeno sm:body-semibold-muito-pequeno">Horário:</strong> {ong.horarioInicio} às {ong.horarioFim}</p>
+            <p className="body-muito-pequeno sm:body-pequeno"><strong className="body-semibold-pequeno sm:body-semibold-muito-pequeno">Horário:</strong> {formatarHorario(ong.horarioInicio)} às {formatarHorario(ong.horarioFim)}</p>
           </div>
 
           <div className="border-t border-[var(--base-40)] pt-3 sm:pt-4">
