@@ -55,6 +55,16 @@ export type DadosFamilia = {
   documentos: File[]; // array de arquivos para upload
 };
 
+export type FamiliarRetorno = {
+  id: number;
+  nome: string;
+  cpf: string;
+  parentesco: string;
+  data_nascimento: string;
+  renda: number;
+  beneficiario: boolean;
+};
+
 export type CriarONGEnvio = {
   nome: string;
   cnpj: string;
@@ -120,6 +130,32 @@ export async function criarUsuarioResponsavel(usuarioId: number, formData: FormD
 // Criar familiar para beneficiário
 export async function criarFamiliar(responsavel_id: number, dados: DadosFamilia[]) {
   const response = await api.post(`/usuario/${responsavel_id}/familia-responsavel`, dados);
+  return response.data;
+}
+
+// Obter familiares do usuário responsável
+export async function obterFamiliares(): Promise<FamiliarRetorno[]> {
+  try {
+    const response = await api.get<FamiliarRetorno[]>("/usuario/familia/all");
+    return response.data;
+  } catch (error: any) {
+    if (error?.response?.status === 404) {
+      // Não há familiares cadastrados
+      return [];
+    }
+    throw error;
+  }
+}
+
+// Atualizar dados de um familiar
+export async function atualizarFamiliar(familia_id: number, dados: Partial<DadosFamilia>) {
+  const response = await api.put(`/usuario/${familia_id}/familia-responsavel`, dados);
+  return response.data;
+}
+
+// Deletar um familiar
+export async function deletarFamiliar(familia_id: number) {
+  const response = await api.delete(`/usuario/familia/${familia_id}`);
   return response.data;
 }
 
