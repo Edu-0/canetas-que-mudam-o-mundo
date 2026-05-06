@@ -181,8 +181,8 @@ def anonimizar_responsavel(usuario_id, db: SessionDep): # Função principal que
 
 def processar_exclusao_conta(usuario_id, db: SessionDep):
     
-    funcoes_do_usuario = db.query(UsuarioFuncao).filter(UsuarioFuncao.usuario_id == usuario_id).all()
-    tipos_cadastrados = [f.tipo for f in funcoes_do_usuario]
+    funcoes_do_usuario = db.query(m.UsuarioFuncao).filter(m.UsuarioFuncao.usuario_id == usuario_id).all()
+    tipos_cadastrados = [f.tipo_usuario for f in funcoes_do_usuario]
 
     db.query(m.UsuarioFuncao).filter(m.UsuarioFuncao.usuario_id == usuario_id).delete()
 
@@ -198,6 +198,7 @@ def processar_exclusao_conta(usuario_id, db: SessionDep):
         anonimizar_responsavel(db, usuario_id)
         
     else:
-        anonimizar_usuario(db, usuario_id)
+        usuario = db.query(m.Usuario).filter(m.Usuario.id == usuario_id).first()
+        anonimizar_usuario(usuario)
 
     db.commit()
