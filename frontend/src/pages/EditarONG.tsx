@@ -55,17 +55,17 @@ function EditarONG() {
       setMensagem("ONG excluída com sucesso!");
       setTipoMensagem("sucesso");
 
-      setTimeout(() => {
-        definirONG(null);
+      setAlterou(false); // reseta aviso de alterações não salvas, já que a ONG foi excluída
 
-        // limpa os tokens e dados do usuário, deslogando-o
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("token_type");
-        localStorage.removeItem("usuario");
+      definirONG(null);
 
-        definirUsuario(null); // desloga o coordenador, já que a ONG foi excluída
-        navigate("/login");
-      }, 1500);
+      // limpa os tokens e dados do usuário, deslogando-o
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("token_type");
+      localStorage.removeItem("usuario");
+
+      definirUsuario(null); // desloga o coordenador, já que a ONG foi excluída
+      navigate("/logar");
 
     } catch (error: any) {
       console.error("Erro ao excluir ONG", error);
