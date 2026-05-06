@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { IMaskInput } from "react-imask";
 import Header from "../components/Header";
@@ -6,7 +6,7 @@ import Footer from "../components/Footer";
 import Botao from "../components/Botao";
 import Toast from "../components/Toast";
 import logo from "../assets/logo.svg";
-import { atualizarTiposUsuario, DadosUsuario, obterPerfil, criarFamiliar } from "../services/usuarioService";
+import { atualizarTiposUsuario, DadosUsuario, obterPerfil, criarFamiliar, obterFamiliares, atualizarFamiliar, deletarFamiliar } from "../services/usuarioService";
 import { mapearTipo, TipoUsuario, useUsuario } from "../context/UserContext";
 import { Familiar } from "../types/Familiar";
 
@@ -24,11 +24,54 @@ function CadastroBeneficiario() {
       dataNascimento: "",
       cpf: "",
       parentesco: "",
-      renda: "",
+      renda: 0,
       documentos: [],
-      beneficiario: false, // sim ou não
+      beneficiario: false,
     },
   ]);
+
+  const [familiaresOriginais, setFamiliaresOriginais] = useState<Familiar[]>([]);
+
+  // Carregar familiares existentes ao montar o componente
+  useEffect(() => {
+    const carregarFamiliares = async () => {
+      try {
+        setCarregando(true);
+        const familiaresExistentes = await obterFamiliares();
+        
+        if (familiaresExistentes.length > 0) {
+          // Converter formato do backend para formato do frontend
+          const familiaresFormatados: Familiar[] = familiaresExistentes.map(f => {
+            // Converter data de YYYY-MM-DD para DD/MM/YYYY
+            let dataNascimento = f.data_nascimento;
+            if (dataNascimento && dataNascimento.includes('-')) {
+              const [ano, mes, dia] = dataNascimento.split('-');
+              dataNascimento = `${dia}/${mes}/${ano}`;
+            }
+
+            return {
+              id: f.id,
+              nome: f.nome,
+              dataNascimento,
+              cpf: f.cpf,
+              parentesco: f.parentesco,
+              renda: f.renda,
+              documentos: [],
+              beneficiario: f.beneficiario,
+            };
+          });
+          setFamiliares(familiaresFormatados);
+          setFamiliaresOriginais(familiaresFormatados);
+        }
+      } catch (error) {
+        console.log("Nenhum familiar cadastrado ainda.");
+      } finally {
+        setCarregando(false);
+      }
+    };
+
+    carregarFamiliares();
+  }, []);
 
   type ChangeLikeEvent = {
     target: {
@@ -74,8 +117,10 @@ function CadastroBeneficiario() {
 
       if (campo === "beneficiario") {
         novos[index].beneficiario = value === "true";
+      } else if (campo === "renda") {
+        novos[index].renda = parseFloat(value) || 0;
       } else {
-        novos[index][campo] = value as Familiar[typeof campo];
+        novos[index][campo] = value as any;
       }
     }
 
@@ -89,6 +134,10 @@ function CadastroBeneficiario() {
   }
 
   function removerFamiliar(index: number) {
+    if (familiares.length <= 1) {
+      setMensagem("Você precisa ter pelo menos um familiar cadastrado.");
+      return;
+    }
     const novos = familiares.filter((_, i) => i !== index);
     setFamiliares(novos);
   }
@@ -101,9 +150,9 @@ function CadastroBeneficiario() {
         dataNascimento: "",
         cpf: "",
         parentesco: "",
-        renda: "",
+        renda: 0,
         documentos: [],
-        beneficiario: false, // sim ou não
+        beneficiario: false,
       },
     ]);
   }
@@ -112,15 +161,107 @@ function CadastroBeneficiario() {
     navigate(-1);
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  // Converter data de DD/MM/YYYY para YYYY-MM-DD
+  function converterDataParaISO(data: string): string {
+    if (!data) return '';
+    const partes = data.split('/');
+    if (partes.length === 3) {
+      return `${partes[2]}-${partes[1]}-${partes[0]}`;
+    }
+    return data;
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    navigate("/confirmar-familiares", {
-      state: { 
-        familiares,
-        dadosResponsavel
-      },
-    });
+    try {
+      setCarregando(true);
+
+      // Separar familiares novos (sem id) dos existentes (com id)
+      const familiaresNovos = familiares.filter(f => !f.id);
+      const familiaresExistentes = familiares.filter(f => f.id);
+
+      // Identificar familiares deletados (que estavam em familiaresOriginais mas não estão mais)
+      const idsExistentesAgora = new Set(familiaresExistentes.map(f => f.id));
+      const familiaresdeletados = familiaresOriginais.filter(
+        f => f.id && !idsExistentesAgora.has(f.id)
+      );
+
+      // Preparar dados dos novos familiares para envio
+      const dadosParaEnviar = familiaresNovos.map(f => ({
+        nome: f.nome,
+        cpf: f.cpf.replace(/\D/g, ''), // Remove formatação do CPF
+        parentesco: f.parentesco,
+        data_nascimento: converterDataParaISO(f.dataNascimento),
+        renda: f.renda,
+        beneficiario: f.beneficiario,
+      }));
+
+      let perfilUsuario: any = null;
+      let responsavelId: number | null = null;
+
+      // Se há familiares novos, criar primeiro
+      if (familiaresNovos.length > 0) {
+        perfilUsuario = await obterPerfil();
+        responsavelId = perfilUsuario.perfil_responsavel?.id;
+
+        if (!responsavelId) {
+          setMensagem("Erro: Não foi possível obter o ID do responsável.");
+          return;
+        }
+
+        await criarFamiliar(responsavelId, dadosParaEnviar);
+      }
+
+      // Atualizar familiares existentes que foram modificados
+      for (const familiar of familiaresExistentes) {
+        const originalIndex = familiaresOriginais.findIndex(f => f.id === familiar.id);
+        if (originalIndex !== -1) {
+          const original = familiaresOriginais[originalIndex];
+          
+          // Verificar se algo mudou
+          const mudou = 
+            original.nome !== familiar.nome ||
+            original.dataNascimento !== familiar.dataNascimento ||
+            original.parentesco !== familiar.parentesco ||
+            original.renda !== familiar.renda ||
+            original.beneficiario !== familiar.beneficiario;
+
+          if (mudou) {
+            await atualizarFamiliar(familiar.id, {
+              nome: familiar.nome,
+              parentesco: familiar.parentesco,
+              data_nascimento: converterDataParaISO(familiar.dataNascimento),
+              renda: familiar.renda,
+              beneficiario: familiar.beneficiario,
+              documentos: [],
+              cpf: familiar.cpf,
+            });
+          }
+        }
+      }
+
+      // Deletar familiares que foram removidos
+      for (const familiar of familiaresdeletados) {
+        await deletarFamiliar(familiar.id!);
+      }
+
+      setMensagem("Familiares atualizados com sucesso!");
+
+      // Navegar para confirmar
+      navigate("/confirmar-familiares", {
+        state: { 
+          familiares,
+          dadosResponsavel
+        },
+      });
+
+    } catch (error: any) {
+      console.error("Erro ao salvar familiares:", error);
+      setMensagem(error?.response?.data?.detail || "Erro ao salvar familiares.");
+    } finally {
+      setCarregando(false);
+    }
   }
 
   return (
@@ -157,9 +298,20 @@ function CadastroBeneficiario() {
 
                     {/* Header */}
                     <div className="flex justify-between items-center mb-4">
-                      <h3 className="font-semibold text-[var(--base-80)]">
-                        Familiar {index + 1}
-                      </h3>
+                      <div className="flex items-center gap-3">
+                        <h3 className="font-semibold text-[var(--base-80)]">
+                          Familiar {index + 1}
+                        </h3>
+                        {familiar.id ? (
+                          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                            Existente
+                          </span>
+                        ) : (
+                          <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
+                            Novo
+                          </span>
+                        )}
+                      </div>
 
                       {index > 0 && (
                         <button
@@ -233,6 +385,9 @@ function CadastroBeneficiario() {
 
                       <Campo label="Renda">
                         <input
+                          type="number"
+                          step="0.01"
+                          min="0"
                           name="renda"
                           value={familiar.renda}
                           onChange={(e) => handleChange(index, e)}

@@ -164,6 +164,7 @@ class atualizarFamiliaResponsavel(BaseModel):
     parentesco: Optional[str] = Field(default=None, min_length=2, max_length=100)
     data_nascimento: Optional[date] = None
     renda: Optional[float] = Field(default=None, ge=0)
+    beneficiario: Optional[bool] = None
 
 
 class atualizarDocumento(BaseModel):
