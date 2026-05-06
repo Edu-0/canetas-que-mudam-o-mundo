@@ -26,7 +26,7 @@ export type CriarUsuarioEnvio = { // (POST envio)
   telefone?: string;
   email: string;
   senha: string; // senha é obrigatória para criar um usuário
-  token_convite?: string; // token de convite para o voluntário
+  // token_convite?: string; // token de convite para o voluntário
 };
 
 export type AtualizarUsuarioEnvio = { // (PUT envio)
