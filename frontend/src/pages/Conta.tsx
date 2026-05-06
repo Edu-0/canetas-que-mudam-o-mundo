@@ -306,7 +306,7 @@ function Conta() {
                         
                         setMostrarModal(false);
                         definirUsuario(null);
-                        navigate("/");
+                        navigate("/logar"); 
                       } catch (erro) {
                         console.error("Erro ao excluir conta:", erro);
                         setCarregandoExclusao(false);
