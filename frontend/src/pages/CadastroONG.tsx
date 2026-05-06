@@ -163,6 +163,7 @@ function CadastroONG() {
 
                   } catch (error: any) {
                     const erroBackend = error.response?.data?.detail;
+                    console.log("Erro no backend:", error.response?.data);
 
                     if (erroBackend) {
                       setErroModal(erroBackend);

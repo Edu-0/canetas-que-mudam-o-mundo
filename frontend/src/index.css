@@ -114,6 +114,20 @@
   line-height: 150%;
 }
 
+.body-bold-medio {
+  font-family: var(--font-body);
+  font-size: 24px;
+  line-height: 150%;
+  font-weight: 800;
+}
+
+.body-bold-pequeno {
+  font-family: var(--font-body);
+  font-size: 20px;
+  line-height: 150%;
+  font-weight: 800;
+}
+
 .body-semibold-grande {
   font-family: var(--font-body);
   font-size: 40px;
@@ -140,6 +154,20 @@
   font-size: 14px;
   line-height: 150%;
   font-weight: 600;
+}
+
+.body-pequeno {
+  font-family: var(--font-body);
+  font-size: 20px;
+  line-height: 150%;
+  font-weight: 400;
+}
+
+.body-muito-pequeno {
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 150%;
+  font-weight: 400;
 }
 
 @layer components {
