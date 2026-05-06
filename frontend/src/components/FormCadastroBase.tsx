@@ -181,6 +181,8 @@ function FormCadastroBase(props: Props) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
+    // console.log("FormCadastroBase: handleSubmit chamado");
+
     if (carregando) return; // evita múltiplos envios
 
     // validação de todos os campos
@@ -217,6 +219,17 @@ function FormCadastroBase(props: Props) {
       if (modo === "cadastro") {
         const propsCadastro = { aoEnviar } as PropsCadastro;
 
+        // console.log("Enviando dados de cadastro para o backend:", {
+        //   nome_completo,
+        //   data_nascimento,
+        //   cpf: cpf.replace(/\D/g, ""),
+        //   cep: cep.replace(/\D/g, ""),
+        //   telefone: telefone ? telefone.replace(/\D/g, "") : undefined,
+        //   email,
+        //   senha,
+        //   confirmarSenha
+        // });
+
         // chama API do backend
         const usuarioCadastrado = await criarUsuario({
           nome_completo,
@@ -226,8 +239,10 @@ function FormCadastroBase(props: Props) {
           telefone: telefone ? telefone.replace(/\D/g, "") : undefined,
           email,
           senha,
-          ...(token ? { token_convite: token } : {}) // se tiver token na URL, envia para o backend para vincular à ONG e tipo de voluntário correspondente
+          // ...(token ? { token_convite: token } : {}) // se tiver token na URL, envia para o backend para vincular à ONG e tipo de voluntário correspondente
         });
+
+        console.log("Usuário cadastrado com sucesso:", usuarioCadastrado);
 
         // Após o cadastro, autentica automaticamente para habilitar rotas protegidas.
         const loginResponse = await api.post("/auth/login", {
@@ -317,13 +332,13 @@ function FormCadastroBase(props: Props) {
       }}
     >
 
-      {modo === "cadastro" && token && (
+      {/* {modo === "cadastro" && token && (
         <div className="bg-[var(--base-10)] border border-[var(--base-40)] rounded-lg p-4 text-center">
           <p className="body-pequeno">
             Você está se cadastrando como <strong>Voluntário da triagem</strong> vinculado a uma ONG.
           </p>
         </div>
-      )}
+      )} */}
 
       <div>
         <label className="body-semibold-pequeno" htmlFor="nome_completo">Nome completo <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
