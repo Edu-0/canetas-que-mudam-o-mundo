@@ -143,7 +143,7 @@ def deletar_ong(
             db.rollback()
             raise HTTPException(status_code=404, detail="ONG não encontrada no banco de dados.")
         
-        funcao = db.query(u.UsuarioFuncao).filter(u.UsuarioFuncao.usuario_id == usuario_atual.id, u.UsuarioFuncao.tipo_usuario == TipoUsuario.COORDENADOR_PROCESSOS).delete()
+        funcao = db.query(u.UsuarioFuncao).filter(u.UsuarioFuncao.usuario_id == usuario_atual.id).delete()
 
         db.query(u.Usuario).filter(u.Usuario.id == usuario_atual.id).delete()
              
