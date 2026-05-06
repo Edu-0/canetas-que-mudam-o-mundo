@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, BackgroundTasks, status
 from app.schemas import user as s
 from app.core.security import gerar_hash_senha
 from app.core.deps_auth import VerificarPermissao, get_current_user
@@ -19,6 +19,13 @@ import json
 
 
 router = APIRouter(prefix="/usuario", tags=["usuario"])
+
+
+def _excluir_arquivo_firebase_background(file_url: str) -> None:
+    try:
+        FirebaseStorageService.delete_file(file_url)
+    except Exception as erro_firebase:
+        logging.error(f"Erro ao excluir arquivo no Firebase em background: {erro_firebase}")
 
 
 @router.get("/", response_model=List[s.respostaUsuario])
@@ -289,38 +296,40 @@ def buscar_documentos_responsavel(
     db: SessionDep,
     permissao = Depends(VerificarPermissao("documento_usuario:listar"))
 ):
-    documentos = db.query(m.DocumentoUsuario).filter(m.DocumentoUsuario.responsavel_id == responsavel_id).all()
+    documentos = db.query(m.DocumentoUsuario).filter(
+        m.DocumentoUsuario.responsavel_id == responsavel_id,
+        m.DocumentoUsuario.pendente_exclusao.is_(False)
+    ).all()
     
     if not documentos:
         raise HTTPException(status_code=404, detail="Nenhum documento encontrado para este responsável.")
         
     return documentos
 
-@router.delete("/documentacao/{documento_id}")
+@router.delete("/documentacao/{documento_id}", status_code=status.HTTP_202_ACCEPTED)
 def deletar_documento_usuario(
     documento_id: int, 
+    background_tasks: BackgroundTasks,
     db: SessionDep,
     permissao = Depends(VerificarPermissao("documento_usuario:deletar"))
 ):
     documentacao = db.get(m.DocumentoUsuario, documento_id)
     
-    if not documentacao:
+    if not documentacao or documentacao.pendente_exclusao:
         raise HTTPException(status_code=404, detail="Documento não encontrado.")
 
+    caminho_arquivo = documentacao.caminho_arquivo
+
     try:
-        db.delete(documentacao)
+        documentacao.pendente_exclusao = True
         db.commit()
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail="Erro ao remover registro do banco.")    
 
-    try:
-        FirebaseStorageService.delete_file(documentacao.caminho_arquivo)
-    except Exception as e:
-        logging.error(f"Erro ao excluir o arquivo no servidor: {str(e)}")
+    background_tasks.add_task(_excluir_arquivo_firebase_background, caminho_arquivo)
 
-    
-    return {"mensagem": "Documento excluído com sucesso."}
+    return {"mensagem": "Documento marcado para exclusão com sucesso."}
 
 
 """ Familiares """
@@ -473,7 +482,10 @@ def buscar_documentos_familiar(
     db: SessionDep,
     permissao = Depends(VerificarPermissao("documento_familia:listar"))
 ):
-    documentos = db.query(m.DocumentoFamilia).filter(m.DocumentoFamilia.familiar_id == familiar_id).all()
+    documentos = db.query(m.DocumentoFamilia).filter(
+        m.DocumentoFamilia.familiar_id == familiar_id,
+        m.DocumentoFamilia.pendente_exclusao.is_(False)
+    ).all()
     if not documentos:
         raise HTTPException(status_code=404, detail="Nenhum documento encontrado para este familiar.")
     return documentos
@@ -492,29 +504,30 @@ def deletar_familiar(
     db.commit()
     return {"mensagem": "Familiar excluído com sucesso."}
 
-@router.delete("/familia/documentacao/{documento_id}")
+@router.delete("/familia/documentacao/{documento_id}", status_code=status.HTTP_202_ACCEPTED)
 def deletar_documento_familiar(
     documento_id: int,
+    background_tasks: BackgroundTasks,
     db: SessionDep,
     permissao = Depends(VerificarPermissao("documento_familia:deletar"))
 ):
     documentacao = db.get(m.DocumentoFamilia, documento_id)
 
-    if not documentacao:
+    if not documentacao or documentacao.pendente_exclusao:
         raise HTTPException(status_code=404, detail="Documento não encontrado.")
+
+    caminho_arquivo = documentacao.caminho_arquivo
+
     try:
-        FirebaseStorageService.delete_file(documentacao.caminho_arquivo)
-
+        documentacao.pendente_exclusao = True
+        db.commit()
     except Exception as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Erro ao excluir o arquivo no servidor: {str(e)}"
-        )
-    
-    db.delete(documentacao)
-    db.commit()
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Erro ao remover registro do banco.")
 
-    return {"mensagem": "Documento excluído com sucesso."}
+    background_tasks.add_task(_excluir_arquivo_firebase_background, caminho_arquivo)
+
+    return {"mensagem": "Documento marcado para exclusão com sucesso."}
 
 
 """ Triagem """
@@ -620,6 +633,3 @@ def deletar_funcao_usuario(
     db.delete(funcao)
     db.commit()
     return {"mensagem":"Função excluída com sucesso."}
-
-
-
