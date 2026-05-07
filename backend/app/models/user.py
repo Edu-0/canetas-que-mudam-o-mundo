@@ -14,7 +14,7 @@ class Usuario(Base):
     data_nascimento = Column(Date, nullable= False)
     cpf = Column(String(11), unique= True, nullable= False)
     cep = Column(String(8), nullable= False)
-    telefone = Column(String(11), nullable = False)
+    telefone = Column(String(11), nullable = True)
     email = Column(String(255), unique = True, nullable= False)
     senha = Column(String(255), nullable= False)
     data_cadastro = Column(DateTime, server_default=func.now(), nullable=False)
