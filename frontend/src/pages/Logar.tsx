@@ -39,11 +39,13 @@ function Logar() {
       localStorage.setItem("token_type", response.data.token_type);
 
       const infoUsuario = await api.get("/auth/me", {
-          headers: {
-            Authorization: `${response.data.token_type} ${response.data.access_token}`,
-          },
+        headers: {
+          Authorization: `${response.data.token_type} ${response.data.access_token}`,
+        },
       });
 
+      const perfilComFuncoes = await api.get(`/usuario/${infoUsuario.data.id}`); // para pegar os tipos do usuário
+ 
       definirUsuario({
         id: infoUsuario.data.id,
         nome_completo: infoUsuario.data.nome_completo,
@@ -52,8 +54,9 @@ function Logar() {
         cep: infoUsuario.data.cep,
         telefone: infoUsuario.data.telefone,
         email: infoUsuario.data.email,
-        tipos: infoUsuario.data.funcao?.map((f: any) => mapearTipo(f.tipo_usuario)) || [], // a pessoa pode ter mais de uma função e quero pegar todas elas
-        data_cadastro: new Date().toISOString()
+        tipos: perfilComFuncoes.data.funcao?.map((f: any) => mapearTipo(f.tipo_usuario)) || [],
+        data_cadastro: perfilComFuncoes.data.data_cadastro || new Date().toISOString(),
+        data_edicao_conta: perfilComFuncoes.data.data_edicao_conta,
       });
 
       // Redirecionar para a página de escolha de cadastro
