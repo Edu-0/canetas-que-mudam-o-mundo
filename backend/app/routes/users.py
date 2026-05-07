@@ -112,6 +112,7 @@ def criar_usuario_base(dados:s.criarUsuario, db:SessionDep):
     except IntegrityError as e:
         db.rollback() # Cancela qualquer alteração para não deixar o banco "sujo"
         erro = str(e.orig).lower()
+        print(f"LOG DE INTEGRIDADE: {erro}")
 
         if "cpf" in erro:
             raise HTTPException(
@@ -127,7 +128,7 @@ def criar_usuario_base(dados:s.criarUsuario, db:SessionDep):
 
         raise HTTPException(
             status_code=400,
-            detail={"campo": "geral", "mensagem": "Erro ao cadastrar usuário."}
+            detail={"campo": "geral", "mensagem": "Erro ao cadastrar usuário"}
         )
 
 @router.put("/{usuario_id}", response_model=s.respostaUsuario)

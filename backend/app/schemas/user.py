@@ -9,7 +9,7 @@ class usuarioBase(BaseModel):
     data_nascimento : date 
     cep : str = Field (pattern=r"^\d{8}$")
     cpf: str = Field (pattern=r"^\d{11}$")
-    telefone: Optional[str] = Field(default=None, pattern=r"^\d{10,11}$")
+    telefone:str | None = Field(default=None, pattern=r"^\d{10,11}$")
     email: EmailStr
     funcao: Optional[TipoUsuario] = TipoUsuario.GENERICO
     token_convite: Optional[str] = None
