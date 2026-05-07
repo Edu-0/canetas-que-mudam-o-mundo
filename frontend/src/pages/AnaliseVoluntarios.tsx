@@ -4,15 +4,17 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import logo from "../assets/logo.svg";
 import Paginacao from "../components/Paginacao";
-import { DadosUsuario, listarVoluntariosONG, excluirConta } from "../services/usuarioService";
-import { mapearTipo } from "../context/UserContext";
+import { DadosUsuario, listarVoluntariosONG, deletarVoluntarioONG } from "../services/usuarioService";
 import Botao from "../components/Botao";
 import Toast from "../components/Toast";
 import ModalConfirmacao from "../components/ModalConfirmacao";
 import { useFiltroVoluntarios } from "../hooks/useFiltroVoluntarios";
+import { useONG } from "../context/OngContext";
 
 function AnaliseVoluntarios() {
   const navigate = useNavigate();
+  const { ong } = useONG();
+  const ong_id = ong?.id;
   const [mostrarModal, setMostrarModal] = useState(false);
   const [carregandoExclusao, setCarregandoExclusao] = useState(false);
   const [mensagem, setMensagem] = useState("");
@@ -80,6 +82,10 @@ function AnaliseVoluntarios() {
   }
 
   function formatarTempo(data?: string) {
+    if (!data) {
+      return { texto: "Sem data", tipo: "antigo" };
+    }
+
     const { meses, dias } = calcularTempo(data);
 
     // se tiver menos de 24h
@@ -92,29 +98,47 @@ function AnaliseVoluntarios() {
       return { texto: `${dias} dia${dias === 1 ? "" : "s"}`, tipo: "recente" };
     }
 
-    // se tiver mais de 1 mês
+     // se tiver mais de 1 mês
     return { texto: `${meses} mês${meses === 1 ? "" : "es"}`, tipo: "antigo" };
   }
 
   useEffect(() => {
     async function carregar() {
       try {
-        const ong_id = Number(localStorage.getItem("ong_id"));
+        const ongSalva = localStorage.getItem("ong");
+
+        const ong_id = ongSalva ? JSON.parse(ongSalva).id : null;
 
         if (!ong_id) {
-          setMensagem("ONG não encontrada.");
+          setMensagem("ONG não encontrada. Faça login novamente.");
           setTipoMensagem("erro");
           return;
         }
 
         const dados = await listarVoluntariosONG(ong_id);
 
+        if (!dados || dados.length === 0) {
+          setVoluntarios([]);
+          setMensagem("Nenhum voluntário vinculado a esta ONG.");
+          setTipoMensagem("erro");
+          return;
+        }
+
         setVoluntarios(dados);
 
-      } catch (erro) {
+      } catch (erro: any) {
         console.error("Erro ao carregar voluntários:", erro);
 
-        setMensagem("Erro ao carregar voluntários.");
+        const status = erro?.response?.status;
+
+        if (status === 403) {
+          setMensagem("Você não tem permissão para ver esses voluntários.");
+        } else if (status === 404) {
+          setMensagem("ONG não encontrada.");
+        } else {
+          setMensagem("Erro ao carregar voluntários.");
+        }
+
         setTipoMensagem("erro");
       }
     }
@@ -207,6 +231,8 @@ function AnaliseVoluntarios() {
 
               <div className="flex flex-col gap-4">
                 {voluntariosPagina.map((v, index) => {
+
+                  if (!v) return null; 
                   
                   const tempo = formatarTempo(v.data_cadastro);
 
@@ -269,7 +295,7 @@ function AnaliseVoluntarios() {
                   setCarregandoExclusao(true);
 
                   try {
-                    await excluirConta(voluntarioSelecionado); // chama a função e coloca o id do voluntário selecionado
+                    await deletarVoluntarioONG(voluntarioSelecionado);
 
                     // atualiza a lista de voluntários removendo o voluntário desativado
                     setVoluntarios(prev => {
