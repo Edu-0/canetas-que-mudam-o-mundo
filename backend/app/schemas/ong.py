@@ -5,7 +5,7 @@ from typing import Optional
 class CriarOng(BaseModel):
     nome:str = Field(max_length = 255)
     cnpj: str = Field (pattern=r"^\d{14}$")
-    cep: str = Field (pattern=r"^\d{8}$")
+    cep: str | None = Field (pattern=r"^\d{8}$")
     rua: str = Field (max_length = 255)
     bairro: str = Field (max_length = 255)
     cidade: str = Field (max_length = 255)
