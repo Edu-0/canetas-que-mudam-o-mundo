@@ -10,7 +10,7 @@ from fastapi import HTTPException
 from sqlalchemy.sql import func
 from sqlalchemy.exc import IntegrityError
 from app.services.firebase_storage import FirebaseStorageService
-from app.services.user_service import anonimizar_responsavel, processar_exclusao_conta
+from app.services.user_service import anonimizar_responsavel, processar_exclusao_conta, remover_funcao_responsavel
 from datetime import date, datetime
 import logging
 from app.core.deps_auth import VerificarPermissao, get_current_user
@@ -190,17 +190,30 @@ def criar_usuario_responsavel(
     url = None 
     
     try:
-        usuario = m.UsuarioResponsavel(
-            responsavel_id = usuario_id,
-            qtd_familiares = qtd_familiares,
-            renda = renda,
-            auxilio = auxilio,
-            concordou_termos = concordou_termos,
-            ativo = True
-        )
+        usuario = db.query(m.UsuarioResponsavel).filter(
+            m.UsuarioResponsavel.responsavel_id == usuario_id
+        ).first()
 
-        db.add(usuario)
-        db.flush() 
+        if usuario:
+            usuario.qtd_familiares = qtd_familiares
+            usuario.renda = renda
+            usuario.auxilio = auxilio
+            usuario.concordou_termos = concordou_termos
+            usuario.documentacao_aprovada = False
+            usuario.ativo = True
+            usuario.data_edicao_conta = datetime.now()
+        else:
+            usuario = m.UsuarioResponsavel(
+                responsavel_id = usuario_id,
+                qtd_familiares = qtd_familiares,
+                renda = renda,
+                auxilio = auxilio,
+                concordou_termos = concordou_termos,
+                ativo = True
+            )
+
+            db.add(usuario)
+            db.flush() 
 
         url = FirebaseStorageService.upload_file(file)
 
@@ -218,7 +231,13 @@ def criar_usuario_responsavel(
             tipo_usuario = TipoUsuario.RESPONSAVEL_BENEFICIARIO
         )
 
-        db.add(funcao)
+        funcao_existente = db.query(m.UsuarioFuncao).filter(
+            m.UsuarioFuncao.usuario_id == usuario_id,
+            m.UsuarioFuncao.tipo_usuario == TipoUsuario.RESPONSAVEL_BENEFICIARIO
+        ).first()
+
+        if not funcao_existente:
+            db.add(funcao)
         
         db.commit()
         db.refresh(usuario)
@@ -339,9 +358,12 @@ def get_familiares(
     db:SessionDep,
     usuario_atual: m.Usuario = Depends(get_current_user),
     permissao = Depends(VerificarPermissao("familia_responsavel:listar"))):
-    familiares = db.query(m.FamiliaResponsavel).filter(m.FamiliaResponsavel.responsavel_id == usuario_atual.id).all()
+    familiares = db.query(m.FamiliaResponsavel).filter(
+        m.FamiliaResponsavel.responsavel_id == usuario_atual.id,
+        m.FamiliaResponsavel.ativo.is_(True)
+    ).all()
     if not familiares:
-        raise HTTPException(status_code=404, detail="Não há familiares cadastrados.") 
+        return []
     return familiares
 
 
@@ -364,6 +386,19 @@ def cadastrar_familia_responsavel(
             print(e)
             print("====================================")
             raise ValueError(f"O formato dos dados dos familiares é inválido. Detalhe: {str(e)}")
+
+        cpfs_enviados = [membro.cpf for membro in dados]
+        cpfs_repetidos_no_payload = {cpf for cpf in cpfs_enviados if cpfs_enviados.count(cpf) > 1}
+        if cpfs_repetidos_no_payload:
+            raise ValueError("Há CPFs duplicados na lista de familiares enviada.")
+
+        cpfs_existentes = db.query(m.FamiliaResponsavel.cpf).filter(
+            m.FamiliaResponsavel.responsavel_id == responsavel_id,
+            m.FamiliaResponsavel.cpf.in_(cpfs_enviados)
+        ).all()
+
+        if cpfs_existentes:
+            raise ValueError("Um ou mais familiares já estão cadastrados para este responsável (CPF duplicado).")
 
         familiares = []
         for membro in dados:
@@ -494,11 +529,16 @@ def buscar_documentos_familiar(
 def deletar_familiar(
     familiar_id,
     db:SessionDep,
+    usuario_atual: m.Usuario = Depends(get_current_user),
     permissao = Depends(VerificarPermissao("familia_responsavel:deletar"))):
     familiar = db.get(m.FamiliaResponsavel,familiar_id)
 
     if not familiar:
         raise HTTPException(status_code=404, detail="Familiar não encontrado.")
+
+    # Garante que o usuário logado só possa remover familiares do próprio perfil.
+    if not familiar.perfil or familiar.perfil.responsavel_id != usuario_atual.id:
+        raise HTTPException(status_code=403, detail="Você não tem permissão para excluir este familiar.")
     
     db.delete(familiar)
     db.commit()
@@ -583,8 +623,7 @@ def atualizar_usuario_funcao(usuario_id: int,
         ).delete()
 
         if TipoUsuario.RESPONSAVEL_BENEFICIARIO in tipos_removidos:
-            print("alo")
-            anonimizar_responsavel(usuario_id, db)
+            remover_funcao_responsavel(usuario_id, db)
 
         funcao_usuario = []
 
@@ -623,7 +662,18 @@ def deletar_funcao_usuario(
         raise HTTPException(status_code=404, detail="Usuario não encontrado.")
 
     if tipo_funcao == TipoUsuario.RESPONSAVEL_BENEFICIARIO:
-        return anonimizar_responsavel(usuario_id,db)
+        funcao = db.query(m.UsuarioFuncao).filter(
+            m.UsuarioFuncao.usuario_id == usuario_id,
+            m.UsuarioFuncao.tipo_usuario == tipo_funcao
+        ).first()
+
+        if not funcao:
+            raise HTTPException(status_code=404, detail="Usuario não possui a função especificada.")
+
+        remover_funcao_responsavel(usuario_id, db)
+        db.delete(funcao)
+        db.commit()
+        return {"mensagem": "Função excluída com sucesso."}
 
     funcao = db.query(m.UsuarioFuncao).filter(m.UsuarioFuncao.usuario_id == usuario_id,m.UsuarioFuncao.tipo_usuario == tipo_funcao).first()
     if not funcao:

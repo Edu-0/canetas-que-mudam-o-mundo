@@ -69,13 +69,17 @@ class respostaUsuarioTriagem(criarUsuarioTriagem):
     status: str
     model_config = ConfigDict(from_attributes=True)
 
-class respostaUsuarioResponsavel(criarUsuarioResponsavel):
-    id:int
-    model_config = ConfigDict(from_attributes=True)
-    documentacao_aprovada:bool
-    data_preenchimento_termos: datetime 
+class respostaUsuarioResponsavel(BaseModel):
+    id: int
+    qtd_familiares: int
+    renda: float
+    auxilio: BeneficiosUsuario
+    concordou_termos: bool
+    documentacao_aprovada: bool
+    data_preenchimento_termos: datetime
     data_edicao_conta: datetime
     familia: List["respostaFamiliaResponsavel"] = []
+    model_config = ConfigDict(from_attributes=True)
 
 class respostaFuncao(BaseModel):
     tipo_usuario:TipoUsuario

@@ -113,14 +113,17 @@ function CadastroBeneficiario() {
       ];
 
     } else {
-      const campo = name as keyof Omit<Familiar, "documentos">;
-
-      if (campo === "beneficiario") {
+      if (name === "beneficiario") {
         novos[index].beneficiario = value === "true";
-      } else if (campo === "renda") {
+      } else if (name === "renda") {
         novos[index].renda = parseFloat(value) || 0;
-      } else {
-        novos[index][campo] = value as any;
+      } else if (
+        name === "nome" ||
+        name === "dataNascimento" ||
+        name === "cpf" ||
+        name === "parentesco"
+      ) {
+        novos[index][name] = value;
       }
     }
 
@@ -171,8 +174,43 @@ function CadastroBeneficiario() {
     return data;
   }
 
+  function extrairMensagemErro(error: any): string {
+    const detail = error?.response?.data?.detail;
+
+    if (typeof detail === "string") {
+      return detail;
+    }
+
+    if (Array.isArray(detail)) {
+      const mensagens = detail
+        .map((item) => {
+          if (typeof item === "string") return item;
+          if (item && typeof item === "object" && typeof item.msg === "string") {
+            return item.msg;
+          }
+          return null;
+        })
+        .filter(Boolean);
+
+      if (mensagens.length > 0) {
+        return mensagens.join(" | ");
+      }
+    }
+
+    if (detail && typeof detail === "object") {
+      if (typeof detail.mensagem === "string") return detail.mensagem;
+      if (typeof detail.msg === "string") return detail.msg;
+    }
+
+    return "Erro ao salvar familiares.";
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    if (carregando) {
+      return;
+    }
 
     try {
       setCarregando(true);
@@ -197,6 +235,15 @@ function CadastroBeneficiario() {
         beneficiario: f.beneficiario,
       }));
 
+      // Validação cliente: o backend valida renda <= 100000 para criação.
+      const LIMITE_RENDA = 100000;
+      const excedente = dadosParaEnviar.find(d => Number(d.renda) > LIMITE_RENDA);
+      if (excedente) {
+        setMensagem(`Valor de renda excede o limite permitido de ${LIMITE_RENDA}. Ajuste e tente novamente.`);
+        setCarregando(false);
+        return;
+      }
+
       let perfilUsuario: any = null;
       let responsavelId: number | null = null;
 
@@ -215,6 +262,10 @@ function CadastroBeneficiario() {
 
       // Atualizar familiares existentes que foram modificados
       for (const familiar of familiaresExistentes) {
+        if (familiar.id == null) {
+          continue;
+        }
+
         const originalIndex = familiaresOriginais.findIndex(f => f.id === familiar.id);
         if (originalIndex !== -1) {
           const original = familiaresOriginais[originalIndex];
@@ -235,7 +286,7 @@ function CadastroBeneficiario() {
               renda: familiar.renda,
               beneficiario: familiar.beneficiario,
               documentos: [],
-              cpf: familiar.cpf,
+              cpf: familiar.cpf.replace(/\D/g, ''),
             });
           }
         }
@@ -258,7 +309,7 @@ function CadastroBeneficiario() {
 
     } catch (error: any) {
       console.error("Erro ao salvar familiares:", error);
-      setMensagem(error?.response?.data?.detail || "Erro ao salvar familiares.");
+      setMensagem(extrairMensagemErro(error));
     } finally {
       setCarregando(false);
     }
@@ -506,7 +557,7 @@ function CadastroBeneficiario() {
                     Cancelar
                   </Botao>
 
-                  <Botao tipo="submit" variante="confirmar">
+                  <Botao tipo="submit" variante="confirmar" desabilitado={carregando}>
                     Confirmar cadastro
                   </Botao>
                 </div>

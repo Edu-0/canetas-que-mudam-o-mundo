@@ -55,6 +55,11 @@ export type DadosFamilia = {
   documentos: File[]; // array de arquivos para upload
 };
 
+type DadosFamiliaSemDocumentos = Omit<DadosFamilia, "documentos">;
+type AtualizarFamiliarEnvio = Partial<DadosFamilia> & {
+  cpf?: string;
+};
+
 export type FamiliarRetorno = {
   id: number;
   nome: string;
@@ -128,8 +133,19 @@ export async function criarUsuarioResponsavel(usuarioId: number, formData: FormD
 }
 
 // Criar familiar para beneficiário
-export async function criarFamiliar(responsavel_id: number, dados: DadosFamilia[]) {
-  const response = await api.post(`/usuario/${responsavel_id}/familia-responsavel`, dados);
+export async function criarFamiliar(responsavel_id: number, dados: DadosFamiliaSemDocumentos[]) {
+  const formData = new FormData();
+  formData.append("dados_familiares", JSON.stringify(dados));
+
+  const response = await api.post(
+    `/usuario/${responsavel_id}/familia-responsavel`,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
   return response.data;
 }
 
@@ -148,7 +164,7 @@ export async function obterFamiliares(): Promise<FamiliarRetorno[]> {
 }
 
 // Atualizar dados de um familiar
-export async function atualizarFamiliar(familia_id: number, dados: Partial<DadosFamilia>) {
+export async function atualizarFamiliar(familia_id: number, dados: AtualizarFamiliarEnvio) {
   const response = await api.put(`/usuario/${familia_id}/familia-responsavel`, dados);
   return response.data;
 }

@@ -1,12 +1,9 @@
 import { useLocation, useNavigate } from "react-router-dom";
+import { useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Botao from "../components/Botao";
 import Toast from "../components/Toast";
-import { useEffect, useState } from "react";
-import { criarFamiliar, obterPerfil } from "../services/usuarioService";
-import { useUsuario } from "../context/UserContext";
-import api from "../services/api";
 import { Familiar } from "../types/Familiar";
 
 function ConfirmarFamiliares() {
@@ -14,93 +11,22 @@ function ConfirmarFamiliares() {
   const location = useLocation();
 
   const familiares = (location.state?.familiares || []) as Familiar[];
-
+  const dadosResponsavel = location.state?.dadosResponsavel;
   const [mensagem, setMensagem] = useState("");
   const [carregando, setCarregando] = useState(false);
 
-  const { usuario } = useUsuario();
-  const dadosResponsavel = location.state?.dadosResponsavel;
-  const [responsavelId, setResponsavelId] = useState<string | null>(null);
-
   function voltar() {
-    //retorna para a página anterior.
-    navigate("/cadastro-beneficiario", {
+    navigate("/conta/cadastro-beneficiario", {
       state: {
-        dadosResponsavel
-      }
+        dadosResponsavel,
+      },
     });
   }
 
-  useEffect(() => {
-    async function carregarPerfil() {
-      try {
-        const perfil = await obterPerfil();
-        setResponsavelId(perfil.perfil_responsavel?.id);
-      } catch (e) {
-        console.error(e);
-        setMensagem("Erro ao carregar perfil.");
-      }
-    }
-
-    carregarPerfil();
-  }, []);
-
-  function formatarData(data: string) {
-    const [dia, mes, ano] = data.split("/");
-    return `${ano}-${mes}-${dia}`;
-  }
-
-  async function confirmarCadastro() {
+  function confirmarCadastro() {
     setCarregando(true);
-
-    try {
-      if (!usuario) {
-        throw new Error("Usuário não logado");
-      }
-
-      const perfil = await obterPerfil();
-      const responsavelIdAtual = perfil.perfil_responsavel?.id;
-
-      if (!responsavelIdAtual) {
-        throw new Error("Usuário não é responsável");
-      }
-
-      const formData = new FormData();
-
-      const familiaresFormatados = familiares.map((f: Familiar) => ({
-        nome: f.nome,
-        cpf: f.cpf.replace(/\D/g, ""),
-        parentesco: f.parentesco,
-        data_nascimento: formatarData(f.dataNascimento),
-        renda: Number(f.renda),
-        beneficiario: f.beneficiario
-      }));
-
-      formData.append("dados_familiares", JSON.stringify(familiaresFormatados));
-
-      familiares.forEach((f) => {
-        if (f.documentos && f.documentos.length > 0) {
-          formData.append("arquivos", f.documentos[0]); 
-        } else {
-          formData.append("arquivos", new Blob([""], { type: "application/octet-stream" }));
-        }
-      });
-
-      await api.post(`usuario/${responsavelIdAtual}/familia-responsavel`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data"
-        }
-      });
-
-      setMensagem("Cadastro confirmado com sucesso!");
-      setTimeout(() => navigate("/conta"), 2000);
-
-    } catch (error) {
-      console.error(error);
-      setMensagem("Erro ao confirmar cadastro. Verifique os dados e tente novamente.");
-    } finally {
-      setCarregando(false);
-    }
+    setMensagem("Cadastro confirmado com sucesso!");
+    setTimeout(() => navigate("/conta"), 1500);
   }
 
   return (
@@ -112,7 +38,6 @@ function ConfirmarFamiliares() {
 
           <Toast mensagem={mensagem} tipo="sucesso" />
 
-          {/* título */}
           <div className="text-center">
             <h1 className="header-medio text-[var(--base-80)]">
               Confirmar Cadastro
@@ -122,21 +47,17 @@ function ConfirmarFamiliares() {
             </p>
           </div>
 
-          {/* lista de familiares */}
           <div className="flex flex-col gap-6 items-center">
-
             {familiares.map((familiar: Familiar, index: number) => (
               <div
                 key={index}
                 className="w-full max-w-4xl bg-[var(--primario-5)] border border-[var(--base-20)] rounded-lg p-6"
               >
-
                 <h2 className="body-semibold-medio text-[var(--base-80)] mb-4">
                   Familiar {index + 1}
                 </h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
                   <Info label="Nome" valor={familiar.nome} />
                   <Info label="Data de nascimento" valor={familiar.dataNascimento} />
                   <Info label="CPF" valor={familiar.cpf} />
@@ -154,51 +75,42 @@ function ConfirmarFamiliares() {
                         : "Nenhum arquivo enviado"}
                     </p>
                   </div>
-
                 </div>
               </div>
             ))}
-
           </div>
 
-          {/* pergunta */}
           <div className="flex justify-center mt-6">
             <div className="w-full max-w-4xl bg-[var(--base-0)] border border-[var(--base-20)] rounded-xl p-6 shadow-sm flex flex-col gap-6">
-
-                {/* Pergunta */}
-                <div className="text-center">
+              <div className="text-center">
                 <p className="body-medio text-[var(--base-80)]">
-                    Deseja confirmar o cadastro desses familiares?
+                  Deseja confirmar o cadastro desses familiares?
                 </p>
-                </div>  
+              </div>
 
-                {/* Botões */}
-                <div className="flex gap-3 justify-center items-center">
-
+              <div className="flex gap-3 justify-center items-center">
                 <Botao
-                    tipo="button"
-                    variante="cancelar"
-                    aoClicar={voltar}
-                    desabilitado={carregando}
-                    className="w-fit px-5 py-2"
+                  tipo="button"
+                  variante="cancelar"
+                  aoClicar={voltar}
+                  desabilitado={carregando}
+                  className="w-fit px-5 py-2"
                 >
-                    Cancelar
+                  Cancelar
                 </Botao>
 
                 <Botao
-                    tipo="button"
-                    variante="confirmar"
-                    aoClicar={confirmarCadastro}
-                    desabilitado={carregando}
-                    className="w-fit px-5 py-2"
+                  tipo="button"
+                  variante="confirmar"
+                  aoClicar={confirmarCadastro}
+                  desabilitado={carregando}
+                  className="w-fit px-5 py-2"
                 >
-                    {carregando ? "Confirmando..." : "Confirmar cadastro"}
+                  {carregando ? "Confirmando..." : "Confirmar cadastro"}
                 </Botao>
-
-                </div>
-
+              </div>
             </div>
-            </div>
+          </div>
 
         </div>
       </main>
@@ -208,16 +120,13 @@ function ConfirmarFamiliares() {
   );
 }
 
-/* 🔹 componente auxiliar */
-function Info({ label, valor }: { label: string; valor: string }) {
+function Info({ label, valor }: { label: string; valor: string | number | null | undefined }) {
+  const valorExibido = valor === null || valor === undefined || valor === "" ? "-" : String(valor);
+
   return (
     <div className="flex flex-col">
-      <span className="body-semibold-pequeno text-[var(--base-70)]">
-        {label}
-      </span>
-      <span className="body-pequeno text-[var(--base-80)]">
-        {valor || "-"}
-      </span>
+      <span className="body-semibold-pequeno text-[var(--base-70)]">{label}</span>
+      <span className="body-pequeno text-[var(--base-80)]">{valorExibido}</span>
     </div>
   );
 }

@@ -179,6 +179,80 @@ def anonimizar_responsavel(usuario_id, db: SessionDep): # Função principal que
             detail=f"Erro ao anonimizar a conta: {str(e)}"
         )
 
+def remover_funcao_responsavel(usuario_id: int, db: SessionDep):
+    usuario = db.get(m.Usuario, usuario_id)
+
+    if not usuario:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado.")
+
+    responsavel = db.query(m.UsuarioResponsavel).filter(
+        m.UsuarioResponsavel.responsavel_id == usuario_id
+    ).first()
+
+    if not responsavel:
+        raise HTTPException(status_code=404, detail="Perfil de responsável não encontrado.")
+
+    familiares = db.query(m.FamiliaResponsavel).filter(
+        m.FamiliaResponsavel.responsavel_id == responsavel.id
+    ).all()
+
+    documentos_familia = []
+    for familiar in familiares:
+        documentos_familia.extend(
+            db.query(m.DocumentoFamilia).filter(
+                m.DocumentoFamilia.familiar_id == familiar.id
+            ).all()
+        )
+
+    documentos_usuario = db.query(m.DocumentoUsuario).filter(
+        m.DocumentoUsuario.responsavel_id == usuario_id
+    ).all()
+
+    urls_arquivos = [doc.caminho_arquivo for doc in documentos_usuario if doc.caminho_arquivo]
+    urls_arquivos.extend(doc.caminho_arquivo for doc in documentos_familia if doc.caminho_arquivo)
+
+    backups_arquivos = preparar_backup_arquivos(urls_arquivos) if urls_arquivos else []
+
+    if urls_arquivos:
+        remover_arquivos_do_storage(urls_arquivos)
+
+    try:
+        anonimizar_responsavel_perfil(responsavel)
+
+        for familiar in familiares:
+            anonimizar_familiar(familiar)
+
+        for doc in documentos_usuario:
+            db.delete(doc)
+
+        for doc in documentos_familia:
+            db.delete(doc)
+
+        usuario.data_edicao_conta = datetime.now()
+        db.commit()
+        db.refresh(usuario)
+        db.refresh(responsavel)
+
+        return {"mensagem": "Função de responsável removida com sucesso."}
+
+    except Exception as e:
+        db.rollback()
+
+        try:
+            if backups_arquivos:
+                restaurar_arquivos_no_storage(backups_arquivos)
+        except Exception as erro_restauracao:
+            logging.error(f"Erro ao restaurar arquivos após falha na remoção da função: {erro_restauracao}")
+            raise HTTPException(
+                status_code=500,
+                detail="A função não foi removida e não foi possível restaurar os arquivos removidos do Firebase Storage."
+            ) from erro_restauracao
+
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erro ao remover a função de responsável: {str(e)}"
+        )
+
 def processar_exclusao_conta(usuario_id, db: SessionDep):
     
     funcoes_do_usuario = db.query(m.UsuarioFuncao).filter(m.UsuarioFuncao.usuario_id == usuario_id).all()
@@ -195,7 +269,7 @@ def processar_exclusao_conta(usuario_id, db: SessionDep):
             raise HTTPException(status_code=404, detail="Usuário não encontrado.")
             
     elif TipoUsuario.RESPONSAVEL_BENEFICIARIO in tipos_cadastrados:
-        anonimizar_responsavel(db, usuario_id)
+        anonimizar_responsavel(usuario_id, db)
         
     else:
         usuario = db.query(m.Usuario).filter(m.Usuario.id == usuario_id).first()
