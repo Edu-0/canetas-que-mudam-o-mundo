@@ -128,7 +128,22 @@ function FormCadastroBase(props: Props) {
 
   const location = useLocation();
   const params = new URLSearchParams(location.search);
+  const [tokenInvalido, setTokenInvalido] = useState(false);
   const token = params.get("token");
+
+  useEffect(() => {
+    async function validarToken() {
+      if (!token) return;
+
+      try {
+        await api.get(`/ong/validar-token/${token}`);
+      } catch {
+        setTokenInvalido(true);
+      }
+    }
+
+    validarToken();
+  }, [token]);
 
   useEffect(() => {
     if (primeiraRenderizacao.current) {
@@ -239,7 +254,7 @@ function FormCadastroBase(props: Props) {
           telefone: telefone ? telefone.replace(/\D/g, "") : undefined,
           email,
           senha,
-          // ...(token ? { token_convite: token } : {}) // se tiver token na URL, envia para o backend para vincular à ONG e tipo de voluntário correspondente
+          ...(token ? { token_convite: token } : {}) // se tiver token na URL, envia para o backend para vincular à ONG e tipo de voluntário correspondente
         });
 
         console.log("Usuário cadastrado com sucesso:", usuarioCadastrado);
@@ -317,6 +332,13 @@ function FormCadastroBase(props: Props) {
   const hoje = new Date();
   const hojeFormatado = hoje.getFullYear() + "-" + String(hoje.getMonth() + 1).padStart(2, "0") + "-" + String(hoje.getDate()).padStart(2, "0"); // data máxima para o input de data (hoje)
 
+
+  {tokenInvalido && (
+    <div className="bg-[var(--cor-resposta-errada)] text-white rounded-lg p-4 text-center mb-4">
+      Este link de convite expirou ou é inválido.
+    </div>
+  )}
+
   return (
     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4" 
       onKeyDown={(e) => {
@@ -332,13 +354,13 @@ function FormCadastroBase(props: Props) {
       }}
     >
 
-      {/* {modo === "cadastro" && token && (
+      {modo === "cadastro" && token && (
         <div className="bg-[var(--base-10)] border border-[var(--base-40)] rounded-lg p-4 text-center">
           <p className="body-pequeno">
-            Você está se cadastrando como <strong>Voluntário da triagem</strong> vinculado a uma ONG.
+            Você está se cadastrando através de um link de convite para atuar como Voluntário da triagem vinculado a uma ONG.
           </p>
         </div>
-      )} */}
+      )}
 
       <div>
         <label className="body-semibold-pequeno" htmlFor="nome_completo">Nome completo <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
@@ -487,7 +509,7 @@ function FormCadastroBase(props: Props) {
         )}
 
         <div className="flex-1">
-          <Botao tipo="submit" variante="confirmar" desabilitado={carregando || (modo === "edicao" && !alterou)}>
+          <Botao tipo="submit" variante="confirmar" desabilitado={carregando || tokenInvalido || (modo === "edicao" && !alterou)}>
             {carregando ? "Salvando..." : textoBotaoEnviar || "Cadastrar"}
           </Botao>
         </div>

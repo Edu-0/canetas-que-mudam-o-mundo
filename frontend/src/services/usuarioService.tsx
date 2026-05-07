@@ -26,7 +26,7 @@ export type CriarUsuarioEnvio = { // (POST envio)
   telefone?: string;
   email: string;
   senha: string; // senha é obrigatória para criar um usuário
-  // token_convite?: string; // token de convite para o voluntário
+  token_convite?: string; // token de convite para o voluntário
 };
 
 export type AtualizarUsuarioEnvio = { // (PUT envio)
@@ -107,9 +107,12 @@ export type AtualizarONGEnvio =  { // PUT editar ONG, o usuário pode enviar ape
   site?: string;
 }; 
 
-// tipo de resposta do backend para o link de cadastro de voluntário
-type RespostaLinkVoluntario = {
+// link para cadastro de voluntário
+export type TokenLink = {
+  id: number;
   link: string;
+  data_criacao?: string;
+  ativo?: boolean;
 };
 
 // aqui defino que a função recebe os dados para criar o usuário (sem id e data_cadastro) e retorna os dados do usuário criado (com id e data_cadastro)
@@ -177,6 +180,12 @@ export async function atualizarUsuario(id: number, dados: AtualizarUsuarioEnvio)
   return response.data;
 }
 
+// Obter listar voluntários vinculados à ONG
+export async function listarVoluntariosONG(ong_id: number): Promise<DadosUsuario[]> {
+  const response = await api.get(`/ong/${ong_id}/voluntarios`);
+  return response.data;
+}
+
 // Atualizar tipos do usuário 
 export async function atualizarTiposUsuario(id: number, tipos: string[]) {
   const response = await api.put(`/usuario/${id}/funcao`, { 
@@ -239,11 +248,20 @@ export async function obterTodasONGs() {
   return response.data; 
 }
 
-// Obter link para cadastro de voluntário
-export async function obterLinkCadastroVoluntario(): Promise<string> {
-  const response = await api.get<RespostaLinkVoluntario>(
-    "/usuario/ong/link-voluntario"
-  );
+// Gerar link para o cadastro do voluntário vingulado a ONG
+export async function gerarLinkVoluntario(): Promise<string> {
+  const response = await api.post("/ong/gerar-token-ong");
+  return response.data.link;
+}
 
-  return response.data.link; //  se for algo como { "ong_id": 1, "tipo": "Voluntário da triagem", "expira_em": "2026-05-10"}
+// listar tokens ativos gerados
+export async function listarTokenOng(ong_id: number): Promise<TokenLink[]> {
+  const response = await api.get(`/ong/listar-token-ong/${ong_id}`);
+  return response.data; // se for algo como [{ "id": 1, "link": "https://example.com/cadastro-voluntario
+}
+
+// desativar token gerado
+export async function desativarTokenOng(ong_id: number, token_id: number) {
+  const response = await api.delete(`/ong/desativar-token-ong/${ong_id}/${token_id}`);
+  return response.data;
 }

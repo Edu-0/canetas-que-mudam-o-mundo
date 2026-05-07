@@ -324,6 +324,14 @@
     @apply bg-sky-300;
   }
 
+  .btn-pequeno-confirmar {
+    @apply bg-[var(--base-20)] px-2 py-0.5 sm:px-3 sm:py-1 text-xs sm:text-base rounded-full border border-black flex items-center justify-center w-fit max-w-full;
+  }
+
+  .btn-pequeno-confirmar:hover {
+    @apply bg-[var(--base-40)];
+  }
+
   .btn-pequeno-desativar {
     @apply  bg-red-200 px-2 py-0.5 sm:px-3 sm:py-1 text-xs sm:text-base rounded-full border border-black flex items-center justify-center w-fit max-w-full;
   }

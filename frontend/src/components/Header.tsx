@@ -4,7 +4,6 @@ import { useUsuario } from "../context/UserContext";
 import logo_titulo from "../assets/logo_titulo.png";
 import Botao from "./Botao";
 
-
 function Header(){
   
   const location = useLocation(); // para saber qual página estamos e assim deixar o botão correspondente selecionado
@@ -46,6 +45,7 @@ function Header(){
 
     "Coordenador de Processos": [
       { id: "relatorio", texto: "Relatório", rota: "/relatorio" },
+      { id: "links_para_voluntarios", texto: "Links", rota: "/links-para-voluntarios" },
       { id: "analise_voluntarios", texto: "Voluntários", rota: "/analise_voluntarios" },
       { id: "auditoria", texto: "Auditoria", rota: "/auditoria" }
     ]
@@ -54,10 +54,12 @@ function Header(){
     const adicionados = new Set();
 
     tipos.forEach((tipo) => {
-      if (tipo === "Genérico") return; // ignora
+      console.log("Tipo individual:", tipo);
+
+      if (tipo === "Genérico") return;
 
       const botoes = mapaTipos[tipo];
-      
+
       if (botoes) {
         botoes.forEach((botao) => {
           if (!adicionados.has(botao.id)) { // verifica se o botão existe para o tipo e se já não foi adicionado
