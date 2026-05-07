@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, Float ,String, Text,Boolean, Date, DateTime, Enum, ForeignKey, Time, JSON
 from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy.sql import func
-import datetime
+from datetime import datetime, timedelta
 from app.database.connection import Base
 
 class Ong(Base):
@@ -31,6 +31,18 @@ class Ong(Base):
     ativa = Column(Boolean, default = True ,nullable = False)
     dono = relationship("Usuario", back_populates="ong")
     voluntarios = relationship("VoluntarioOng", back_populates="ong")
+    tokens = relationship("TokenOng", back_populates = "ong")
+
+class TokenOng(Base):
+    __tablename__ = "token_ong"
+    id = Column(Integer, primary_key = True)
+    ong_id = Column(Integer, ForeignKey("ong.id"), nullable = False)
+    token = Column(String(255), nullable = False, unique = True)
+    usado = Column(Boolean, default = False, nullable = False)
+    criado_em = Column(DateTime, server_default = func.now(), nullable = False)
+    usado_em = Column(DateTime, nullable = True)
+    data_expiracao = Column(DateTime, default=lambda: datetime.now() + timedelta(hours=2))
+    ong = relationship("Ong", back_populates = "tokens")
 
 class VoluntarioOng(Base):
     __tablename__ = "voluntario_ong"

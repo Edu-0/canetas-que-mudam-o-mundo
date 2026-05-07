@@ -12,6 +12,7 @@ class usuarioBase(BaseModel):
     telefone: Optional[str] = Field(default=None, pattern=r"^\d{10,11}$")
     email: EmailStr
     funcao: Optional[TipoUsuario] = TipoUsuario.GENERICO
+    token_convite: Optional[str] = None
     
     @field_validator('data_nascimento')
     @classmethod

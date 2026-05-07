@@ -94,13 +94,15 @@ def criar_usuario_base(dados:s.criarUsuario, db:SessionDep):
     try:
         db.add(usuario)
         db.flush()
-
-        funcao = m.UsuarioFuncao(
-            usuario_id = usuario.id,
-            tipo_usuario = dados.funcao
-        )
-
-        db.add(funcao)
+        if dados.token_convite:
+            criar_voluntario(usuario.id, dados.token_convite, db)
+        else:
+            funcao = m.UsuarioFuncao(
+                usuario_id = usuario.id,
+                tipo_usuario = dados.funcao
+            )
+            db.add(funcao)
+            
         db.commit()
         db.refresh(usuario)
         
