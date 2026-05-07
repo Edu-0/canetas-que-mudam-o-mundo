@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, BackgroundTasks
 from sqlalchemy import func
 from app.database.connection import SessionDep
 from app.core.deps_auth import VerificarPermissao, get_current_user
@@ -8,8 +8,9 @@ from app.schemas.user import respostaUsuario
 from app.models import ong as m
 from app.models import user as u
 from typing import List
-from app.services.ong_service import remover_voluntario_ong
+from app.services import ong_service as service
 import uuid
+from datetime import datetime
 
 
 router = APIRouter(prefix="/ong", tags=["ong"])
@@ -118,7 +119,7 @@ def deletar_voluntario(
     usuario_atual: u.Usuario = Depends(get_current_user),
     permissao = Depends(VerificarPermissao("voluntario_ong:deletar-voluntario"))):
     try:
-        remover_voluntario_ong(
+        service.remover_voluntario_ong(
             db=db, 
             voluntario_id=voluntario_id, 
             ong_id=usuario_atual.ong.id, 
@@ -178,6 +179,7 @@ def deletar_ong(
 def gerar_token_ong(
     db:SessionDep, 
     ong_id:int,
+    background_tasks: BackgroundTasks,
     usuario_atual:u.Usuario = Depends(get_current_user)):
 
     if not usuario_atual.ong or usuario_atual.ong.id != ong_id:
@@ -194,6 +196,9 @@ def gerar_token_ong(
         db.add(token_ong)
         db.commit()
         db.refresh(token_ong)
+
+        background_tasks.add_task(service.limpar_tokens_vencidos, ong_id)
+
         return token_ong
     except Exception as e:
         db.rollback()
@@ -206,7 +211,8 @@ def listar_token_ong(ong_id:int, db:SessionDep, usuario_atual = Depends(get_curr
     if not usuario_atual.ong or usuario_atual.ong.id != ong_id:
         raise HTTPException(status_code=403, detail="Você não tem permissão para acessar os tokens dessa ONG.")
     
-    return db.query(m.TokenOng).filter(m.TokenOng.ong_id == ong_id, m.TokenOng.usado == False).all()
+
+    return db.query(m.TokenOng).filter(m.TokenOng.ong_id == ong_id, m.TokenOng.usado == False, m.TokenOng.data_expiracao > datetime.now()).all()
 
 @router.delete("/desativar-token-ong/{ong_id}/{token_id}")
 def desativar_token_ong(

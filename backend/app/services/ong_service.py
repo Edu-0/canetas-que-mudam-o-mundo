@@ -1,9 +1,10 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from app.models.user import Usuario, UsuarioFuncao
-from app.models.ong import VoluntarioOng
-from app.database.connection import SessionDep
+from app.models.ong import VoluntarioOng, TokenOng
+from app.database.connection import engine, SessionDep
 from app.services.user_service import anonimizar_usuario
+from datetime import datetime
 
 def remover_voluntario_ong(db: SessionDep, voluntario_id: int, ong_id: int, ong_ativa: bool):
     vinculo_deletado = db.query(VoluntarioOng).filter(
@@ -29,4 +30,15 @@ def remover_voluntario_ong(db: SessionDep, voluntario_id: int, ong_id: int, ong_
     
     db.commit()
 
-
+def limpar_tokens_vencidos(ong_id: int):
+    with Session(engine) as db:
+        try:
+            db.query(TokenOng).filter(
+                TokenOng.ong_id == ong_id,
+                TokenOng.data_expiracao < datetime.now()
+            ).delete(synchronize_session=False)
+            
+            db.commit()            
+        except Exception as e:
+            db.rollback()
+            print(f"[Background Task] Erro fatal: {e}")
