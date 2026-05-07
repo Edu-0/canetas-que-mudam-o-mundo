@@ -45,7 +45,7 @@ function App() {
         <Route path="/confirmar-familiares" element={<ConfirmarFamiliares />} />
         <Route path="/montar-kits" element={<MontarKits />} />
         <Route path="/conta/cadastro-ong" element={<CadastroONG />} />
-        <Route path="/conta/link-para-voluntario" element={<LinkParaVoluntario />} />
+        <Route path="/links-para-voluntarios" element={<LinkParaVoluntario />} />
         <Route path="/conta/editar-ong" element={<EditarONG />} />
         <Route path="/ongs" element={<ListarONGs />} />
       </Routes>

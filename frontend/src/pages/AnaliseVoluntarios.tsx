@@ -4,7 +4,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import logo from "../assets/logo.svg";
 import Paginacao from "../components/Paginacao";
-import { DadosUsuario, obterTodosUsuarios, excluirConta } from "../services/usuarioService";
+import { DadosUsuario, listarVoluntariosONG, excluirConta } from "../services/usuarioService";
 import { mapearTipo } from "../context/UserContext";
 import Botao from "../components/Botao";
 import Toast from "../components/Toast";
@@ -98,15 +98,25 @@ function AnaliseVoluntarios() {
 
   useEffect(() => {
     async function carregar() {
-      const dados = await obterTodosUsuarios();
+      try {
+        const ong_id = Number(localStorage.getItem("ong_id"));
 
-      const filtrados = dados.filter(u =>
-        u.funcao.some(f =>
-          mapearTipo(f.tipo_usuario) === "Voluntário da triagem"
-        )
-      );
+        if (!ong_id) {
+          setMensagem("ONG não encontrada.");
+          setTipoMensagem("erro");
+          return;
+        }
 
-      setVoluntarios(filtrados);
+        const dados = await listarVoluntariosONG(ong_id);
+
+        setVoluntarios(dados);
+
+      } catch (erro) {
+        console.error("Erro ao carregar voluntários:", erro);
+
+        setMensagem("Erro ao carregar voluntários.");
+        setTipoMensagem("erro");
+      }
     }
 
     carregar();

@@ -147,7 +147,24 @@ function CadastroONG() {
                     definirONG(ongCriada);
 
                     const perfilAtualizado = await obterPerfil();
-                    definirUsuario(perfilAtualizado);
+                    // console.log("PERFIL ATUALIZADO:", perfilAtualizado);
+
+                    definirUsuario({
+                      id: perfilAtualizado.id,
+                      nome_completo: perfilAtualizado.nome_completo,
+                      data_nascimento: perfilAtualizado.data_nascimento,
+                      cpf: perfilAtualizado.cpf,
+                      cep: perfilAtualizado.cep,
+                      telefone: perfilAtualizado.telefone,
+                      email: perfilAtualizado.email,
+
+                      tipos: perfilAtualizado.funcao.map((f: any) =>
+                        mapearTipo(f.tipo_usuario)
+                      ),
+
+                      data_cadastro: perfilAtualizado.data_cadastro || "",
+                      data_edicao_conta: perfilAtualizado.data_edicao_conta,
+                    });
 
                     setAlterou(false);
                     setMensagem("ONG cadastrada com sucesso!");
@@ -156,10 +173,10 @@ function CadastroONG() {
                     setMostrarConfirmacaoCadastro(false);
 
                     setTimeout(() => {
-                      navigate("/conta/link-para-voluntario", {
+                      navigate("/links-para-voluntarios", {
                         state: { link: resposta.link_convite }
                       });
-                    }, 1500);
+                    }, 1000);
 
                   } catch (error: any) {
                     const erroBackend = error.response?.data?.detail;
