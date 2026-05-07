@@ -29,6 +29,7 @@ function App() {
         <Route path="/" element={<Inicio />} />
         <Route path="/logar" element={<Logar />} />
         <Route path="/cadastro" element={<Cadastro />} />
+        <Route path="/cadastro-voluntario" element={<Cadastro />} />
         <Route path="/conta" element={<Conta />} />
         <Route path="/conta/editar" element={<EditarConta />} />
         <Route path="/conta/cadastro-responsavel" element={<CadastroResponsavel />} />

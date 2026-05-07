@@ -132,20 +132,6 @@ function FormCadastroBase(props: Props) {
   const token = params.get("token");
 
   useEffect(() => {
-    async function validarToken() {
-      if (!token) return;
-
-      try {
-        await api.get(`/ong/validar-token/${token}`);
-      } catch {
-        setTokenInvalido(true);
-      }
-    }
-
-    validarToken();
-  }, [token]);
-
-  useEffect(() => {
     if (primeiraRenderizacao.current) {
       primeiraRenderizacao.current = false;
       return;
@@ -297,21 +283,43 @@ function FormCadastroBase(props: Props) {
 
         const erroBackend = error.response?.data?.detail;
 
+        // token inválido ou expirado
+        if (erroBackend === "Token não cadastrado." || erroBackend === "Token expirado. Peça um novo link para o responsável.") {
+
+          setTokenInvalido(true);
+
+          aoErro?.({
+            mensagem: erroBackend
+          });
+
+          return;
+        }
+
         if (erroBackend) { // se o backend retornou um erro esperado com mensagem e campo
           // mostra no modal
-          aoErro?.(erroBackend);
+          if (typeof erroBackend === "object") {
+            aoErro?.(erroBackend);
 
-          // marca campo (cpf/email)
-          if (erroBackend.campo) {
-            setErros((prev) => ({
-              ...prev,
-              [erroBackend.campo]: erroBackend.mensagem
-            }));
+            // marca campo (cpf/email)
+            if (erroBackend.campo) {
+              setErros((prev) => ({
+                ...prev,
+                [erroBackend.campo]: erroBackend.mensagem
+              }));
 
-            setTocados((prev) => ({
-              ...prev,
-              [erroBackend.campo]: true
-            }));
+              setTocados((prev) => ({
+                ...prev,
+                [erroBackend.campo]: true
+              }));
+            }
+
+          } else {
+
+            // backend retornou string
+            aoErro?.({
+              mensagem: erroBackend
+            });
+
           }
 
         } else {
@@ -331,13 +339,6 @@ function FormCadastroBase(props: Props) {
 
   const hoje = new Date();
   const hojeFormatado = hoje.getFullYear() + "-" + String(hoje.getMonth() + 1).padStart(2, "0") + "-" + String(hoje.getDate()).padStart(2, "0"); // data máxima para o input de data (hoje)
-
-
-  {tokenInvalido && (
-    <div className="bg-[var(--cor-resposta-errada)] text-white rounded-lg p-4 text-center mb-4">
-      Este link de convite expirou ou é inválido.
-    </div>
-  )}
 
   return (
     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4" 
@@ -361,6 +362,12 @@ function FormCadastroBase(props: Props) {
           </p>
         </div>
       )}
+
+      {tokenInvalido && (
+        <div className="bg-[var(--cor-resposta-errada)] text-white rounded-lg p-4 text-center mb-4">
+          Este link de convite expirou ou é inválido.
+        </div>
+      ) }
 
       <div>
         <label className="body-semibold-pequeno" htmlFor="nome_completo">Nome completo <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
