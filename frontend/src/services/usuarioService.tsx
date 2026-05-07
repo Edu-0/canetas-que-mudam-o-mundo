@@ -249,15 +249,25 @@ export async function obterTodasONGs() {
 }
 
 // Gerar link para o cadastro do voluntário vingulado a ONG
-export async function gerarLinkVoluntario(): Promise<string> {
-  const response = await api.post("/ong/gerar-token-ong");
-  return response.data.link;
+export async function gerarLinkVoluntario(ong_id: number): Promise<string> {
+  const response = await api.post(`/ong/gerar-token-ong/${ong_id}`);
+
+  return `${window.location.origin}/cadastro-voluntario?token=${response.data.token}`;
 }
 
 // listar tokens ativos gerados
 export async function listarTokenOng(ong_id: number): Promise<TokenLink[]> {
   const response = await api.get(`/ong/listar-token-ong/${ong_id}`);
-  return response.data; // se for algo como [{ "id": 1, "link": "https://example.com/cadastro-voluntario
+
+  return response.data.map((token: any) => ({
+    id: token.id,
+
+    link: `${window.location.origin}/cadastro-voluntario?token=${token.token}`,
+
+    data_criacao: token.criado_em,
+
+    ativo: !token.usado,
+  }));
 }
 
 // desativar token gerado

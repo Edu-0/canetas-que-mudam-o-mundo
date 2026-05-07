@@ -16,6 +16,7 @@ import logging
 from app.core.deps_auth import VerificarPermissao, get_current_user
 from app.core.enums import TipoUsuario
 import json
+from app.services.user_service import criar_voluntario
 
 
 router = APIRouter(prefix="/usuario", tags=["usuario"])

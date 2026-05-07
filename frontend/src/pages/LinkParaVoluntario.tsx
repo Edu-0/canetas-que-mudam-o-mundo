@@ -62,7 +62,9 @@ function LinkParaVoluntario() {
     setGerando(true);
 
     try {
-      await gerarLinkVoluntario();
+      await gerarLinkVoluntario(ongId);
+
+      if (!ongId) return;
 
       const listaAtualizada = await listarTokenOng(ongId);
 
