@@ -10,6 +10,7 @@ from app.core.firebase import get_bucket
 from app.core.security import gerar_hash_senha
 from app.database.connection import SessionDep
 from app.models import user as m
+from app.models import ong as o
 from app.services.firebase_storage import FirebaseStorageService
 from app.utils.funcoes import gerar_codigo_numerico, gerar_email_anonimo
 
@@ -202,3 +203,27 @@ def processar_exclusao_conta(usuario_id, db: SessionDep):
         anonimizar_usuario(usuario)
 
     db.commit()
+
+def criar_voluntario(usuario_id,token, db):
+    info_token = db.query(o.TokenOng).filter(o.TokenOng.token == token).first()
+
+    if not info_token:
+        raise HTTPException(status_code=404, detail="Token não cadastrado.")
+    if info_token.data_expiracao <= datetime.now():
+        raise HTTPException(status_code=401, detail="Token expirado. Peça um novo link para o responsável.")
+
+    funcao = m.UsuarioFuncao(
+        usuario_id = usuario_id,
+        tipo_usuario = TipoUsuario.TRIAGEM
+    )    
+    db.add(funcao) 
+
+    vinculo_ong = o.VoluntarioOng(
+        usuario_id = usuario_id,
+        ong_id = info_token.ong_id
+    )
+    db.add(vinculo_ong) 
+
+    info_token.usado = True
+    info_token.usado_em = datetime.now()
+

@@ -51,3 +51,11 @@ class AtualizarOng(BaseModel):
     instagram: str | None = None
     facebook: str | None = None
     site: str | None = None
+
+
+class TokenOngResponse(BaseModel):
+    id: int
+    token: str
+    ong_id: int
+    data_expiracao: datetime 
+    model_config = ConfigDict(from_attributes = True)   
