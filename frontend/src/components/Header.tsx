@@ -46,8 +46,7 @@ function Header(){
     "Coordenador de Processos": [
       { id: "relatorio", texto: "Relatório", rota: "/relatorio" },
       { id: "links_para_voluntarios", texto: "Links", rota: "/links-para-voluntarios" },
-      { id: "analise_voluntarios", texto: "Voluntários", rota: "/analise_voluntarios" },
-      { id: "auditoria", texto: "Auditoria", rota: "/auditoria" }
+      { id: "analise_voluntarios", texto: "Voluntários", rota: "/analise_voluntarios" }
     ]
   };
 
