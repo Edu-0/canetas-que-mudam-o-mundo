@@ -236,6 +236,12 @@ export async function excluirONG(ong_id: number) {
   return response.data;
 }
 
+// Excluir voluntário vinculado à ONG
+export async function deletarVoluntarioONG(voluntario_id: number) {
+  const response = await api.delete(`/ong/deletar-voluntario/${voluntario_id}`);
+  return response.data;
+}
+
 // Obter dados da ONG do usuário
 export async function obterONG(): Promise<ONG> {
   const response = await api.get(`/ong/minha-ong`);

@@ -10,10 +10,12 @@ import ModalConfirmacao from "../components/ModalConfirmacao";
 import { gerarLinkVoluntario, listarTokenOng, desativarTokenOng, obterONG, type TokenLink} from "../services/usuarioService";
 import { useFiltroLinks } from "../hooks/useFiltroLinks";
 import Paginacao from "../components/Paginacao";
+import { useUsuario } from "../context/UserContext";
 
 function LinkParaVoluntario() {
 
   const navigate = useNavigate();
+  const { usuario, definirUsuario } = useUsuario();
 
   const [tokens, setTokens] = useState<TokenLink[]>([]);
   const [ongId, setOngId] = useState<number | null>(null);
@@ -25,6 +27,7 @@ function LinkParaVoluntario() {
   const [gerando, setGerando] = useState(false);
 
   const [mostrarModal, setMostrarModal] = useState(false);
+  const [mostrarModalCadastro, setMostrarModalCadastro] = useState(false);
   const [tokenSelecionado, setTokenSelecionado] = useState<number | null>(null);
   const [carregandoExclusao, setCarregandoExclusao] = useState(false);
 
@@ -37,10 +40,13 @@ function LinkParaVoluntario() {
   const [erroBusca, setErroBusca] = useState("");
   const [tocadoBusca, setTocadoBusca] = useState(false);
 
-  const linksFiltrados = useFiltroLinks(tokens, busca, ordem, status);
+  const linksFiltrados = useFiltroLinks(tokens, busca, ordem);
 
   const totalPaginas = Math.max(1, Math.ceil(linksFiltrados.length / ITENS_POR_PAGINA));
   const linksPagina = linksFiltrados.slice((paginaAtual - 1) * ITENS_POR_PAGINA, paginaAtual * ITENS_POR_PAGINA);
+
+  const [ultimoLink, setUltimoLink] = useState<string | null>(null);
+  const [linkSelecionado, setLinkSelecionado] = useState<string | null>(null);
 
   async function copiarLink(link: string) {
     try {
@@ -62,15 +68,17 @@ function LinkParaVoluntario() {
     setGerando(true);
 
     try {
-      await gerarLinkVoluntario(ongId);
+      const novoLink = await gerarLinkVoluntario(ongId);
 
-      if (!ongId) return;
+      await navigator.clipboard.writeText(novoLink); // copia o link gerado
+
+      setUltimoLink(novoLink); // guarda o último link gerado para destacar na lista
 
       const listaAtualizada = await listarTokenOng(ongId);
 
       setTokens(listaAtualizada);
 
-      setMensagem("Link gerado com sucesso!");
+      setMensagem("Link gerado e copiado com sucesso!");
       setTipoMensagem("sucesso");
     } catch (e) {
       console.error(e);
@@ -86,6 +94,28 @@ function LinkParaVoluntario() {
     if (valor.length >= 100) return "Você atingiu o limite máximo de 100 caracteres";
     return "";
   };
+
+  function calcularTempoExpiracao(data?: string) {
+    if (!data) return { texto: "Sem data", tipo: "antigo" };
+
+    const criado = new Date(data);
+    const expira = new Date(criado.getTime() + 2 * 60 * 60 * 1000); // +2h
+    const agora = new Date();
+
+    const diffMs = expira.getTime() - agora.getTime();
+    const diffMin = Math.floor(diffMs / (1000 * 60));
+
+    if (diffMs <= 0) {
+      return { texto: "Expirado", tipo: "antigo" };
+    }
+
+    if (diffMin <= 60) {
+      return { texto: `Expira em ${diffMin} min`, tipo: "novo" };
+    }
+
+    const horas = Math.floor(diffMin / 60);
+    return { texto: `Expira em ${horas}h`, tipo: "recente" };
+  }
 
   useEffect(() => {
     async function carregar() {
@@ -165,22 +195,19 @@ function LinkParaVoluntario() {
 
                 <div>
                   {/* ordem */}
-                  <select id="busca-ordem" value={ordem} onChange={(e) => { setOrdem(e.target.value as any); setPaginaAtual(1);}} className="input-padrao w-full sm:w-48 hover:border-2 border-[var(--base-70)] focus-acessivel" aria-label="Selcionar a ordem de exibição dos links">
-                    <option value="novo">Links recentes</option>
-                    <option value="antigo">Links mais antigos</option>
-                  </select>
-                </div>
-
-                <div>
-                  {/* status */}
-                  <select id="busca-status" value={status} onChange={(e) => { setStatus(e.target.value as any); setPaginaAtual(1); }} className="input-padrao w-full sm:w-48 hover:border-2 hover:border-[var(--base-70)] focus-acessivel" aria-label="Filtrar por status">
-                    <option value="todos">Status</option>
-                    <option value="ativos">Ativos</option>
-                    <option value="desativados">Desativados</option>
+                  <select id="busca-ordem" value={ordem} onChange={(e) => { setOrdem(e.target.value as any); setPaginaAtual(1);}} className="input-padrao w-full sm:w-58 hover:border-2 border-[var(--base-70)] focus-acessivel" aria-label="Selcionar a ordem de exibição dos links">
+                    <option value="novo">Links mais recentes primeiro</option>
+                    <option value="antigo">Links mais antigos primeiro</option>
                   </select>
                 </div>
 
               </div>
+
+              {linksPagina.length === 0 && (
+                <div className="text-center body-semibold-pequeno py-6">
+                  Nenhum link encontrado com esses filtros.
+                </div>
+              )}
 
               {carregando ? (
                 <p className="text-center">Carregando links...</p>
@@ -191,32 +218,54 @@ function LinkParaVoluntario() {
               ) : (
                 <div className="flex flex-col gap-4">
 
-                  {linksPagina.map((t, index) => (
-                    <div key={t.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b py-3">
-                      
-                      {/* esquerda */}
-                      <div className="flex flex-col min-w-0">
-                        <span className="font-semibold truncate">
-                          {String((paginaAtual - 1) * ITENS_POR_PAGINA + index + 1).padStart(3, "0")}
-                        </span>
+                  {linksPagina.map((t, index) => {
 
-                        <a href={t.link} target="_blank" rel="noopener noreferrer" className="text-black underline break-all">
-                          {t.link}
-                        </a>
+                    const criadoEm = t.data_criacao
+                      ? new Date(t.data_criacao).toLocaleString()
+                      : "N/A";
 
-                  
+                    const expiraEm = t.data_criacao
+                      ? new Date(new Date(t.data_criacao).getTime() + 2 * 60 * 60 * 1000).toLocaleString()
+                      : "N/A";
+
+                    return (
+
+                      <div key={t.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b py-3">
+                        
+                        {/* esquerda */}
+                        <div className="flex flex-col min-w-0">
+                          <span className="font-semibold truncate">
+                            {String((paginaAtual - 1) * ITENS_POR_PAGINA + index + 1).padStart(3, "0")}
+                          </span>
+
+                          <button onClick={() => {setLinkSelecionado(t.link); setMostrarModalCadastro(true);}} className={`text-left underline break-all hover:bg-[var(--base-10)] hover:rounded-sm ${t.link === ultimoLink ? "text-[var(--base-60)]" : "text-black"}`}>
+                            {t.link}
+                          </button>
+                          
+                          <div className="flex flex-col sm:flex-row sm:justify-between gap-1 mt-1">
+                            <div >
+                              <span className="body-muito-pequeno">
+                                <strong className="body-semibold-muito-pequeno">Criado em: </strong>{criadoEm}
+                              </span>
+                            </div>
+
+                            <span className="body-muito-pequeno">
+                              <strong className="body-semibold-muito-pequeno">Expira em: </strong>{expiraEm}
+                            </span>
+                          </div>
+
+                        </div>
+
+                        {/* direita */}
+                        <div className="flex flex-wrap gap-3 sm:gap-2 sm:justify-center mt-2 sm:mt-0">
+
+                          <Botao variante="botao-pequeno-editar" aoClicar={() => copiarLink(t.link)}>Copiar</Botao>
+
+                          <Botao variante="botao-pequeno-desativar" desabilitado={carregandoExclusao} aoClicar={() => { setTokenSelecionado(t.id); setMostrarModal(true);}}>Desativar</Botao>
+                                
+                        </div>
                       </div>
-
-                      {/* direita */}
-                      <div className="flex flex-wrap gap-3 sm:gap-2 sm:justify-center mt-2 sm:mt-0">
-
-                        <Botao variante="botao-pequeno-editar" aoClicar={() => copiarLink(t.link)}>Copiar</Botao>
-
-                        <Botao variante="botao-pequeno-desativar" desabilitado={carregandoExclusao} aoClicar={() => { setTokenSelecionado(t.id); setMostrarModal(true);}}>Desativar</Botao>
-                              
-                      </div>
-                    </div>
-                  ))}
+                    )})}
 
                 </div>
               )}
@@ -245,13 +294,8 @@ function LinkParaVoluntario() {
                   try {
                     await desativarTokenOng(ongId, tokenSelecionado);
 
-                    setTokens(prev =>
-                      prev.map(t => // se for o token que desativamos, marca como inativo
-                        t.id === tokenSelecionado
-                          ? { ...t, ativo: false }
-                          : t
-                      )
-                    );
+                    const listaAtualizada = await listarTokenOng(ongId);
+                    setTokens(listaAtualizada);
 
                     setMensagem("Link desativado com sucesso!");
                     setTipoMensagem("sucesso");
@@ -266,6 +310,33 @@ function LinkParaVoluntario() {
                   setMostrarModal(false);
                   setTokenSelecionado(null);
                 }}
+              />
+
+              {/* Quando clicar em um link */}
+              <ModalConfirmacao
+                aberto={mostrarModalCadastro}
+                titulo="Fazer cadastro com esse link?"
+                descricao="Tem certeza que deseja fazer cadastro com esse link? Você será deslogado e redirecionado para a página de cadastro."
+                botaoCancelar="Cancelar"
+                botaoConfirmar="Confirmar"
+                varianteCancelar="confirmar"
+                varianteConfirmar="cancelar"
+                onCancelar={() => setMostrarModalCadastro(false)}
+                onConfirmar={() => {
+                  if (!linkSelecionado) return;
+
+                  // deslogar
+                  localStorage.removeItem("access_token");
+                  localStorage.removeItem("token_type");
+                  localStorage.removeItem("usuario");
+                  definirUsuario(null);
+
+                  const url = new URL(linkSelecionado);
+                  navigate(url.pathname + url.search);
+
+                  setMostrarModalCadastro(false);
+                  setLinkSelecionado(null);
+                }}       
               />
 
             </div>
