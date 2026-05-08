@@ -270,11 +270,8 @@ function EditarONG() {
 
                 aoEnviar={async (dadosAtualizados) => {
                   try {
-                    console.log("EditarONG.aoEnviar recebido", dadosAtualizados);
 
-                    const ongAtualizada = await atualizarONG(dadosAtualizados);
-
-                    console.log("EditarONG.aoEnviar atualizada", ongAtualizada);
+                    const ongAtualizada = await atualizarONG(ong.id, dadosAtualizados);
                     
                     definirONG(ongAtualizada);
 

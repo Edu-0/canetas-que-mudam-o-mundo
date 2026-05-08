@@ -21,6 +21,8 @@ export type ONG = {
   instagram?: string;
   facebook?: string;
   site?: string;
+
+  nome_coordenador?: string;
 };
 
 // o que o contexto fornece

@@ -18,7 +18,6 @@ function Header(){
 
   // início sempre fica no começo da lista
   listaDeBotoes.push({ id: "inicio", texto: "Início", rota: "/" });
-  listaDeBotoes.push({ id: "ongs", texto: "ONGs", rota: "/ongs" });
 
   if (!usuario) {
     listaDeBotoes.push(
@@ -28,27 +27,29 @@ function Header(){
   } else {
     const tipos = usuario.tipos || [];
 
+    listaDeBotoes.push({ id: "ongs", texto: "ONGs", rota: "/ongs" }); // para o tipo genérico e para todos os outros tipos
+
     // mapa de tipos
     const mapaTipos: Record<string, { id: string; texto: string; rota: string }[]> = {
-    "Doador": [
-      { id: "doar", texto: "Doar", rota: "/doar" }
-    ],
+      "Doador": [
+        { id: "doar", texto: "Doar", rota: "/doar" }
+      ],
 
-    "Voluntário da triagem": [
-      { id: "triagem", texto: "Triagem", rota: "/triagem" },
-      { id: "montar_kits", texto: "Kits", rota: "/montar_kits" }
-    ],
+      "Voluntário da triagem": [
+        { id: "triagem", texto: "Triagem", rota: "/triagem" },
+        { id: "montar_kits", texto: "Kits", rota: "/montar_kits" }
+      ],
 
-    "Responsável pelo beneficiário": [
-      { id: "pedido", texto: "Pedido", rota: "/pedido" }
-    ],
+      "Responsável pelo beneficiário": [
+        { id: "pedido", texto: "Pedido", rota: "/pedido" }
+      ],
 
-    "Coordenador de Processos": [
-      { id: "relatorio", texto: "Relatório", rota: "/relatorio" },
-      { id: "links_para_voluntarios", texto: "Links", rota: "/links-para-voluntarios" },
-      { id: "analise_voluntarios", texto: "Voluntários", rota: "/analise-voluntarios" }
-    ]
-  };
+      "Coordenador de Processos": [
+        { id: "relatorio", texto: "Relatório", rota: "/relatorio" },
+        { id: "links_para_voluntarios", texto: "Links", rota: "/links-para-voluntarios" },
+        { id: "analise_voluntarios", texto: "Voluntários", rota: "/analise-voluntarios" }
+      ]
+    };
 
     const adicionados = new Set();
 

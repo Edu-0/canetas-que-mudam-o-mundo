@@ -220,9 +220,9 @@ export async function criarONG(dados: CriarONGEnvio) {
 }
 
 // Atualizar dados da ONG do usuário
-export async function atualizarONG(dados: AtualizarONGEnvio) {
+export async function atualizarONG(ong_id: number, dados: AtualizarONGEnvio) {
   try {
-    const response = await api.put(`/ong/editar-ong`, dados);
+    const response = await api.put(`/ong/editar-ong/${ong_id}`, dados);
     return response.data;
   } catch (err: any) {
     console.error("usuarioService.atualizarONG erro:", err?.response?.status, err?.response?.data);
@@ -280,4 +280,10 @@ export async function listarTokenOng(ong_id: number): Promise<TokenLink[]> {
 export async function desativarTokenOng(ong_id: number, token_id: number) {
   const response = await api.delete(`/ong/desativar-token-ong/${ong_id}/${token_id}`);
   return response.data;
+}
+
+// Validar token de convite para cadastro de voluntário
+export async function validarTokenConvite(token: string) {
+  const response = await api.get(`/convite/validar?token=${token}`);
+  return response.data; // { "valido": true } ou { "valido": false }
 }

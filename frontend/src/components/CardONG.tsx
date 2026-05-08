@@ -146,9 +146,7 @@ function CardONG({ ong }: Props) {
 
             <p className="body-muito-pequeno sm:body-pequeno"><strong className="body-semibold-pequeno sm:body-semibold-muito-pequeno">Telefone:</strong> {formatarTelefone(ong.telefone)}</p>
             <p className="body-muito-pequeno sm:body-pequeno break-words"><strong className="body-semibold-pequeno sm:body-semibold-muito-pequeno">Email:</strong> {ong.email}</p>
-            {(ong as any).usuario?.nome_completo && (
-              <p className="body-muito-pequeno sm:body-pequeno"><strong className="body-semibold-pequeno sm:body-semibold-muito-pequeno">Coordenador de processos: </strong>{(ong as any).usuario.nome_completo}</p>
-            )}
+            <p className="body-muito-pequeno sm:body-pequeno"><strong className="body-semibold-pequeno sm:body-semibold-muito-pequeno">Coordenador de processos: </strong>{ong.nome_coordenador || "Não informado"}</p>
           </div>
 
           <div className="border-t border-[var(--base-40)] pt-3 sm:pt-4">
