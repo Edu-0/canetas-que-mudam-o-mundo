@@ -4,7 +4,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import logo from "../assets/logo.svg";
 import Paginacao from "../components/Paginacao";
-import { DadosUsuario, listarVoluntariosONG, deletarVoluntarioONG } from "../services/usuarioService";
+import { DadosUsuario, listarVoluntariosONG, deletarVoluntarioONG, obterONG } from "../services/usuarioService";
 import Botao from "../components/Botao";
 import Toast from "../components/Toast";
 import ModalConfirmacao from "../components/ModalConfirmacao";
@@ -105,9 +105,10 @@ function AnaliseVoluntarios() {
   useEffect(() => {
     async function carregar() {
       try {
-        const ongSalva = localStorage.getItem("ong");
 
-        const ong_id = ongSalva ? JSON.parse(ongSalva).id : null;
+        const ong = await obterONG();
+
+        const ong_id = ong?.id;
 
         if (!ong_id) {
           setMensagem("ONG não encontrada. Faça login novamente.");
@@ -116,13 +117,6 @@ function AnaliseVoluntarios() {
         }
 
         const dados = await listarVoluntariosONG(ong_id);
-
-        if (!dados || dados.length === 0) {
-          setVoluntarios([]);
-          setMensagem("Nenhum voluntário vinculado a esta ONG.");
-          setTipoMensagem("erro");
-          return;
-        }
 
         setVoluntarios(dados);
 
@@ -223,62 +217,67 @@ function AnaliseVoluntarios() {
 
               </div>
 
-              {voluntariosPagina.length === 0 && (
+              {voluntarios.length === 0 ? (
+                <div className="text-center body-semibold-pequeno py-6">
+                  Nenhum voluntário vinculado a esta ONG.
+                </div>
+
+              ) : voluntariosPagina.length === 0 ? (
                 <div className="text-center body-semibold-pequeno py-6">
                   Nenhum voluntário encontrado com esses filtros.
                 </div>
+
+              ) : (
+                <div className="flex flex-col gap-4">
+                  {voluntariosPagina.map((v, index) => {
+
+                    if (!v) return null; 
+                    
+                    const tempo = formatarTempo(v.data_cadastro);
+
+                    return (
+                      <div key={v.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b py-3">
+
+                        {/* Esquerda */}
+                        <div className="flex flex-col min-w-0">
+
+                          <span className="font-['Nunito'] font-semibold text-sm sm:text-base md:text-lg truncate">
+                            {String((paginaAtual - 1) * ITENS_POR_PAGINA + index + 1).padStart(3, "0")} - {v.nome_completo} {/* número sequencial considerando a paginação */}
+                          </span>
+
+                          <span className={`
+                            text-[10px] sm-text-[12px] px-1 py-[2px] text-center leading-none rounded-sm w-fit mt-1
+                            ${
+                              tempo.tipo === "novo"
+                                ? "bg-[var(--base-15)] text-black"
+                                : tempo.tipo === "recente"
+                                ? "bg-blue-100 text-black"
+                                : "bg-[var(--secundario-100)] text-black"
+                            }`}>
+                            {tempo.texto}
+                          </span> 
+                        
+                        </div>
+
+                        {/* Direita */}
+                        <div className="flex flex-wrap gap-3 sm:gap-2 sm:justify-center mt-2 sm:mt-0">
+
+                          <Botao variante="botao-pequeno-editar" aoClicar={() => navigate("/auditoria")}>Analisar</Botao>
+
+                          <Botao variante="botao-pequeno-desativar" desabilitado={carregandoExclusao} aoClicar={() => {setVoluntarioSelecionado(v.id); setMostrarModal(true)}}>Desativar</Botao>
+
+                        </div>
+                      </div>
+                    );
+                  })}
+              
+                  <Paginacao
+                    paginaAtual={paginaAtual}
+                    totalPaginas={totalPaginas}
+                    setPagina={setPaginaAtual}
+                  />
+                </div>
               )}
-
-              <div className="flex flex-col gap-4">
-                {voluntariosPagina.map((v, index) => {
-
-                  if (!v) return null; 
-                  
-                  const tempo = formatarTempo(v.data_cadastro);
-
-                  return (
-                    <div key={v.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b py-3">
-
-                      {/* Esquerda */}
-                      <div className="flex flex-col min-w-0">
-
-                        <span className="font-['Nunito'] font-semibold text-sm sm:text-base md:text-lg truncate">
-                          {String((paginaAtual - 1) * ITENS_POR_PAGINA + index + 1).padStart(3, "0")} - {v.nome_completo} {/* número sequencial considerando a paginação */}
-                        </span>
-
-                        <span className={`
-                          text-[10px] sm-text-[12px] px-1 py-[2px] text-center leading-none rounded-sm w-fit mt-1
-                          ${
-                            tempo.tipo === "novo"
-                              ? "bg-[var(--base-15)] text-black"
-                              : tempo.tipo === "recente"
-                              ? "bg-blue-100 text-black"
-                              : "bg-[var(--secundario-100)] text-black"
-                          }`}>
-                          {tempo.texto}
-                        </span> 
-                      
-                      </div>
-
-                      {/* Direita */}
-                      <div className="flex flex-wrap gap-3 sm:gap-2 sm:justify-center mt-2 sm:mt-0">
-
-                        <Botao variante="botao-pequeno-editar" aoClicar={() => navigate("/auditoria")}>Analisar</Botao>
-
-                        <Botao variante="botao-pequeno-desativar" desabilitado={carregandoExclusao} aoClicar={() => {setVoluntarioSelecionado(v.id); setMostrarModal(true)}}>Desativar</Botao>
-
-                      </div>
-                    </div>
-                  );
-                })}
-
-
-                <Paginacao
-                  paginaAtual={paginaAtual}
-                  totalPaginas={totalPaginas}
-                  setPagina={setPaginaAtual}
-                />
-              </div>
 
               <ModalConfirmacao
                 aberto={mostrarModal}

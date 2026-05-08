@@ -19,6 +19,7 @@ function EditarONG() {
   console.log("EditarONG.render", { usuarioId: usuario?.id, ongId: ong?.id });
   const navigate = useNavigate();
   const [mensagem, setMensagem] = useState("");
+  const [carregandoONG, setCarregandoONG] = useState(true);
   
   const {alterou, setAlterou, tentarSair, mostrarModal, setMostrarModal, } = useAvisoAlteracoesNaoSalvas({
     mensagem: "Você tem alterações não salvas. Deseja sair mesmo?",});
@@ -40,6 +41,44 @@ function EditarONG() {
     const bOrdenado = [...b].sort();
 
     return aOrdenado.every((v, i) => v === bOrdenado[i]);
+  }
+
+  function extrairMensagemErro(erro: unknown, fallback: string) {
+    if (typeof erro === "string") return erro;
+
+    if (Array.isArray(erro)) {
+      return erro
+        .map((item) => {
+          if (typeof item === "string") return item;
+          if (item && typeof item === "object") {
+            const detalhe = item as { loc?: unknown; msg?: unknown };
+            return typeof detalhe.msg === "string"
+              ? detalhe.msg
+              : "Erro de validação";
+          }
+          return "Erro de validação";
+        })
+        .join("; ");
+    }
+
+    if (erro && typeof erro === "object") {
+      const detalhe = erro as {
+        detail?: unknown;
+        mensagem?: unknown;
+        msg?: unknown;
+      };
+
+      if (typeof detalhe.mensagem === "string") return detalhe.mensagem;
+      if (typeof detalhe.msg === "string") return detalhe.msg;
+
+      if (Array.isArray(detalhe.detail)) {
+        return extrairMensagemErro(detalhe.detail, fallback);
+      }
+
+      if (typeof detalhe.detail === "string") return detalhe.detail;
+    }
+
+    return fallback;
   }
 
   async function handleExcluirONG() {
@@ -83,20 +122,39 @@ function EditarONG() {
   }
 
   useEffect(() => {
+    let ativo = true;
+
     async function carregarONG() {
-      if (!usuario || ong) return; // se não tiver usuário ou se a ONG já estiver carregada, não precisa buscar
+      if (!usuario) {
+        setCarregandoONG(false);
+        return;
+      }
+
+      setCarregandoONG(true);
 
       try {
         const dados = await obterONG();
-        definirONG(dados);
+        if (ativo) {
+          definirONG(dados);
+        }
 
       } catch (error) {
         console.error("Erro ao carregar ONG", error);
+        if (ativo) {
+          definirONG(null);
+        }
+      } finally {
+        if (ativo) {
+          setCarregandoONG(false);
+        }
       }
     }
 
     carregarONG();
-  }, [usuario, ong]);
+    return () => {
+      ativo = false;
+    };
+  }, [usuario?.id]);
 
   function normalizarONG(u: any) {
     return {
@@ -125,6 +183,20 @@ function EditarONG() {
 
   if (!usuario) {
     return <p>Nenhum usuário</p>;
+  }
+
+  if (carregandoONG) {
+    return (
+      <div className="min-h-screen flex flex-col overflow-x-hidden bg-[var(--base-5)]">
+        <Header />
+        <main className="flex-1 pt-24 pb-10">
+          <div className="w-full px-6 md:px-20 flex flex-col items-center justify-center">
+            <p className="body-semibold-pequeno">Carregando dados da ONG...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
   }
 
   if (!ong) {
@@ -286,12 +358,9 @@ function EditarONG() {
 
                   } catch (error: any) {
                     const erroBackend = error.response?.data?.detail;
+                    const mensagemErro = extrairMensagemErro(erroBackend, "Erro ao atualizar ONG.");
 
-                    if (erroBackend) {
-                      setErroModal({ mensagem: erroBackend });
-                    } else {
-                      setErroModal({ mensagem: "Erro ao atualizar ONG." });
-                    }
+                    setErroModal({ mensagem: mensagemErro });
                   }
                 }}
 

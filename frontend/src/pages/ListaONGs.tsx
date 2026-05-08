@@ -15,6 +15,7 @@ function ListarONGs() {
   const [estadoSelecionado, setEstadoSelecionado] = useState("");
   const [erroBusca, setErroBusca] = useState("");
   const [tocadoBusca, setTocadoBusca] = useState(false);
+  const [carregando, setCarregando] = useState(true);
 
   const ITENS_POR_PAGINA = 5;
   const [paginaAtual, setPaginaAtual] = useState(1);
@@ -38,8 +39,12 @@ function ListarONGs() {
 
   useEffect(() => {
     async function carregar() {
-      const dados = await obterTodasONGs();
-      setOngs(dados);
+      try {
+        const dados = await obterTodasONGs();
+        setOngs(dados);
+      } finally {
+        setCarregando(false);
+      }
     }
 
     carregar();
@@ -133,11 +138,19 @@ function ListarONGs() {
 
               </div>
 
-              {/* lista */}
-              {ongsPagina.length === 0 ? (
+              {carregando ? (
+                <p className="text-center body-semibold-pequeno py-6">Carregando ONGs...</p>
+
+              ) : ongs.length === 0 ? (
+                <p className="text-center body-semibold-pequeno py-6">
+                  Nenhuma ONG cadastrada na plataforma.
+                </p>
+
+              ) : ongsPagina.length === 0 ? (
                 <p className="text-center body-semibold-pequeno py-6">
                   Nenhuma ONG encontrada com esses filtros.
                 </p>
+
               ) : (
                 <div className="flex flex-col gap-6">
                   {ongsPagina.map((ong) => (

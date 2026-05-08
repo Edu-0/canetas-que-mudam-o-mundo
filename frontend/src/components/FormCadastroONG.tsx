@@ -544,6 +544,22 @@ function FormCadastroONG(props: Props) {
     } catch (error: any) {
       console.error("FormCadastroONG.handleSubmit erro", error);
 
+      const erros = error.response?.data?.detail;
+
+      if (Array.isArray(erros)) {
+        const primeiroErro = erros[0];
+
+        aoErro?.({
+          campo: primeiroErro.loc?.[1],
+          mensagem: primeiroErro.msg,
+        });
+
+      } else {
+        aoErro?.({ mensagem: "Erro inesperado" });
+      }
+
+      console.log("ERRO BACKEND COMPLETO:", error.response?.data);
+      
       const erroBackend = error.response?.data?.detail;
 
       if (erroBackend) {
