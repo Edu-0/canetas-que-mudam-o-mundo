@@ -11,6 +11,7 @@ from typing import List
 from app.services import ong_service as service
 import uuid
 from datetime import datetime
+import logging
 
 
 router = APIRouter(prefix="/ong", tags=["ong"])
@@ -53,7 +54,10 @@ def cadastrar_ong(
     db:SessionDep,
     usuario_atual: u.Usuario = Depends(get_current_user),
     permissao = Depends(VerificarPermissao("ong:criar"))):
-    
+
+    if any(f.tipo_usuario != TipoUsuario.GENERICO for f in usuario_atual.funcao):
+        raise HTTPException(status_code=403, detail="Apenas usuários genéricos podem cadastrar ONGs.")
+
     ong_dict = dados.model_dump(
         by_alias=False 
     )
@@ -86,12 +90,17 @@ def cadastrar_ong(
         )
 
 # Rota update
-@router.put("/editar-ong", response_model = s.RespostaOng)
+@router.put("/editar-ong/{ong_id}", response_model = s.RespostaOng)
 def atualizar_ong(
     dados: s.AtualizarOng,
     db: SessionDep,
+    ong_id:int,
     usuario_atual: u.Usuario = Depends(get_current_user),
     permissao = Depends(VerificarPermissao("ong:editar"))):
+
+    if usuario_atual.ong.id != ong_id:
+        raise HTTPException(status_code=403, detail="Você não tem permissão para editar essa ONG.")
+
     ong = usuario_atual.ong
 
     ong_dict = dados.model_dump(exclude_unset=True, by_alias=False)
@@ -118,6 +127,20 @@ def deletar_voluntario(
     voluntario_id, db:SessionDep, 
     usuario_atual: u.Usuario = Depends(get_current_user),
     permissao = Depends(VerificarPermissao("voluntario_ong:deletar-voluntario"))):
+
+    vinculo_voluntario = db.query(m.VoluntarioOng).filter(
+        m.VoluntarioOng.voluntario_id == voluntario_id
+    ).first()
+
+    if not vinculo_voluntario:
+        raise HTTPException(status_code=404, detail="Voluntário não encontrado.")
+
+    if usuario_atual.ong.id != vinculo_voluntario.ong_id:
+        raise HTTPException(
+            status_code=403, 
+            detail="Você não tem permissão para gerenciar voluntários de outra ONG."
+        )
+
     try:
         service.remover_voluntario_ong(
             db=db, 
