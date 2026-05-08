@@ -32,6 +32,9 @@ class Ong(Base):
     dono = relationship("Usuario", back_populates="ong")
     voluntarios = relationship("VoluntarioOng", back_populates="ong")
     tokens = relationship("TokenOng", back_populates = "ong")
+    @property
+    def nome_coordenador(self):
+        return self.dono.nome_completo if self.dono else None
 
 class TokenOng(Base):
     __tablename__ = "token_ong"

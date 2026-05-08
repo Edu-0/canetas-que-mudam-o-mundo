@@ -27,6 +27,8 @@ class RespostaOng(CriarOng):
     id:int
     data_cadastro: datetime
     data_edicao: Optional[datetime] = None 
+    nome_coordenador: str | None = None
+        
     model_config = ConfigDict(
         from_attributes=True,  
         populate_by_name=True  
