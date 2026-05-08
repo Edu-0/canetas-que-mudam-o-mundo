@@ -29,8 +29,10 @@ function ListarONGs() {
   );
 
   const validarBusca = (valor: string) => {
-    if (valor.length >= 100) return "Você atingiu o limite máximo de 100 caracteres";
-    if (!/^[a-zA-ZÀ-ÿ\s]*$/.test(valor)) return "Apenas letras e espaços";
+    if (valor.length >= 100) 
+      return "Você atingiu o limite máximo de 100 caracteres";
+    if (!/^[\wÀ-ÿ\s./-]*$/.test(valor))
+      return "Caracteres inválidos";
     return "";
   };
 

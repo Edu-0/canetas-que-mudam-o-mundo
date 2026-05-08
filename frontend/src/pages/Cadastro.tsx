@@ -1,6 +1,6 @@
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useUsuario, mapearTipo } from "../context/UserContext";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import logo from "../assets/logo.svg";
@@ -8,6 +8,7 @@ import FormCadastroBase from "../components/FormCadastroBase";
 import { useAvisoAlteracoesNaoSalvas } from "../hooks/useAvisoAlteracoesNaoSalvas";
 import Toast from "../components/Toast";
 import ModalConfirmacao from "../components/ModalConfirmacao";
+import { validarTokenConvite } from "../services/usuarioService";
 
 function Cadastro() {
   const { definirUsuario } = useUsuario();
@@ -24,6 +25,42 @@ function Cadastro() {
     mensagem: string;
   } | null>(null);
 
+  const [erroToken, setErroToken] = useState<string | null>(null);
+
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const token = params.get("token");
+
+  const [tokenCarregado, setTokenCarregado] = useState(false);
+
+  useEffect(() => {
+    async function validar() {
+      if (!token) {
+        setTokenCarregado(true);
+        return;
+      }
+
+      try {
+        const resposta = await validarTokenConvite(token);
+
+        if (!resposta.valido) {
+          setErroToken("Este link de convite expirou ou é inválido.");
+          setAlterou(false);
+        }
+      } catch {
+        setErroToken("Este link de convite expirou ou é inválido.");
+        setAlterou(false);
+      } finally {
+        setTokenCarregado(true);
+      }
+    }
+
+    validar();
+  }, [token]);
+
+  if (!tokenCarregado) {
+    return <div>Carregando...</div>;
+  }
 
   return (
     <div className="min-h-screen flex flex-col overflow-x-hidden bg-[var(--base-5)]">
@@ -54,64 +91,82 @@ function Cadastro() {
                 CADASTRO
               </h2>
 
-              <FormCadastroBase 
-                modo="cadastro"
+              {!erroToken && ( // se tiver erro no token não mostra o formulário, só o modal de erro
+          
+                <FormCadastroBase 
+                  modo="cadastro"
+                  tokenInvalido={!!erroToken}
 
-                mudouDados={(dados) => {
-                  const mudou =
-                    dados.nome_completo.trim() !== "" ||
-                    dados.data_nascimento.trim() !== "" ||
-                    dados.cpf.trim() !== "" ||
-                    dados.cep.trim() !== "" ||
-                    dados.telefone.trim() !== "" ||
-                    dados.email.trim() !== "" ||
-                    dados.senha.trim() !== "" ||
-                    dados.confirmarSenha.trim() !== ""; 
+                  mudouDados={(dados) => {
+                    if (erroToken) return; // token inválido, isso evita ver o alerta de useAlteracoesNaoSalvas
+                    
+                    const mudou =
+                      dados.nome_completo.trim() !== "" ||
+                      dados.data_nascimento.trim() !== "" ||
+                      dados.cpf.trim() !== "" ||
+                      dados.cep.trim() !== "" ||
+                      dados.telefone.trim() !== "" ||
+                      dados.email.trim() !== "" ||
+                      dados.senha.trim() !== "" ||
+                      dados.confirmarSenha.trim() !== ""; 
 
-                  setAlterou(mudou);
-                }}
+                    setAlterou(mudou);
+                  }}
 
-                textoBotaoCancelar="Cancelar cadastro"
-                textoBotaoEnviar="Cadastrar"
-                mostrarCancelar={true}
+                  textoBotaoCancelar="Cancelar cadastro"
+                  textoBotaoEnviar="Cadastrar"
+                  mostrarCancelar={true}
 
-                aoErro={(erro) => {
-                  setErroModal(erro);
-                }}
+                  aoErro={(erro) => {
+                    if (erro.mensagem === "Este link de convite expirou ou é inválido.") {
+              
+                      setErroModal(null); 
+                      setErroToken(erro.mensagem);
 
-                aoCancelar={() => {
-                  const podeSair = tentarSair("/");
-                  if (podeSair) {
-                    navigate("/");
-                  }
-                }}
+                      setAlterou(false); // reseta o estado de alteração para evitar alerta de alterações não salvas
+                      
+                      setMensagem("Este link de convite expirou ou é inválido. Se quiser fazer o cadastro peça um novo convite para o coordenador da ONG.");
+                      setTipoMensagem("erro");
 
-                aoEnviar={(usuarioCadastrado) => {
-                  definirUsuario({
-                    id: usuarioCadastrado.id,
-                    nome_completo: usuarioCadastrado.nome_completo,
-                    data_nascimento: usuarioCadastrado.data_nascimento,
-                    cpf: usuarioCadastrado.cpf,
-                    cep: usuarioCadastrado.cep,
-                    telefone: usuarioCadastrado.telefone,
-                    email: usuarioCadastrado.email,
-                    tipos: usuarioCadastrado.funcao?.map(f => mapearTipo(f.tipo_usuario)) || [], // a pessoa pode ter mais de uma função e quero pegar todas elas
-                    data_cadastro: new Date().toISOString()
-                  });
+                    } else {
+                      setErroModal(erro);
+                    }
+                  }}
 
-                  setAlterou(false); // reseta o estado de alteração para evitar alerta ao sair depois de cadastrar
-                  setMensagem("Cadastro realizado com sucesso!");
-                  setTipoMensagem("sucesso");
+                  aoCancelar={() => {
+                    const podeSair = tentarSair("/");
+                    if (podeSair) {
+                      navigate("/");
+                    }
+                  }}
 
-                  setTimeout(() => {
-                    setMensagem(""); // some o toast
-                    navigate("/conta");
-                  }, 2000);
-                }}
-              />
+                  aoEnviar={(usuarioCadastrado) => {
+                    definirUsuario({
+                      id: usuarioCadastrado.id,
+                      nome_completo: usuarioCadastrado.nome_completo,
+                      data_nascimento: usuarioCadastrado.data_nascimento,
+                      cpf: usuarioCadastrado.cpf,
+                      cep: usuarioCadastrado.cep,
+                      telefone: usuarioCadastrado.telefone,
+                      email: usuarioCadastrado.email,
+                      tipos: usuarioCadastrado.funcao?.map(f => mapearTipo(f.tipo_usuario)) || [], // a pessoa pode ter mais de uma função e quero pegar todas elas
+                      data_cadastro: new Date().toISOString()
+                    });
+
+                    setAlterou(false); // reseta o estado de alteração para evitar alerta ao sair depois de cadastrar
+                    setMensagem("Cadastro realizado com sucesso!");
+                    setTipoMensagem("sucesso");
+
+                    setTimeout(() => {
+                      navigate("/conta");
+                    }, 2000);
+                  }}
+                />
+        
+              )}
 
               <ModalConfirmacao
-                aberto={mostrarModal} // mostra o modal de erro se tiver erro e não estiver mostrando o modal de confirmação (para evitar os dois modais juntos)
+                aberto={mostrarModal && !erroToken && !erroModal} // mostra o modal de erro se tiver erro e não estiver mostrando o modal de confirmação (para evitar os dois modais juntos)
                 titulo="Alterações não salvas"
                 descricao="Você começou o cadastro. Deseja sair mesmo?"
                 botaoCancelar="Continuar cadastro"
@@ -137,6 +192,16 @@ function Cadastro() {
                 botaoConfirmar="Fechar"
                 onCancelar={() => setErroModal(null)}
                 onConfirmar={() => setErroModal(null)}
+              />
+
+              <ModalConfirmacao
+                aberto={!!erroToken}
+                titulo="Link expirado"
+                descricao="Este link de convite expirou ou é inválido. Se quiser fazer o cadastro peça um novo convite para o coordenador da ONG."
+                varianteCancelar={"cancelar"}
+                botaoConfirmar="Sair"
+                onCancelar={() => setErroToken(null)}
+                onConfirmar={() => navigate("/")}
               />
 
             </div>

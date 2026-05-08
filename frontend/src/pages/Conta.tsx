@@ -116,6 +116,8 @@ function Conta() {
   const estaComoVoluntario = dadosNormalizados?.tipos?.includes("Voluntário da triagem");
   const estaComoResponsavel = dadosNormalizados?.tipos?.includes("Responsável pelo beneficiário");
 
+  const podeSerCoordenador = !estaComoDoador && !estaComoResponsavel && !estaComoVoluntario;
+
   const location = useLocation();
 
   function sair() {
@@ -317,32 +319,27 @@ function Conta() {
                     Com o/s tipo/s de usuário/s escolhidos, você poderá acessar as funcionalidades específicas de cada tipo de usuário!
                   </p>
 
+                  <p className="body-muito-pequeno text-left mb-6">
+                    - Alguns tipos de usuário são exclusivos.<br />
+                    - Ao se tornar <strong>Coordenador de Processos</strong> ou <strong>Voluntário da triagem</strong>, você não poderá ter outros tipos.<br />
+                    - E, se você for <strong>Doador</strong> ou <strong>Responsável pelo beneficiário</strong>, não poderá cadastrar uma ONG.<br />
+                  </p>
+                  
+
                   {/* botões para os tipos de cadastros */}
                   <div className="flex flex-col md:flex-row gap-4 w-full h-auto">
                     <div className="flex-1">
                       <Botao aoClicar={() => selecionarTipo("Doador")} variante={estaComoDoador ? "tipo-selecionado" : "confirmar"} aria-label="Botão para selecionar tipo de usuário Doador" className="h-full">Doador</Botao>
                     </div>
 
-                    <div className="flex-1">
-                      <Botao aoClicar={() => selecionarTipo("Coordenador de Processos")} variante={estaComoCoordenador ? "tipo-selecionado" : "confirmar"} aria-label="Botão para selecionar tipo de usuário Coordenador de Processos" className="h-full">Cadastro da ONG</Botao>
-                    </div>
+                    {podeSerCoordenador && (
+                      <div className="flex-1">
+                        <Botao aoClicar={() => selecionarTipo("Coordenador de Processos")} variante={estaComoCoordenador ? "tipo-selecionado" : "confirmar"} aria-label="Botão para selecionar tipo de usuário Coordenador de Processos" className="h-full">Cadastro da ONG</Botao>
+                      </div>
+                    )}
 
                     <div className="flex-1">
                       <Botao aoClicar={() => selecionarTipo("Responsável pelo beneficiário")} variante={estaComoResponsavel ? "tipo-selecionado" : "confirmar"} aria-label="Botão para selecionar tipo de usuário Responsável pelo beneficiário" className="h-full">Responsável pelo beneficiário</Botao>
-
-                      {estaComoResponsavel && (
-                        <div className="mt-5 flex justify-end">
-                          <div className="w-auto text-sm px-1 py-0"> 
-                            <Botao
-                              aria-label="Botão para editar renda e familiares"
-                              aoClicar={() => navigate("/conta/editar-renda-e-familiares")}
-                              variante="editar"
-                            >
-                              Editar renda e familiares
-                            </Botao>
-                          </div>
-                        </div>
-                      )}
                     </div>
 
                     <ModalConfirmacao
@@ -398,6 +395,22 @@ function Conta() {
                   </p>
 
                   <Botao variante="editar" aria-label="Botão para ir para a edição da ONG" aoClicar={() => navigate("/conta/editar-ong")} className="w-full">Editar informações da ONG</Botao>
+                </>
+              )}
+
+              {estaComoResponsavel && (
+                <>
+                  <div className="border-t border-[var(--primario-40)] my-6" />
+
+                  <h3 className="header-pequeno text-center mb-6">
+                    Edição da Renda e Familiares
+                  </h3>
+
+                  <p className="body-pequeno text-center mb-6">
+                    No botão abaixo, você pode gerenciar suas informações de renda e composição familiar.
+                  </p>
+
+                  <Botao  variante="editar" aria-label="Botão para editar renda e familiares" aoClicar={() => navigate("/conta/editar-renda-e-familiares")} className="w-full">Editar informações</Botao>
                 </>
               )}
 

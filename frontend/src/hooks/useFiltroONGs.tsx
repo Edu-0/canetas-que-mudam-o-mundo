@@ -4,6 +4,13 @@ function limparCNPJ(valor: string) {
   return valor.replace(/\D/g, ""); 
 }
 
+function normalizarTexto(texto: string) {
+  return texto
+    .toLowerCase()
+    .normalize("NFD") // separa acentos
+    .replace(/[\u0300-\u036f]/g, ""); // remove acentos
+}
+
 export function useFiltroONGs(
   ongs: ONG[], // array de ONGs a filtrar
   busca: string,
@@ -11,20 +18,23 @@ export function useFiltroONGs(
   ordem: "nome-asc" | "nome-desc"
 ) {
 
-  const buscaTexto = busca.toLowerCase();
+  const buscaTexto = normalizarTexto(busca.trim());
   const buscaCNPJ = limparCNPJ(busca);
 
   return ongs
     // filtro por nome e CNPJ
     .filter(o => {
-      const nomeMatch = o.nome.toLowerCase().includes(buscaTexto);
-
+      const nomeNormalizado = normalizarTexto(o.nome);
       const cnpjLimpo = limparCNPJ(o.cnpj);
+
+      const nomeMatch = nomeNormalizado.includes(buscaTexto);
       const cnpjMatch = cnpjLimpo.includes(buscaCNPJ);
 
       const estadoMatch = !estadoSelecionado || o.estado === estadoSelecionado;
 
-      return (nomeMatch || cnpjMatch) && estadoMatch;
+      const temNumeroNaBusca = buscaCNPJ.length > 0;
+
+      return ((nomeMatch || (temNumeroNaBusca && cnpjMatch)) && estadoMatch);
     })
 
     // ordenação

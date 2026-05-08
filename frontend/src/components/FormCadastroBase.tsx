@@ -23,6 +23,7 @@ type PropsCadastro = {
     email?: string;
   };
 
+  tokenInvalido?: boolean;
   textoBotaoEnviar?: string;
   textoBotaoCancelar?: string;
   mostrarCancelar?: boolean;
@@ -46,6 +47,7 @@ type PropsEdicao = {
     email?: string;
   };
 
+  tokenInvalido?: boolean;
   textoBotaoEnviar?: string;
   textoBotaoCancelar?: string;
   mostrarCancelar?: boolean;
@@ -64,6 +66,7 @@ function FormCadastroBase(props: Props) {
     textoBotaoEnviar = "Cadastrar",
     textoBotaoCancelar = "Cancelar",
     mostrarCancelar = false,
+    tokenInvalido,
     aoCancelar,
     mudouDados,
     aoErro,
@@ -128,7 +131,6 @@ function FormCadastroBase(props: Props) {
 
   const location = useLocation();
   const params = new URLSearchParams(location.search);
-  const [tokenInvalido, setTokenInvalido] = useState(false);
   const token = params.get("token");
 
   useEffect(() => {
@@ -283,15 +285,17 @@ function FormCadastroBase(props: Props) {
 
         const erroBackend = error.response?.data?.detail;
 
-        // token inválido ou expirado
         if (erroBackend === "Token não cadastrado." || erroBackend === "Token expirado. Peça um novo link para o responsável.") {
-
-          setTokenInvalido(true);
-
           aoErro?.({
-            mensagem: erroBackend
+            mensagem: "Este link de convite expirou ou é inválido."
           });
+          return;
+        }
 
+        if (token && error.response?.status === 401) {
+          aoErro?.({
+            mensagem: "Este link de convite expirou ou é inválido."
+          });
           return;
         }
 
@@ -363,11 +367,11 @@ function FormCadastroBase(props: Props) {
         </div>
       )}
 
-      {tokenInvalido && (
+      {/* {tokenInvalido && (
         <div className="bg-[var(--cor-resposta-errada)] text-white rounded-lg p-4 text-center mb-4">
           Este link de convite expirou ou é inválido.
         </div>
-      ) }
+      ) } */}
 
       <div>
         <label className="body-semibold-pequeno" htmlFor="nome_completo">Nome completo <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
