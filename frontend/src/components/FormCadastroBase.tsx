@@ -520,7 +520,8 @@ function FormCadastroBase(props: Props) {
         )}
 
         <div className="flex-1">
-          <Botao tipo="submit" variante="confirmar" desabilitado={carregando || tokenInvalido || (modo === "edicao" && !alterou)}>
+          {/* <Botao tipo="submit" variante="confirmar" desabilitado={carregando || tokenInvalido || (modo === "edicao" && !alterou)}> */}
+          <Botao tipo="submit" variante="confirmar" desabilitado={carregando || (modo === "edicao" && !alterou)}>
             {carregando ? "Salvando..." : textoBotaoEnviar || "Cadastrar"}
           </Botao>
         </div>

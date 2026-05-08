@@ -203,18 +203,21 @@ function LinkParaVoluntario() {
 
               </div>
 
-              {linksPagina.length === 0 && (
+              {carregando ? (
+                <p className="text-center body-semibold-pequeno py-6">
+                  Carregando links...
+                </p>
+
+              ) : tokens.length === 0 ? (
+                <div className="text-center body-semibold-pequeno py-6">
+                  Nenhum link gerado ainda.
+                </div>
+
+              ) : linksPagina.length === 0 ? (
                 <div className="text-center body-semibold-pequeno py-6">
                   Nenhum link encontrado com esses filtros.
                 </div>
-              )}
-
-              {carregando ? (
-                <p className="text-center">Carregando links...</p>
-              ) : tokens.length === 0 ? (
-                <p className="text-center">
-                  Nenhum link gerado ainda.
-                </p>
+              
               ) : (
                 <div className="flex flex-col gap-4">
 

@@ -129,7 +129,7 @@ def deletar_voluntario(
     permissao = Depends(VerificarPermissao("voluntario_ong:deletar-voluntario"))):
 
     vinculo_voluntario = db.query(m.VoluntarioOng).filter(
-        m.VoluntarioOng.voluntario_id == voluntario_id
+        m.VoluntarioOng.usuario_id == voluntario_id
     ).first()
 
     if not vinculo_voluntario:
