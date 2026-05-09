@@ -179,6 +179,66 @@ def anonimizar_responsavel(usuario_id, db: SessionDep): # Função principal que
             detail=f"Erro ao anonimizar a conta: {str(e)}"
         )
 
+
+def remover_dados_familiares(usuario_id: int, db: SessionDep) -> None:
+    
+    responsavel = db.query(m.UsuarioResponsavel).filter(
+        m.UsuarioResponsavel.responsavel_id == usuario_id
+    ).first()
+
+    if not responsavel:
+        return 
+        
+
+    familiares = db.query(m.FamiliaResponsavel).filter(
+        m.FamiliaResponsavel.responsavel_id == responsavel.id
+    ).all()
+
+    documentos_usuario = db.query(m.DocumentoUsuario).filter(
+        m.DocumentoUsuario.responsavel_id == responsavel.id
+    ).all()
+
+    documentos_familia = []
+    for familiar in familiares:
+        documentos_familia.extend(
+            db.query(m.DocumentoFamilia).filter(
+                m.DocumentoFamilia.familiar_id == familiar.id
+            ).all()
+        )
+
+    urls_arquivos = [doc.caminho_arquivo for doc in documentos_usuario]
+    urls_arquivos.extend(doc.caminho_arquivo for doc in documentos_familia)
+
+    backups_arquivos = []
+    if urls_arquivos:
+        backups_arquivos = preparar_backup_arquivos(urls_arquivos)
+        remover_arquivos_do_storage(urls_arquivos)
+
+    try:
+        for familiar in familiares:
+            anonimizar_familiar(familiar)
+
+        for doc in documentos_usuario:
+            db.delete(doc)
+
+        for doc in documentos_familia:
+            db.delete(doc)
+            
+        responsavel.qtd_familiares = 0
+        responsavel.renda = 0.0
+        responsavel.auxilio = BeneficiosUsuario.NENHUM
+        responsavel.documentacao_aprovada = False
+
+        db.flush() 
+
+    except Exception as e:
+        if urls_arquivos:
+            restaurar_arquivos_no_storage(backups_arquivos)
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Erro ao remover dados dependentes: {str(e)}"
+        )
+
 def processar_exclusao_conta(usuario_id: int, db: SessionDep):
     usuario = db.query(m.Usuario).filter(m.Usuario.id == usuario_id).first()
     
