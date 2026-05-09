@@ -174,44 +174,17 @@ def deletar_voluntario(
         print(f"Erro ao deletar: {e}")
         raise HTTPException(status_code=500, detail="Erro interno ao tentar remover voluntário.")
 
-@router.delete("/deletar-ong/{ong_id}")
 def deletar_ong(
     ong_id: int,  
     db: SessionDep,
     usuario_atual: u.Usuario = Depends(get_current_user),
     permissao = Depends(VerificarPermissao("ong:deletar"))
 ):
-    if not usuario_atual.ong or usuario_atual.ong.id != ong_id:
-        raise HTTPException(status_code=403, detail="Você não tem permissão para deletar esta ONG.")
-
-    try:
-        ids_voluntarios = [vinculo.usuario_id for vinculo in usuario_atual.ong.voluntarios]
-
-        db.query(m.VoluntarioOng).filter(m.VoluntarioOng.ong_id == ong_id).delete()
-
-        if ids_voluntarios:
-            db.query(u.UsuarioFuncao).filter(u.UsuarioFuncao.usuario_id.in_(ids_voluntarios)).delete(synchronize_session=False)
-            db.query(u.Usuario).filter(u.Usuario.id.in_(ids_voluntarios)).delete(synchronize_session=False)
-
-        ong_apagada = db.query(m.Ong).filter(m.Ong.id == ong_id).delete()
-
-        if ong_apagada == 0:
-            db.rollback()
-            raise HTTPException(status_code=404, detail="ONG não encontrada no banco de dados.")
-        
-        funcao = db.query(u.UsuarioFuncao).filter(u.UsuarioFuncao.usuario_id == usuario_atual.id).delete()
-
-        db.query(u.Usuario).filter(u.Usuario.id == usuario_atual.id).delete()
-             
-        db.commit()
-        return {"mensagem": "ONG e todos os seus vínculos deletados com sucesso"} 
-
-    except HTTPException as http_e:
-        raise http_e
-    except Exception as e:
-        db.rollback()
-        print(f"Erro ao deletar ONG: {e}") 
-        raise HTTPException(status_code=500, detail="Erro interno ao tentar remover a ONG.")
+    return apagar_ong_e_vinculos(
+        ong_id=ong_id, 
+        usuario_atual=usuario_atual, 
+        db=db
+    )
 
 @router.post("/gerar-token-ong/{ong_id}", response_model = s.TokenOngResponse)
 def gerar_token_ong(

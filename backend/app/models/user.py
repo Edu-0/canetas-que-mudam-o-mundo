@@ -86,5 +86,5 @@ class UsuarioFuncao(Base):
     id = Column(Integer, primary_key = True)
     usuario_id = Column(Integer, ForeignKey('usuario.id'), nullable= False)
     tipo_usuario =  Column(Enum(TipoUsuario), default = TipoUsuario.GENERICO)
-    usuario = relationship("Usuario", back_populates = "funcao")
+    usuario = relationship("Usuario",back_populates = "funcao")
 
