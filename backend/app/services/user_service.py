@@ -105,7 +105,6 @@ def remover_arquivos_do_storage(urls: list[str]) -> None:
 
 def anonimizar_responsavel(usuario_id, db: SessionDep): # Função principal que orquestra o processo de anonimização do usuário, incluindo a preparação de backups dos arquivos, a anonimização dos dados e a remoção dos arquivos do Firebase Storage, garantindo que o processo seja robusto e que os dados possam ser restaurados em caso de falha, mantendo a integridade dos dados e a conformidade com a LGPD.
     usuario = db.get(m.Usuario, usuario_id)
-
     if not usuario: # Verifica se o usuário existe antes de iniciar o processo de anonimização.
         raise HTTPException(status_code=404, detail="Usuário não encontrado.")
 
@@ -180,29 +179,29 @@ def anonimizar_responsavel(usuario_id, db: SessionDep): # Função principal que
             detail=f"Erro ao anonimizar a conta: {str(e)}"
         )
 
-def processar_exclusao_conta(usuario_id, db: SessionDep):
+def processar_exclusao_conta(usuario_id: int, db: SessionDep):
+    usuario = db.query(m.Usuario).filter(m.Usuario.id == usuario_id).first()
     
-    funcoes_do_usuario = db.query(m.UsuarioFuncao).filter(m.UsuarioFuncao.usuario_id == usuario_id).all()
-    tipos_cadastrados = [f.tipo_usuario for f in funcoes_do_usuario]
+    if not usuario:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado.")
 
-    db.query(m.UsuarioFuncao).filter(m.UsuarioFuncao.usuario_id == usuario_id).delete()
+    tipos_cadastrados = [f.tipo_usuario for f in usuario.funcao]
 
     if TipoUsuario.COORDENADOR_PROCESSOS in tipos_cadastrados:
+        from app.services.ong_service import apagar_ong_e_vinculos
         
-        usuario_deletado = db.query(m.Usuario).filter(m.Usuario.id == usuario_id).delete()
-    
-        if usuario_deletado == 0:
-            db.rollback()
-            raise HTTPException(status_code=404, detail="Usuário não encontrado.")
-            
-    elif TipoUsuario.RESPONSAVEL_BENEFICIARIO in tipos_cadastrados:
-        anonimizar_responsavel(db, usuario_id)
+        apagar_ong_e_vinculos(ong_id=usuario.ong.id, usuario_atual=usuario, db=db)
+        return {"mensagem": "Conta de Coordenador e ONG excluídas com sucesso."}
+        
+    elif TipoUsuario.RESPONSAVEL_BENEFICIARIO in tipos_cadastrados: 
+        anonimizar_responsavel(usuario_id=usuario.id, db=db)
         
     else:
-        usuario = db.query(m.Usuario).filter(m.Usuario.id == usuario_id).first()
-        anonimizar_usuario(usuario)
+        db.query(m.UsuarioFuncao).filter(m.UsuarioFuncao.usuario_id == usuario_id).delete()
+        db.delete(usuario)
 
-    db.commit()
+    db.commit() 
+    return {"mensagem": "Conta processada (anonimizada/excluída) com sucesso conforme a LGPD."}
 
 def criar_voluntario(usuario_id,token, db):
     info_token = db.query(o.TokenOng).filter(o.TokenOng.token == token).first()
