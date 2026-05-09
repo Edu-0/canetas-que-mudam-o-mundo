@@ -46,6 +46,21 @@ def listar_voluntarios_da_ong(
 
     return voluntarios
 
+@router.get("/convite/validar")
+def validar_token_convite(token: str, db: SessionDep):
+    
+    info_token = db.query(m.TokenOng).filter(m.TokenOng.token == token).first()
+    
+    if not info_token:
+        return {"valido": False, "motivo": "Token não encontrado"}
+        
+    if info_token.data_expiracao <= datetime.now():
+        return {"valido": False, "motivo": "Token expirado"}
+        
+    if info_token.usado:
+        return {"valido": False, "motivo": "Token já usado"}
+
+    return {"valido": True}
 
 # Rota insert
 @router.post("/cadastro-ong", response_model=s.RespostaOng)
