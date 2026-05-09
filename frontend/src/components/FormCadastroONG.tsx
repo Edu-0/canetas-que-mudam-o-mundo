@@ -900,7 +900,7 @@ function FormCadastroONG(props: Props) {
       </div>
 
       {/* Botões */}
-      <div className="flex gap-4 mt-4">
+      <div className="flex flex-col md:flex-row gap-4 mt-4">
         {mostrarCancelar && (
           <div className="flex-1">
             <Botao variante="cancelar" aoClicar={aoCancelar}>
