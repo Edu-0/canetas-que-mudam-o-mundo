@@ -284,6 +284,6 @@ export async function desativarTokenOng(ong_id: number, token_id: number) {
 
 // Validar token de convite para cadastro de voluntário
 export async function validarTokenConvite(token: string) {
-  const response = await api.get(`/convite/validar?token=${token}`);
+  const response = await api.get(`/ong/convite/validar?token=${encodeURIComponent(token)}`);
   return response.data; // { "valido": true } ou { "valido": false }
 }

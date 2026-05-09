@@ -23,7 +23,6 @@ type PropsCadastro = {
     email?: string;
   };
 
-  tokenInvalido?: boolean;
   textoBotaoEnviar?: string;
   textoBotaoCancelar?: string;
   mostrarCancelar?: boolean;
@@ -47,7 +46,6 @@ type PropsEdicao = {
     email?: string;
   };
 
-  tokenInvalido?: boolean;
   textoBotaoEnviar?: string;
   textoBotaoCancelar?: string;
   mostrarCancelar?: boolean;
@@ -66,7 +64,6 @@ function FormCadastroBase(props: Props) {
     textoBotaoEnviar = "Cadastrar",
     textoBotaoCancelar = "Cancelar",
     mostrarCancelar = false,
-    tokenInvalido,
     aoCancelar,
     mudouDados,
     aoErro,
@@ -285,20 +282,6 @@ function FormCadastroBase(props: Props) {
 
         const erroBackend = error.response?.data?.detail;
 
-        if (erroBackend === "Token não cadastrado." || erroBackend === "Token expirado. Peça um novo link para o responsável.") {
-          aoErro?.({
-            mensagem: "Este link de convite expirou ou é inválido."
-          });
-          return;
-        }
-
-        if (token && error.response?.status === 401) {
-          aoErro?.({
-            mensagem: "Este link de convite expirou ou é inválido."
-          });
-          return;
-        }
-
         if (erroBackend) { // se o backend retornou um erro esperado com mensagem e campo
           // mostra no modal
           if (typeof erroBackend === "object") {
@@ -366,12 +349,6 @@ function FormCadastroBase(props: Props) {
           </p>
         </div>
       )}
-
-      {/* {tokenInvalido && (
-        <div className="bg-[var(--cor-resposta-errada)] text-white rounded-lg p-4 text-center mb-4">
-          Este link de convite expirou ou é inválido.
-        </div>
-      ) } */}
 
       <div>
         <label className="body-semibold-pequeno" htmlFor="nome_completo">Nome completo <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
@@ -520,7 +497,6 @@ function FormCadastroBase(props: Props) {
         )}
 
         <div className="flex-1">
-          {/* <Botao tipo="submit" variante="confirmar" desabilitado={carregando || tokenInvalido || (modo === "edicao" && !alterou)}> */}
           <Botao tipo="submit" variante="confirmar" desabilitado={carregando || (modo === "edicao" && !alterou)}>
             {carregando ? "Salvando..." : textoBotaoEnviar || "Cadastrar"}
           </Botao>

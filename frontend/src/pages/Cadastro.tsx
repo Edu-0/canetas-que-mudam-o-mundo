@@ -25,6 +25,19 @@ function Cadastro() {
     mensagem: string;
   } | null>(null);
 
+  function traduzirErroToken(motivo: string) {
+    switch (motivo) {
+      case "Token não encontrado":
+        return "Esse link de convite não é válido. Verifique se ele foi copiado corretamente.";
+      case "Token expirado":
+        return "Este link de convite expirou. Peça um novo convite para o coordenador de processos da ONG.";
+      case "Token já usado":
+        return "Este convite já foi utilizado. Se precisar, solicite um novo.";
+      default:
+        return "Link de convite inválido ou expirado.";
+    }
+  }
+
   const [erroToken, setErroToken] = useState<string | null>(null);
 
   const location = useLocation();
@@ -34,6 +47,8 @@ function Cadastro() {
   const [tokenCarregado, setTokenCarregado] = useState(false);
 
   useEffect(() => {
+    setErroToken(null); // reseta o erro 
+
     async function validar() {
       if (!token) {
         setTokenCarregado(true);
@@ -44,7 +59,7 @@ function Cadastro() {
         const resposta = await validarTokenConvite(token);
 
         if (!resposta.valido) {
-          setErroToken("Este link de convite expirou ou é inválido.");
+          setErroToken(traduzirErroToken(resposta.motivo));
           setAlterou(false);
         }
       } catch {
@@ -56,7 +71,7 @@ function Cadastro() {
     }
 
     validar();
-  }, [token]);
+  }, [token, setAlterou]);
 
   if (!tokenCarregado) {
     return <div>Carregando...</div>;
@@ -91,11 +106,15 @@ function Cadastro() {
                 CADASTRO
               </h2>
 
-              {!erroToken && ( // se tiver erro no token não mostra o formulário, só o modal de erro
+              {!tokenCarregado ? (
+                <p className="text-center body-semibold-pequeno py-6">
+                  Validando link de convite...
+                </p>
+
+              ) : !erroToken ? ( // se tiver erro no token não mostra o formulário, só o modal de erro
           
                 <FormCadastroBase 
                   modo="cadastro"
-                  tokenInvalido={!!erroToken}
 
                   mudouDados={(dados) => {
                     if (erroToken) return; // token inválido, isso evita ver o alerta de useAlteracoesNaoSalvas
@@ -163,7 +182,7 @@ function Cadastro() {
                   }}
                 />
         
-              )}
+              ) : null} {/* se tiver erro no token não mostra o formulário, só o modal de erro */}
 
               <ModalConfirmacao
                 aberto={mostrarModal && !erroToken && !erroModal} // mostra o modal de erro se tiver erro e não estiver mostrando o modal de confirmação (para evitar os dois modais juntos)
@@ -197,7 +216,7 @@ function Cadastro() {
               <ModalConfirmacao
                 aberto={!!erroToken}
                 titulo="Link expirado"
-                descricao="Este link de convite expirou ou é inválido. Se quiser fazer o cadastro peça um novo convite para o coordenador da ONG."
+                descricao={ erroToken || "Este link de convite expirou ou é inválido. Se quiser fazer o cadastro peça um novo convite para o coordenador da ONG."}
                 varianteCancelar={"cancelar"}
                 botaoConfirmar="Sair"
                 onCancelar={() => setErroToken(null)}
