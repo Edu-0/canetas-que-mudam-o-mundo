@@ -71,12 +71,8 @@ function Cadastro() {
     }
 
     validar();
-  }, [token, setAlterou]);
-
-  if (!tokenCarregado) {
-    return <div>Carregando...</div>;
-  }
-
+  }, [token]); // roda só uma vez para validar o token do convite, sempre que o token mudar
+  
   return (
     <div className="min-h-screen flex flex-col overflow-x-hidden bg-[var(--base-5)]">
       

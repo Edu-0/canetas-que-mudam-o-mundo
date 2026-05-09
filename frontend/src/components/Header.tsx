@@ -27,10 +27,12 @@ function Header(){
   } else {
     const tipos = usuario.tipos || [];
 
-    listaDeBotoes.push({ id: "ongs", texto: "ONGs", rota: "/ongs" }); // para o tipo genérico e para todos os outros tipos
-
     // mapa de tipos
     const mapaTipos: Record<string, { id: string; texto: string; rota: string }[]> = {
+      "Genérico": [
+        { id: "ongs", texto: "ONGs", rota: "/ongs" }
+      ],
+
       "Doador": [
         { id: "doar", texto: "Doar", rota: "/doar" }
       ],
