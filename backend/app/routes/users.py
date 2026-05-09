@@ -10,7 +10,7 @@ from fastapi import HTTPException
 from sqlalchemy.sql import func
 from sqlalchemy.exc import IntegrityError
 from app.services.firebase_storage import FirebaseStorageService
-from app.services.user_service import anonimizar_responsavel, processar_exclusao_conta
+from app.services.user_service import anonimizar_responsavel, processar_exclusao_conta, remover_dados_familiares
 from datetime import date, datetime
 import logging
 from app.core.deps_auth import VerificarPermissao, get_current_user
@@ -566,29 +566,29 @@ def salvar_resultado_triagem(
 
 """ Funções de Usuário """
 @router.put("/{usuario_id}/funcao", response_model=list[s.respostaFuncao])
-def atualizar_usuario_funcao(usuario_id: int, 
+def atualizar_usuario_funcao(
+    usuario_id: int, 
     dados: s.atualizarUsuarioFuncao, 
     db: SessionDep, 
-    permissao = Depends(VerificarPermissao("usuario_funcao:atualizar"))):
+    permissao = Depends(VerificarPermissao("usuario_funcao:atualizar"))
+):
     usuario = db.get(m.Usuario, usuario_id)
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuário não encontrado.")
     
-    tipos_atuais = db.query(m.UsuarioFuncao).filter(
-            m.UsuarioFuncao.usuario_id == usuario_id
-        )
+    tipos_atuais_objs = db.query(m.UsuarioFuncao).filter(m.UsuarioFuncao.usuario_id == usuario_id).all()
+    tipos_atuais = [f.tipo_usuario for f in tipos_atuais_objs]
+    
     tipos_novos = dados.tipo_usuario 
     tipos_removidos = set(tipos_atuais) - set(tipos_novos)
-    tipos_removidos = [tipo.tipo_usuario for tipo in tipos_removidos]
     
     try:
+        if TipoUsuario.RESPONSAVEL_BENEFICIARIO in tipos_removidos:
+            remover_dados_familiares(usuario_id, db)
+
         db.query(m.UsuarioFuncao).filter(
             m.UsuarioFuncao.usuario_id == usuario_id
         ).delete()
-
-        if TipoUsuario.RESPONSAVEL_BENEFICIARIO in tipos_removidos:
-            print("alo")
-            anonimizar_responsavel(usuario_id, db)
 
         funcao_usuario = []
 
