@@ -62,115 +62,132 @@
   --font-body: 'Nunito', sans-serif;
 }
 
-.header-grande {
-  font-family: var(--font-header);
-  font-size: 96px;
-  line-height: 100%;
-}
-
-.header-medio {
-  font-family: var(--font-header);
-  font-size: 48px;
-  line-height: 125%;
-  font-weight: 700;
-}
-
-.header-pequeno {
-  font-family: var(--font-header);
-  @apply text-2xl sm:text-3xl md:text-[40px];
-  line-height: 125%;
-}
-
-.header-pequeno-tela-inicial {
-  font-family: var(--font-header);
-  font-size: 30px;
-  line-height: 100%;
-}
-
-.body-grande {
-  font-family: var(--font-body);
-  font-size: 40px;
-  line-height: 150%;
-  font-weight: 400;
-}
-
-.body-medio {
-  font-family: var(--font-body);
-  font-size: 24px;
-  line-height: 150%;
-  font-weight: 400;
-}
-
-.body-pequeno {
-  font-family: var(--font-body);
-  font-size: 20px;
-  line-height: 150%;
-  font-weight: 400;
-}
-
-.letra-footer {
-  font-family: var(--font-body);
-  font-size: 14px;
-  line-height: 150%;
-}
-
-.body-bold-medio {
-  font-family: var(--font-body);
-  font-size: 24px;
-  line-height: 150%;
-  font-weight: 800;
-}
-
-.body-bold-pequeno {
-  font-family: var(--font-body);
-  font-size: 20px;
-  line-height: 150%;
-  font-weight: 800;
-}
-
-.body-semibold-grande {
-  font-family: var(--font-body);
-  font-size: 40px;
-  line-height: 150%;
-  font-weight: 600;
-}
-
-.body-semibold-medio {
-  font-family: var(--font-body);
-  font-size: 24px;
-  line-height: 150%;
-  font-weight: 600;
-}
-
-.body-semibold-pequeno {
-  font-family: var(--font-body);
-  font-size: 20px;
-  line-height: 150%;
-  font-weight: 600;
-}
-
-.body-semibold-muito-pequeno {
-  font-family: var(--font-body);
-  font-size: 14px;
-  line-height: 150%;
-  font-weight: 600;
-}
-
-.body-pequeno {
-  font-family: var(--font-body);
-  font-size: 20px;
-  line-height: 150%;
-  font-weight: 400;
-}
-
-.body-muito-pequeno {
-  font-family: var(--font-body);
-  font-size: 14px;
-  line-height: 150%;
-  font-weight: 400;
-}
 
 @layer components {
+
+  .header-grande {
+    font-family: var(--font-header);
+    font-size: 96px;
+    line-height: 100%;
+  }
+
+  .header-medio {
+    font-family: var(--font-header);
+    font-size: 48px;
+    line-height: 125%;
+    font-weight: 700;
+  }
+
+  .header-pequeno {
+    font-family: var(--font-header);
+    @apply text-2xl sm:text-3xl md:text-[40px];
+    line-height: 125%;
+  }
+
+  .header-pequeno-tela-inicial {
+    font-family: var(--font-header);
+    font-size: 30px;
+    line-height: 100%;
+  }
+
+  .header-muito-pequeno-tela-inicial {
+    font-family: var(--font-header);
+    font-size: 24px;
+    line-height: 100%;
+  }
+
+  .body-grande {
+    font-family: var(--font-body);
+    font-size: 40px;
+    line-height: 150%;
+    font-weight: 400;
+  }
+
+  .body-medio {
+    font-family: var(--font-body);
+    font-size: 24px;
+    line-height: 150%;
+    font-weight: 400;
+  }
+
+  .body-pequeno {
+    font-family: var(--font-body);
+    font-size: 20px;
+    line-height: 150%;
+    font-weight: 400;
+  }
+
+  .letra-footer {
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 150%;
+  }
+
+  .body-bold-medio {
+    font-family: var(--font-body);
+    font-size: 24px;
+    line-height: 150%;
+    font-weight: 800;
+  }
+
+  .body-bold-pequeno {
+    font-family: var(--font-body);
+    font-size: 20px;
+    line-height: 150%;
+    font-weight: 800;
+  }
+
+  .body-bold-muito-pequeno {
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 150%;
+    font-weight: 800;
+  }
+
+  .body-semibold-grande {
+    font-family: var(--font-body);
+    font-size: 40px;
+    line-height: 150%;
+    font-weight: 600;
+  }
+
+  .body-semibold-medio {
+    font-family: var(--font-body);
+    font-size: 24px;
+    line-height: 150%;
+    font-weight: 600;
+  }
+
+  .body-semibold-pequeno {
+    font-family: var(--font-body);
+    font-size: 20px;
+    line-height: 150%;
+    font-weight: 600;
+  }
+
+  .body-semibold-muito-pequeno {
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 150%;
+    font-weight: 600;
+  }
+
+  .body-pequeno {
+    font-family: var(--font-body);
+    font-size: 20px;
+    line-height: 150%;
+    font-weight: 400;
+  }
+
+  .body-muito-pequeno {
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 150%;
+    font-weight: 400;
+  }
+
+  /* Botões */
+
   /* estilo base para os botões no Header*/
   .btn-base {
     @apply px-4 py-0.5 rounded-md border body-semibold-pequeno transition-all duration-300 w-[120px] text-center;

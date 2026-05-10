@@ -236,10 +236,10 @@ function AnaliseVoluntarios() {
                     const tempo = formatarTempo(v.data_cadastro);
 
                     return (
-                      <div key={v.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b py-3">
+                      <div key={v.id} className="flex flex-col sm:flex-row gap-3 border-b py-3 w-full">
 
                         {/* Esquerda */}
-                        <div className="flex flex-col min-w-0">
+                        <div className="flex flex-col min-w-0 flex-1">
 
                           <span className="font-['Nunito'] font-semibold text-sm sm:text-base md:text-lg truncate">
                             {String((paginaAtual - 1) * ITENS_POR_PAGINA + index + 1).padStart(3, "0")} - {v.nome_completo} {/* número sequencial considerando a paginação */}
@@ -260,7 +260,7 @@ function AnaliseVoluntarios() {
                         </div>
 
                         {/* Direita */}
-                        <div className="flex flex-wrap gap-3 sm:gap-2 sm:justify-center mt-2 sm:mt-0">
+                        <div className="flex flex-row items-center justify-between gap-2 mt-2 sm:mt-0 w-full sm:w-auto">
 
                           <Botao variante="botao-pequeno-editar" aoClicar={() => navigate("/auditoria")}>Analisar</Botao>
 

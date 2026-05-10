@@ -112,6 +112,7 @@ export type TokenLink = {
   id: number;
   link: string;
   data_criacao?: string;
+  data_expiracao?: string;
   ativo?: boolean;
 };
 
@@ -267,11 +268,9 @@ export async function listarTokenOng(ong_id: number): Promise<TokenLink[]> {
 
   return response.data.map((token: any) => ({
     id: token.id,
-
     link: `${window.location.origin}/cadastro-voluntario?token=${token.token}`,
-
     data_criacao: token.criado_em,
-
+    data_expiracao: token.data_expiracao,
     ativo: !token.usado,
   }));
 }

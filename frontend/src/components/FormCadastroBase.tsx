@@ -351,7 +351,7 @@ function FormCadastroBase(props: Props) {
       )}
 
       <div>
-        <label className="body-semibold-pequeno" htmlFor="nome_completo">Nome completo <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
+        <label className="body-semibold-muito-pequeno sm:body-semibold-pequeno" htmlFor="nome_completo">Nome completo <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
         <input id="nome_completo" type="text" maxLength={100} required className={`input-padrao ${tocados.nome_completo && nome_completo ? erros.nome_completo ? "border-[var(--cor-resposta-errada)] focus:ring-[var(--cor-resposta-errada)]" : "border-[var(--cor-resposta-correta)] focus:ring-[var(--cor-resposta-correta)]" : ""}`} 
         autoComplete="name" placeholder="Digite aqui o seu nome completo" value={nome_completo} onChange={(e) => setNomeCompleto(e.target.value)} aria-invalid={!!erros.nome_completo} aria-describedby={erros.nome_completo ? "erro-nome" : undefined} onBlur={() => {marcarComoTocado("nome_completo"), validarUmCampo("nome_completo");}}/>
       
@@ -360,7 +360,7 @@ function FormCadastroBase(props: Props) {
       </div>
 
       <div>
-        <label className="body-semibold-pequeno" htmlFor="data_nascimento">Data de nascimento <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
+        <label className="body-semibold-muito-pequeno sm:body-semibold-pequeno" htmlFor="data_nascimento">Data de nascimento <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
         <input id="data_nascimento" type="date" max={hojeFormatado} required className={`input-padrao ${tocados.data_nascimento && data_nascimento ? erros.data_nascimento ? "border-[var(--cor-resposta-errada)] focus:ring-[var(--cor-resposta-errada)]" : "border-[var(--cor-resposta-correta)] focus:ring-[var(--cor-resposta-correta)]" : ""}`} 
         autoComplete="off" value={data_nascimento} onChange={(e) => setDataNascimento(e.target.value)} aria-invalid={!!erros.data_nascimento} aria-describedby={erros.data_nascimento ? "erro-data-nascimento" : undefined} onBlur={() => {marcarComoTocado("data_nascimento"), validarUmCampo("data_nascimento");}}/>
       
@@ -368,7 +368,7 @@ function FormCadastroBase(props: Props) {
       </div>
       
       <div>
-        <label className="body-semibold-pequeno" htmlFor="cpf">CPF <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
+        <label className="body-semibold-muito-pequeno sm:body-semibold-pequeno" htmlFor="cpf">CPF <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
         <IMaskInput mask="000.000.000-00" id="cpf" type="text" required className={`input-padrao ${tocados.cpf && cpf ? erros.cpf ? "border-[var(--cor-resposta-errada)] focus:ring-[var(--cor-resposta-errada)]" : "border-[var(--cor-resposta-correta)] focus:ring-[var(--cor-resposta-correta)]" : ""}`} 
         autoComplete="off" placeholder="Digite aqui o seu CPF 000.000.000-00" value={cpf} onAccept={(value) => setCpf(value)} onBlur={() => {marcarComoTocado("cpf"), validarUmCampo("cpf");}} aria-invalid={!!erros.cpf} aria-describedby={erros.cpf ? "erro-cpf" : undefined}/>
         
@@ -376,7 +376,7 @@ function FormCadastroBase(props: Props) {
       </div>
 
       <div>
-        <label className="body-semibold-pequeno" htmlFor="cep">CEP <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
+        <label className="body-semibold-muito-pequeno sm:body-semibold-pequeno" htmlFor="cep">CEP <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
         <IMaskInput mask="00000-000" id="cep" type="text" required className={`input-padrao ${tocados.cep && cep ? erros.cep ? "border-[var(--cor-resposta-errada)] focus:ring-[var(--cor-resposta-errada)]" : "border-[var(--cor-resposta-correta)] focus:ring-[var(--cor-resposta-correta)]" : ""}`} 
         autoComplete="postal-code" placeholder="Digite aqui o seu CEP 00000-000" value={cep} onAccept={(value) => setCep(value)} onBlur={() => {marcarComoTocado("cep"), validarUmCampo("cep");}} aria-invalid={!!erros.cep} aria-describedby={erros.cep ? "erro-cep" : undefined}/>
 
@@ -384,7 +384,7 @@ function FormCadastroBase(props: Props) {
       </div>
     
       <div>
-        <label className="body-semibold-pequeno" htmlFor="telefone">Telefone</label>
+        <label className="body-semibold-muito-pequeno sm:body-semibold-pequeno" htmlFor="telefone">Telefone</label>
         <IMaskInput mask="(00) 00000-0000" id="telefone" type="tel" className={`input-padrao ${tocados.telefone && telefone ? erros.telefone ? "border-[var(--cor-resposta-errada)] focus:ring-[var(--cor-resposta-errada)]": "border-[var(--cor-resposta-correta)] focus:ring-[var(--cor-resposta-correta)]" : ""}`} 
         autoComplete="tel" placeholder="Digite aqui o seu telefone (00) 00000-0000" value={telefone} onAccept={(value) => setTelefone(value)} onBlur={() => {marcarComoTocado("telefone"), validarUmCampo("telefone");}} aria-invalid={!!erros.telefone} aria-describedby={erros.telefone ? "erro-telefone" : undefined} />
         
@@ -392,7 +392,7 @@ function FormCadastroBase(props: Props) {
       </div>
       
       <div>
-        <label className="body-semibold-pequeno" htmlFor="email">Email <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
+        <label className="body-semibold-muito-pequeno sm:body-semibold-pequeno" htmlFor="email">Email <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
         <input id="email" type="email" maxLength={254} required className={`input-padrao ${tocados.email && email ? erros.email ? "border-[var(--cor-resposta-errada)] focus:ring-[var(--cor-resposta-errada)]": "border-[var(--cor-resposta-correta)] focus:ring-[var(--cor-resposta-correta)]" : ""}`} 
         autoComplete="email" placeholder="Digite aqui o seu email" value={email} onChange={(e) => setEmail(e.target.value)} aria-invalid={!!erros.email} aria-describedby={erros.email ? "erro-email" : undefined} onBlur={() => {marcarComoTocado("email"), validarUmCampo("email");}}/> 
         
@@ -400,42 +400,48 @@ function FormCadastroBase(props: Props) {
       </div>
       
       {modo === "edicao" && (
-        <Botao
-          variante="editar"
-          tipo="button"
-          desabilitado={enviandoEmail}
-          aoClicar={async () => {
-            if (!email) {
-              aoErro?.({ mensagem: "Email não informado." });
-              return;
-            }
 
-            setEnviandoEmail(true);
+        <div className="mt-4 mb-2">
+          <div>
+            <p className="body-semibold-pequeno sm:body-semibold-medio text-center">Gostaria de redefinir a sua senha?</p>
+          </div>
+        
+          <div className="flex align-center mt-4 w-48 mx-auto">
+            <Botao variante="editar" tipo="button" desabilitado={enviandoEmail}
+              aoClicar={async () => {
+                if (!email) {
+                  aoErro?.({ mensagem: "Email não informado." });
+                  return;
+                }
 
-            try {
-              await solicitarRedefinicaoSenha(email);
+                setEnviandoEmail(true);
 
-              props.aoMensagemSucessoSenha?.(
-                "Se o email estiver cadastrado, você receberá as instruções para redefinir a senha."
-              );
+                try {
+                  await solicitarRedefinicaoSenha(email);
 
-            } catch {
-              aoErro?.({
-                mensagem: "Erro ao enviar email para redefinir a senha.",
-              });
-            } finally {
-              setEnviandoEmail(false);
-            }
-          }}
-        >
-          {enviandoEmail ? "Enviando..." : "Redefinir senha"}
-        </Botao>
+                  props.aoMensagemSucessoSenha?.(
+                    "Se o email estiver cadastrado, você receberá as instruções para redefinir a senha."
+                  );
+
+                } catch {
+                  aoErro?.({
+                    mensagem: "Erro ao enviar email para redefinir a senha.",
+                  });
+                } finally {
+                  setEnviandoEmail(false);
+                }
+              }}
+            >
+              {enviandoEmail ? "Enviando..." : "Redefinir senha"}
+            </Botao>
+          </div>
+        </div>
       )}
 
       {deveMostrarSenha && (
         <>
           <div>
-            <label className="body-semibold-pequeno" htmlFor="senha">Senha <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
+            <label className="body-semibold-muito-pequeno sm:body-semibold-pequeno" htmlFor="senha">Senha <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
             <div className="relative">
               <input id="senha" type={mostrarSenha ? "text" : "password"} maxLength={50} className={`input-padrao pr-10 ${tocados.senha && senha ? erros.senha ? "border-[var(--cor-resposta-errada)] focus:ring-[var(--cor-resposta-errada)]": "border-[var(--cor-resposta-correta)] focus:ring-[var(--cor-resposta-correta)]" : ""}`} 
               autoComplete="new-password" placeholder="Digite aqui a sua senha" value={senha} onChange={(e) => setSenha(e.target.value)} aria-invalid={!!erros.senha} aria-describedby={erros.senha ? "erro-senha" : undefined} onBlur={() => {marcarComoTocado("senha"), validarUmCampo("senha");}}/>
@@ -473,7 +479,7 @@ function FormCadastroBase(props: Props) {
           )}
 
           <div>
-            <label className="body-semibold-pequeno" htmlFor="confirmarSenha">Confirmar senha <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
+            <label className="body-semibold-muito-pequeno sm:body-semibold-pequeno" htmlFor="confirmarSenha">Confirmar senha <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
             <div className="relative">
               <input id="confirmarSenha" type={mostrarConfirmarSenha ? "text" : "password"} maxLength={50} className={`input-padrao pr-10 ${tocados.confirmarSenha && confirmarSenha ? erros.confirmarSenha ? "border-[var(--cor-resposta-errada)] focus:ring-[var(--cor-resposta-errada)]": "border-[var(--cor-resposta-correta)] focus:ring-[var(--cor-resposta-correta)]" : ""}`} 
               autoComplete="new-password" placeholder="Confirme aqui a sua senha" value={confirmarSenha} onChange={(e) => setConfirmarSenha(e.target.value)} aria-invalid={!!erros.confirmarSenha} aria-describedby={erros.confirmarSenha ? "erro-confirmar-senha" : undefined} onBlur={() => {marcarComoTocado("confirmarSenha"), validarUmCampo("confirmarSenha");}}/>

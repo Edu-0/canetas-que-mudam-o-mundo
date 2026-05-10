@@ -44,28 +44,28 @@ function Inicio() {
             </div>
 
             <div className="space-y-6 text-justify">
-              <p className="body-pequeno text-black leading-relaxed">
-                Atualmente, crianças e jovens em situações de vulnerabilidade não conseguem ter seus momentos de{" "}
-                <strong className="font-extrabold inline-block border-b-2 border-[var(--base-40)] pb-0.3 rounded-sm">estudos com qualidade</strong>, 
+              <p className="body-muito-pequeno sm:body-pequeno text-black leading-relaxed">
+                Atualmente, crianças e jovens em situações de vulnerabilidade não conseguem ter seus momentos de estudos com{" "}
+                <strong className="font-extrabold inline-block border-b-2 border-[var(--base-40)] pb-0.3 rounded-sm">qualidade</strong>, 
                 pois não possuem os materiais adequados e em boa qualidade.
               </p>
 
-              <p className="body-pequeno text-black leading-relaxed">
+              <p className="body-muito-pequeno sm:body-pequeno text-black leading-relaxed">
                 Somos um projeto na qual foi desenvolvido com a finalidade atender essa comunidade{" "}
                 <strong className="font-extrabold inline-block border-b-2 border-[var(--base-40)] pb-0.3 rounded-sm"> infanto juvenil </strong>{" "}
                 mais necessitada, com o propósito de democratizar o acesso a materiais escolares de qualidade.
               </p>
 
             
-              <p className="body-pequeno text-black">
+              <p className="body-muito-pequeno sm:body-pequeno text-black">
                 O projeto tem como objetivo se tornar um {" "}
                 <strong className="font-extrabold inline-block border-b-2 border-[var(--base-40)] pb-0.3 rounded-sm">intermediador</strong>{" "} entre pessoas voluntárias, que querem fazer o bem para alguém em situação de carência, e voluntários que desejam realizar a entrega desses materiais para instituições e famílias mais necessitadas.
               </p>
 
-              <p className="body-pequeno text-black leading-relaxed">
+              <p className="body-muito-pequeno sm:body-pequeno text-black leading-relaxed">
                 Por meio de doações, jovens podem receber{" "}
-                <strong className="font-extrabold inline-block border-b-2 border-[var(--base-40)] pb-0.3 rounded-sm">diversos materiais escolares </strong>{" "}
-                 como lápis, borracha, caderno, estojo, mochila e entre outros.
+                <strong className="font-extrabold inline-block border-b-2 border-[var(--base-40)] pb-0.3 rounded-sm">diversos </strong>{" "}
+                 materiais escolares como lápis, borracha, caderno, estojo, mochila e entre outros.
               </p>
             </div>
           </section>
@@ -104,107 +104,107 @@ function Inicio() {
 
                 {/* Genérico */}
                 <article className="bg-[var(--primario-5)] border-l-4 border-[var(--pastel-azul-borda)] rounded-lg p-6 shadow-[2px_8px_25px_rgba(0,0,0,0.08)] flex flex-col gap-3">
-                  <h3 className="header-pequeno-tela-inicial text-center">
+                  <h3 className="header-muito-pequeno-tela-inicial sm:header-pequeno-tela-inicial text-center">
                     Usuário Genérico
                   </h3>
 
-                  <p className="body-pequeno text-justify">
+                  <p className="body-muito-pequeno sm:body-pequeno text-justify">
                     Todo usuário começa como genérico ao se cadastrar na plataforma. Esse tipo permite o acesso inicial ao sistema e aos botões para se tornar um ou mais tipos específicos de usuário. 
                     Mesmo ao adquirir outras funções, o usuário nunca deixa de ser genérico.
                   </p>
 
                   <div className="border-t border-[var(--pastel-azul-borda)] my-2" />
 
-                  <h4 className="body-semibold-medio text-center">
+                  <h4 className="body-semibold-pequeno sm:body-semibold-medio text-center">
                     Como se tornar
                   </h4>
 
-                  <p className="body-pequeno text-justify">
+                  <p className="body-muito-pequeno sm:body-pequeno text-justify">
                     Todo usuário já inicia automaticamente como genérico ao se cadastrar. Esse tipo é permanente e não pode ser removido.
                   </p>
                 </article>
 
                 {/* Doador */}
                 <article className="bg-[var(--primario-5)] border-l-4 border-[var(--pastel-laranja-borda)] rounded-lg p-6 shadow-[2px_8px_25px_rgba(0,0,0,0.08)] flex flex-col gap-3">
-                  <h3 className="header-pequeno-tela-inicial text-center">
+                  <h3 className="header-muito-pequeno-tela-inicial sm:header-pequeno-tela-inicial text-center">
                     Doador
                   </h3>
 
-                  <p className="body-pequeno text-justify">
+                  <p className="body-muito-pequeno sm:body-pequeno text-justify">
                     Permite disponibilizar itens para doação de forma simples, com envio de fotos e descrições. 
                     Os materiais passam por análise antes de ficarem disponíveis para envio ao ponto de entrega designado pelo site.
                   </p>
 
                   <div className="border-t border-[var(--pastel-laranja-borda)] my-2" />
 
-                  <h4 className="body-semibold-medio text-center">
+                  <h4 className="body-semibold-pequeno sm:body-semibold-medio text-center">
                     Como se tornar
                   </h4>
 
-                  <p className="body-pequeno text-justify">
+                  <p className="body-muito-pequeno sm:body-pequeno text-justify">
                     Pode ser ativado diretamente na tela de conta, sem necessidade de etapas adicionais.
                   </p>
                 </article>
 
                 {/* Voluntário */}
                 <article className="bg-[var(--primario-5)] border-l-4 border-[var(--pastel-roxo-borda)] rounded-lg p-6 shadow-[2px_8px_25px_rgba(0,0,0,0.08)] flex flex-col gap-3">
-                  <h3 className="header-pequeno-tela-inicial text-center">
+                  <h3 className="header-muito-pequeno-tela-inicial sm:header-pequeno-tela-inicial text-center">
                     Voluntário da triagem
                   </h3>
 
-                  <p className="body-pequeno text-justify">
-                    Pessoa ligada diretamente a ONG, seu objetivo é garantir que apenas materiais de bom estado cheguem à ONG. Seu tempo no aplicativo envolve seu cadastro na plataforma, análise das fotos e descrições enviadas pelos doadores e a criação de kits de materiais. Por fim, o voluntário deve definir se aquele material está apto para ficar disponível na plataforma.
+                  <p className="body-muito-pequeno sm:body-pequeno text-justify">
+                    Pessoa ligada diretamente a ONG, seu objetivo é garantir que apenas materiais de bom estado cheguem à ONG. Seu tempo no aplicativo envolve seu cadastro na plataforma, análise das fotos e descrições enviadas pelos doadores e a confirmação da entrega e coleta dos materiais. Por fim, o voluntário deve definir se aquele material está apto para ficar disponível na plataforma.
                   </p>
 
                   <div className="border-t border-[var(--pastel-roxo-borda)] my-2" />
 
-                  <h4 className="body-semibold-medio text-center">
+                  <h4 className="body-semibold-pequeno sm:body-semibold-medio text-center">
                     Como se tornar
                   </h4>
 
-                  <p className="body-pequeno text-justify">
+                  <p className="body-muito-pequeno sm:body-pequeno text-justify">
                     Sua forma de ingressar na plataforma é através da sua participação direta na ONG física, onde o Coordenador de Processos irá compartilhar um <strong>link</strong> de acesso.
                   </p>
                 </article>
 
                 {/* Responsável */}
                 <article className="bg-[var(--primario-5)] border-l-4 border-[var(--pastel-rosa-borda)] rounded-lg p-6 shadow-[2px_8px_25px_rgba(0,0,0,0.08)] flex flex-col gap-3">
-                  <h3 className="header-pequeno-tela-inicial text-center">
+                  <h3 className="header-muito-pequeno-tela-inicial sm:header-pequeno-tela-inicial text-center">
                     Responsável pelo beneficiário
                   </h3>
 
-                  <p className="body-pequeno text-justify">
+                  <p className="body-muito-pequeno sm:body-pequeno text-justify">
                     Pode solicitar itens para seus dependentes e realizar a retirada no local de coleta, dentro do prazo definido pelo site.
                   </p>
 
                   <div className="border-t border-[var(--pastel-rosa-borda)] my-2" />
 
-                  <h4 className="body-semibold-medio text-center">
+                  <h4 className="body-semibold-pequeno sm:body-semibold-medio text-center">
                     Como se tornar
                   </h4>
 
-                  <p className="body-pequeno text-justify">
+                  <p className="body-muito-pequeno sm:body-pequeno text-justify">
                     É necessário preencher um <strong>cadastro</strong> com renda e familiares. Após isso, é preciso aguardar a aprovação.
                   </p>
                 </article>
 
                 {/* Coordenador */}
                 <article className="bg-[var(--primario-5)] border-l-4 border-[var(--pastel-verde-borda)] rounded-lg p-6 shadow-[2px_8px_25px_rgba(0,0,0,0.08)] flex flex-col gap-3 md:col-span-2">
-                  <h3 className="header-pequeno-tela-inicial text-center">
+                  <h3 className="header-muito-pequeno-tela-inicial sm:header-pequeno-tela-inicial text-center">
                     Coordenador de processos
                   </h3>
 
-                  <p className="body-pequeno text-justify">
+                  <p className="body-muito-pequeno sm:body-pequeno text-justify">
                     É um usuário responsável pelo cadastro de uma ONG. Seu papel inclui gerar links de cadastro para voluntários, averiguação das avaliações realizadas por voluntários da triagem iniciantes e o monitoramento do impacto social do projeto por meio de relatórios de doações e beneficiários.
                   </p>
 
                   <div className="border-t border-[var(--pastel-verde-borda)] my-2" />
 
-                  <h4 className="body-semibold-medio text-center">
+                  <h4 className="body-semibold-pequeno sm:body-semibold-medio text-center">
                     Como se tornar
                   </h4>
 
-                  <p className="body-pequeno text-justify">
+                  <p className="body-muito-pequeno sm:body-pequeno text-justify">
                     Esse tipo é atribuído apenas após finalizar o cadastro de uma ONG, não podendo ser selecionado diretamente na plataforma.
                   </p>
                 </article>
