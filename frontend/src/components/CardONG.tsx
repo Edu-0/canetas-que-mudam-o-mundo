@@ -124,48 +124,52 @@ function CardONG({ ong }: Props) {
         <>
 
           <div className="border-t border-[var(--base-40)] pt-3 sm:pt-4">
-            <h4 className="body-bold-pequeno text-center mb-2">
+            <h4 className="body-bold-muito-pequeno sm:body-bold-pequeno text-center mb-2">
               Endereço da ONG
             </h4>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-1">
               {ong.cep && (
-                <p className="text-sm sm:body-pequeno"><strong className="text-sm font-semibold sm:body-semibold-pequeno">CEP:</strong> {formatarCEP(ong.cep)}</p>
+                <p className="body-muito-pequeno sm:body-pequeno"><strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">CEP:</strong> {formatarCEP(ong.cep)}</p>
               )}
               
-              <p className="body-muito-pequeno sm:body-pequeno"><strong className="body-semibold-pequeno sm:body-semibold-pequeno">Bairro:</strong> {ong.bairro}</p>
-              <p className="body-muito-pequeno sm:body-pequeno"><strong className="body-semibold-pequeno sm:body-semibold-muito-pequeno">Estado:</strong> {ong.estado}</p>
-              <p className="body-muito-pequeno sm:body-pequeno"><strong className="body-semibold-pequeno sm:body-semibold-muito-pequeno">Rua:</strong> {ong.rua}</p>
-              <p className="body-muito-pequeno sm:body-pequeno"><strong className="body-semibold-pequeno sm:body-semibold-muito-pequeno">Cidade:</strong> {ong.cidade}</p>
-              <p className="body-muito-pequeno sm:body-pequeno"><strong className="body-semibold-pequeno sm:body-semibold-muito-pequeno">Número:</strong> {ong.numero || "Não informado"}</p>
+              <p className="body-muito-pequeno sm:body-pequeno"><strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Bairro:</strong> {ong.bairro}</p>
+              <p className="body-muito-pequeno sm:body-pequeno"><strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Estado:</strong> {ong.estado}</p>
+              <p className="body-muito-pequeno sm:body-pequeno"><strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Rua:</strong> {ong.rua}</p>
+              <p className="body-muito-pequeno sm:body-pequeno"><strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Cidade:</strong> {ong.cidade}</p>
+              <p className="body-muito-pequeno sm:body-pequeno"><strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Número:</strong> {ong.numero || "Não informado"}</p>
               {ong.complemento && (
-                <p className="body-muito-pequeno sm:body-pequeno"><strong className="body-semibold-pequeno sm:body-semibold-muito-pequeno">Complemento:</strong> {ong.complemento}</p>
+                <p className="body-muito-pequeno sm:body-pequeno"><strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Complemento:</strong> {ong.complemento}</p>
               )}
               
             </div>
           </div>
 
           <div className="border-t border-[var(--base-40)] pt-3 sm:pt-4">
-            <h4 className="body-bold-medio text-center mb-2">
+            <h4 className="body-bold-muito-pequeno sm:body-bold-pequeno text-center mb-2">
               Informações de contato
             </h4>
 
-            <p className="body-muito-pequeno sm:body-pequeno"><strong className="body-semibold-pequeno sm:body-semibold-muito-pequeno">Telefone:</strong> {formatarTelefone(ong.telefone)}</p>
-            <p className="body-muito-pequeno sm:body-pequeno break-words"><strong className="body-semibold-pequeno sm:body-semibold-muito-pequeno">Email:</strong> {ong.email}</p>
-            <p className="body-muito-pequeno sm:body-pequeno"><strong className="body-semibold-pequeno sm:body-semibold-muito-pequeno">Coordenador de processos: </strong>{ong.nome_coordenador || "Não informado"}</p>
+            <div className="flex flex-col gap-2 sm:gap-1">
+              <p className="body-muito-pequeno sm:body-pequeno"><strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Telefone:</strong> {formatarTelefone(ong.telefone)}</p>
+              <p className="body-muito-pequeno sm:body-pequeno break-words"><strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Email:</strong> {ong.email}</p>
+              <p className="body-muito-pequeno sm:body-pequeno"><strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Coordenador de processos: </strong>{ong.nome_coordenador || "Não informado"}</p>
+            </div>
           </div>
 
           <div className="border-t border-[var(--base-40)] pt-3 sm:pt-4">
-            <h4 className="body-bold-medio text-center mb-2">
+            <h4 className="body-bold-muito-pequeno sm:body-bold-pequeno text-center mb-2">
               Funcionamento da ONG
             </h4>
 
-            <p className="body-muito-pequeno sm:body-pequeno"><strong className="body-semibold-pequeno sm:body-semibold-muito-pequeno">Dias da semana:</strong> {formatarDias(ong.diasFuncionamento)}</p>
-            <p className="body-muito-pequeno sm:body-pequeno"><strong className="body-semibold-pequeno sm:body-semibold-muito-pequeno">Horário:</strong> {formatarHorario(ong.horarioInicio)} às {formatarHorario(ong.horarioFim)}</p>
+            <div className="flex flex-col gap-2 sm:gap-1">
+              <p className="body-muito-pequeno sm:body-pequeno"><strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Dias da semana:</strong> {formatarDias(ong.diasFuncionamento)}</p>
+              <p className="body-muito-pequeno sm:body-pequeno"><strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Horário:</strong> {formatarHorario(ong.horarioInicio)} às {formatarHorario(ong.horarioFim)}</p>
+            </div>
           </div>
 
           <div className="border-t border-[var(--base-40)] pt-3 sm:pt-4">
-            <h4 className="body-bold-medio text-center mb-2">
+            <h4 className="body-bold-muito-pequeno sm:body-bold-pequeno text-center mb-2">
               Sobre a ONG
             </h4>
 
@@ -175,16 +179,16 @@ function CardONG({ ong }: Props) {
           </div>
 
           <div className="border-t border-[var(--base-40)] pt-3 sm:pt-4">
-            <h4 className="body-bold-medio text-center mb-2">
+            <h4 className="body-bold-muito-pequeno sm:body-bold-pequeno text-center mb-2">
               Redes sociais
             </h4>
 
             {ong.instagram || ong.facebook || ong.site ? (
-              <div className="flex flex-col gap-2 body-semibold-pequeno">
+              <div className="flex flex-col gap-2 sm:gap-1">
 
                 {ong.instagram && (
                   <p className="body-muito-pequeno sm:body-pequeno">
-                    <strong className="body-semibold-pequeno sm:body-semibold-muito-pequeno">Instagram:</strong>{" "}
+                    <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Instagram:</strong>{" "}
                     <a aria-label="Instagram da ONG" href={ong.instagram} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-800 underline break-all focus-acessivel">
                       {ong.instagram}
                     </a>
@@ -193,7 +197,7 @@ function CardONG({ ong }: Props) {
 
                 {ong.facebook && (
                   <p className="body-muito-pequeno sm:body-pequeno">
-                    <strong className="body-semibold-pequeno sm:body-semibold-muito-pequeno">Facebook:</strong>{" "}
+                    <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Facebook:</strong>{" "}
                     <a aria-label="Facebook da ONG" href={ong.facebook} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-800 underline break-all focus-acessivel">
                       {ong.facebook}
                     </a>
@@ -202,7 +206,7 @@ function CardONG({ ong }: Props) {
 
                 {ong.site && ( 
                   <p className="body-muito-pequeno sm:body-pequeno">
-                    <strong className="body-semibold-pequeno sm:body-semibold-muito-pequeno">Site:</strong>{" "}
+                    <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Site:</strong>{" "}
                     <a aria-label="Site da ONG" href={ong.site} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-800 underline break-all focus-acessivel">
                       {ong.site}
                     </a>

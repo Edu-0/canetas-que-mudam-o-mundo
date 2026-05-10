@@ -36,7 +36,6 @@ function LinkParaVoluntario() {
 
   const [busca, setBusca] = useState("");
   const [ordem, setOrdem] = useState<"novo" | "antigo">("novo");
-  const [status, setStatus] = useState<"todos" | "ativos" | "desativados">("todos");
   const [erroBusca, setErroBusca] = useState("");
   const [tocadoBusca, setTocadoBusca] = useState(false);
 
@@ -95,26 +94,26 @@ function LinkParaVoluntario() {
     return "";
   };
 
-  function calcularTempoExpiracao(data?: string) {
-    if (!data) return { texto: "Sem data", tipo: "antigo" };
+  function formatarDataHora(data?: string) {
+    if (!data) return "N/A";
 
-    const criado = new Date(data);
-    const expira = new Date(criado.getTime() + 2 * 60 * 60 * 1000); // +2h
-    const agora = new Date();
+    // normaliza o formato do Python → ISO
+    const iso = data.replace(" ", "T");
 
-    const diffMs = expira.getTime() - agora.getTime();
-    const diffMin = Math.floor(diffMs / (1000 * 60));
+    const d = new Date(iso);
 
-    if (diffMs <= 0) {
-      return { texto: "Expirado", tipo: "antigo" };
-    }
+    const dataFormatada = d.toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
 
-    if (diffMin <= 60) {
-      return { texto: `Expira em ${diffMin} min`, tipo: "novo" };
-    }
+    const horaFormatada = d.toLocaleTimeString("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
 
-    const horas = Math.floor(diffMin / 60);
-    return { texto: `Expira em ${horas}h`, tipo: "recente" };
+    return `${dataFormatada} às ${horaFormatada}`;
   }
 
   useEffect(() => {
@@ -223,13 +222,8 @@ function LinkParaVoluntario() {
 
                   {linksPagina.map((t, index) => {
 
-                    const criadoEm = t.data_criacao
-                      ? new Date(t.data_criacao).toLocaleString()
-                      : "N/A";
-
-                    const expiraEm = t.data_criacao
-                      ? new Date(new Date(t.data_criacao).getTime() + 2 * 60 * 60 * 1000).toLocaleString()
-                      : "N/A";
+                    const criadoEm = formatarDataHora(t.data_criacao);
+                    const expiraEm = formatarDataHora(t.data_expiracao);
 
                     return (
 
@@ -245,22 +239,24 @@ function LinkParaVoluntario() {
                             {t.link}
                           </button>
                           
-                          <div className="flex flex-col sm:flex-row sm:justify-between gap-1 mt-1">
-                            <div >
+                          <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                            <div className="mt-1">
                               <span className="body-muito-pequeno">
                                 <strong className="body-semibold-muito-pequeno">Criado em: </strong>{criadoEm}
                               </span>
                             </div>
 
-                            <span className="body-muito-pequeno">
-                              <strong className="body-semibold-muito-pequeno">Expira em: </strong>{expiraEm}
-                            </span>
+                            <div className="mt-1">
+                              <span className="body-muito-pequeno">
+                                <strong className="body-semibold-muito-pequeno">Expira em: </strong>{expiraEm}
+                              </span>
+                            </div>
                           </div>
 
                         </div>
 
                         {/* direita */}
-                        <div className="flex flex-wrap gap-3 sm:gap-2 sm:justify-center mt-2 sm:mt-0">
+                        <div className="flex flex-row items-center justify-between gap-2 mt-2 sm:mt-0 w-full sm:w-auto">
 
                           <Botao variante="botao-pequeno-editar" aoClicar={() => copiarLink(t.link)}>Copiar</Botao>
 
@@ -322,8 +318,8 @@ function LinkParaVoluntario() {
                 descricao="Tem certeza que deseja fazer cadastro com esse link? Você será deslogado e redirecionado para a página de cadastro."
                 botaoCancelar="Cancelar"
                 botaoConfirmar="Confirmar"
-                varianteCancelar="confirmar"
-                varianteConfirmar="cancelar"
+                varianteCancelar="cancelar"
+                varianteConfirmar="confirmar"
                 onCancelar={() => setMostrarModalCadastro(false)}
                 onConfirmar={() => {
                   if (!linkSelecionado) return;

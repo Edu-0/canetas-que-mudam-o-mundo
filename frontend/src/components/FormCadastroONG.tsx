@@ -650,7 +650,7 @@ function FormCadastroONG(props: Props) {
 
       {/* Nome */}
       <div>
-        <label className="body-semibold-pequeno" htmlFor="nome">Nome da ONG <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
+        <label className="body-semibold-muito-pequeno sm:body-semibold-pequeno" htmlFor="nome">Nome da ONG <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
         <input id="nome" type="text" maxLength={100} required className={inputClass("nome", nome)} autoComplete="name" placeholder="Digite aqui o nome da ONG" value={nome} onChange={(e) => atualizarCampo("nome", e.target.value)} aria-invalid={!!erros.nome} aria-describedby={erros.nome ? "erro-nome" : undefined} onBlur={() => {marcarComoTocado("nome"); validarUmCampo("nome");}}/>
 
         {erros.nome && tocados.nome && <p id="erro-nome" aria-live="polite" className="text-[var(--cor-resposta-errada)] text-sm">{erros.nome}</p>}
@@ -658,7 +658,7 @@ function FormCadastroONG(props: Props) {
 
       {/* CNPJ */}
       <div>
-        <label className="body-semibold-pequeno" htmlFor="cnpj">CNPJ <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
+        <label className="body-semibold-muito-pequeno sm:body-semibold-pequeno" htmlFor="cnpj">CNPJ <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
 
         <IMaskInput mask="00.000.000/0000-00" id="cnpj" type="text" required className={inputClass("cnpj", cnpj)} 
         autoComplete="off" placeholder="Digite aqui o CNPJ da ONG 00.000.000/0000-00" value={cnpj} onAccept={(value) => atualizarCampo("cnpj", value)} onBlur={() => {marcarComoTocado("cnpj"); validarUmCampo("cnpj");}} aria-invalid={!!erros.cnpj} aria-describedby={erros.cnpj ? "erro-cnpj" : undefined}/>
@@ -669,13 +669,13 @@ function FormCadastroONG(props: Props) {
       {/* linha separadora */}
       <div className="border-t border-[var(--base-40)] my-2" />
 
-      <h2 className="body-semibold-medio text-center w-full my-0">
+      <h2 className="body-semibold-pequeno sm:body-semibold-medio text-center w-full my-0">
           Endereço da ONG
       </h2>
 
       {/* CEP */}
       <div>
-        <label className="body-semibold-pequeno" htmlFor="cep">CEP</label>
+        <label className="body-semibold-muito-pequeno sm:body-semibold-pequeno" htmlFor="cep">CEP</label>
 
         <IMaskInput mask="00000-000" id="cep" type="text" className={inputClass("cep", cep)} 
         autoComplete="postal-code" placeholder="Digite aqui o CEP da ONG 00000-000" value={cep} onAccept={(value) => atualizarCampo("cep", value)} onBlur={() => {marcarComoTocado("cep"); validarUmCampo("cep"); buscarCep(cep);}} aria-invalid={!!erros.cep} aria-describedby={erros.cep ? "erro-cep" : undefined}/>
@@ -685,7 +685,7 @@ function FormCadastroONG(props: Props) {
 
       <div className="grid md:grid-cols-2 gap-6 mb-4">
         <div>
-          <label className="body-semibold-pequeno" htmlFor="estado">Estado <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
+          <label className="body-semibold-muito-pequeno sm:body-semibold-pequeno" htmlFor="estado">Estado <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
 
           <select id="estado" autoComplete="address-level1" className={inputClass("estado", estado)} value={estado} onChange={(e) => {atualizarCampo("estado", e.target.value); setCidade(""); if (tocados.estado) validarUmCampo("estado"); }} onBlur={() => { marcarComoTocado("estado"); validarUmCampo("estado"); }}>
             <option value="">Selecione o estado</option>
@@ -721,7 +721,7 @@ function FormCadastroONG(props: Props) {
         </div>
 
         <div>
-          <label className="body-semibold-pequeno" htmlFor="cidade">Cidade <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
+          <label className="body-semibold-muito-pequeno sm:body-semibold-pequeno" htmlFor="cidade">Cidade <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
 
           <select id="cidade" autoComplete="address-level2" className={inputClass("cidade", cidade)} value={cidade} onChange={(e) => {atualizarCampo("cidade", e.target.value); if (tocados.cidade) validarUmCampo("cidade"); }} onBlur={() => { marcarComoTocado("cidade"); validarUmCampo("cidade");}} disabled={!estado}>
             <option value="">
@@ -739,7 +739,7 @@ function FormCadastroONG(props: Props) {
         </div>
 
         <div>
-          <label className="body-semibold-pequeno" htmlFor="bairro">Bairro <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
+          <label className="body-semibold-muito-pequeno sm:body-semibold-pequeno" htmlFor="bairro">Bairro <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
 
           <input id="bairro" type="text" maxLength={100} required className={inputClass("bairro", bairro)} autoComplete="address-line1" placeholder="Digite aqui o nome do bairro onde está a ONG" value={bairro} onChange={(e) => atualizarCampo("bairro", e.target.value)} aria-invalid={!!erros.bairro} aria-describedby={erros.bairro ? "erro-bairro" : undefined} onBlur={() => {marcarComoTocado("bairro"); validarUmCampo("bairro");}}/>
 
@@ -747,7 +747,7 @@ function FormCadastroONG(props: Props) {
         </div>
 
         <div>
-          <label className="body-semibold-pequeno" htmlFor="rua">Rua <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
+          <label className="body-semibold-muito-pequeno sm:body-semibold-pequeno" htmlFor="rua">Rua <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
 
           <input id="rua" type="text" maxLength={100} required className={inputClass("rua", rua)} autoComplete="street-address" placeholder="Digite aqui o nome da rua onde está a ONG" value={rua} onChange={(e) => {atualizarCampo("rua", e.target.value); if (tocados.rua) validarUmCampo("rua"); }} aria-invalid={!!erros.rua} aria-describedby={erros.rua ? "erro-rua" : undefined} onBlur={() => {marcarComoTocado("rua"); validarUmCampo("rua");}}/>
 
@@ -755,7 +755,7 @@ function FormCadastroONG(props: Props) {
         </div>
 
         <div>
-          <label className="body-semibold-pequeno" htmlFor="numero">Número </label>
+          <label className="body-semibold-muito-pequeno sm:body-semibold-pequeno" htmlFor="numero">Número </label>
 
           <input id="numero" type="text" maxLength={10} className={inputClass("numero", numero)} autoComplete="address-line2" placeholder="Digite aqui o número do endereço onde está a ONG" value={numero} onChange={(e) => atualizarCampo("numero", e.target.value)} aria-invalid={!!erros.numero} aria-describedby={erros.numero ? "erro-numero" : undefined} onBlur={() => {marcarComoTocado("numero"); validarUmCampo("numero");}}/>
 
@@ -763,7 +763,7 @@ function FormCadastroONG(props: Props) {
         </div>
 
         <div>
-          <label className="body-semibold-pequeno" htmlFor="complemento">Complemento</label>
+          <label className="body-semibold-muito-pequeno sm:body-semibold-pequeno" htmlFor="complemento">Complemento</label>
           
           <textarea id="complemento" maxLength={100} className={inputClass("complemento", complemento)} autoComplete="off" placeholder="Digite aqui o complemento do endereço onde está a ONG" value={complemento} onChange={(e) => atualizarCampo("complemento", e.target.value)} aria-invalid={!!erros.complemento} aria-describedby={erros.complemento ? "erro-complemento" : undefined} onBlur={() => {marcarComoTocado("complemento"); validarUmCampo("complemento");}}/>
                 
@@ -774,13 +774,13 @@ function FormCadastroONG(props: Props) {
       {/* linha separadora */}
       <div className="border-t border-[var(--base-40)] my-2" />
 
-      <h2 className="body-semibold-medio text-center w-full my-0">
+      <h2 className="body-semibold-pequeno sm:body-semibold-medio text-center w-full my-0">
           Informações de contato da ONG
       </h2>
 
       {/* Telefone */}
       <div>
-        <label className="body-semibold-pequeno" htmlFor="telefone">Telefone <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
+        <label className="body-semibold-muito-pequeno sm:body-semibold-pequeno" htmlFor="telefone">Telefone <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
         <IMaskInput mask="(00) 00000-0000" id="telefone" type="tel" className={inputClass("telefone", telefone)} 
         autoComplete="tel" placeholder="Digite aqui o telefone da ONG (00) 00000-0000" value={telefone} onAccept={(value) => atualizarCampo("telefone", value)} onBlur={() => {marcarComoTocado("telefone"); validarUmCampo("telefone");}} aria-invalid={!!erros.telefone} aria-describedby={erros.telefone ? "erro-telefone" : undefined} />
 
@@ -789,7 +789,7 @@ function FormCadastroONG(props: Props) {
 
       {/* Email */}
       <div>
-        <label className="body-semibold-pequeno" htmlFor="email">Email <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
+        <label className="body-semibold-muito-pequeno sm:body-semibold-pequeno" htmlFor="email">Email <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
         <input id="email" type="email" maxLength={254} required className={inputClass("email", email)} 
         autoComplete="email" placeholder="Digite aqui o email da ONG" value={email} onChange={(e) => atualizarCampo("email", e.target.value)} aria-invalid={!!erros.email} aria-describedby={erros.email ? "erro-email" : undefined} onBlur={() => {marcarComoTocado("email"); validarUmCampo("email");}}/> 
       
@@ -799,13 +799,13 @@ function FormCadastroONG(props: Props) {
       {/* linha separadora */}
       <div className="border-t border-[var(--base-40)] my-2" />
 
-      <h2 className="body-semibold-medio text-center w-full my-0">
+      <h2 className="body-semibold-pequeno sm:body-semibold-medio text-center w-full my-0">
           Informações sobre o funcionamento da ONG
       </h2>
 
       {/* Dias */}
       <div>
-        <p className="body-semibold-pequeno" id="diasFuncionamento">Dias de funcionamento <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></p>
+        <p className="body-semibold-muito-pequeno sm:body-semibold-pequeno" id="diasFuncionamento">Dias de funcionamento <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></p>
         <div role="group" aria-labelledby="diasFuncionamento">
           <div className="grid grid-cols-2 md:grid-cols-7 gap-2 w-full">
             {diasSemana.map((dia) => (
@@ -831,17 +831,18 @@ function FormCadastroONG(props: Props) {
 
       {/* Horário */}
       <div>
-        <div className="flex gap-4">
+        <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex flex-col flex-1">
-            <label className="body-semibold-pequeno" htmlFor="horarioInicio">Horário de abertura <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
+            <label className="body-semibold-muito-pequeno sm:body-semibold-pequeno" htmlFor="horarioInicio">Horário de abertura <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
             <input id="horarioInicio" type="time" required className={inputClass("horarioInicio", horarioInicio)} autoComplete="off" value={horarioInicio} onChange={(e) => atualizarCampo("horarioInicio", e.target.value)} aria-invalid={!!erros.horarioInicio} aria-describedby={erros.horarioInicio ? "erro-horarioInicio" : undefined} onBlur={() => {marcarComoTocado("horarioInicio"), validarUmCampo("horarioInicio");}}/>
           </div>
 
-          <span className="body-semibold-pequeno flex items-end">até</span>
-          {/* <span className="body-semibold-pequeno flex items-center justify-center px-1">até</span> */}
+          <span className="body-semibold-muito-pequeno sm:body-semibold-pequeno flex items-center justify-center sm:items-end">
+            até
+          </span>
           
           <div className="flex flex-col flex-1">
-            <label className="body-semibold-pequeno" htmlFor="horarioFim">Horário de fechamento <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
+            <label className="body-semibold-muito-pequeno sm:body-semibold-pequeno" htmlFor="horarioFim">Horário de fechamento <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
             <input id="horarioFim" type="time" required className={inputClass("horarioFim", horarioFim)} autoComplete="off" value={horarioFim} onChange={(e) => atualizarCampo("horarioFim", e.target.value)} aria-invalid={!!erros.horarioFim} aria-describedby={erros.horarioFim ? "erro-horarioFim" : undefined} onBlur={() => {marcarComoTocado("horarioFim"), validarUmCampo("horarioFim");}}/>
           </div>
         </div>
@@ -855,13 +856,13 @@ function FormCadastroONG(props: Props) {
       {/* linha separadora */}
       <div className="border-t border-[var(--base-40)] my-2" />
 
-      <h2 className="body-semibold-medio text-center w-full my-0">
+      <h2 className="body-semibold-pequeno sm:body-semibold-medio text-center w-full my-0">
           Texto informativo sobre a ONG
       </h2>
 
       {/* Sobre */}
       <div>
-        <label className="body-semibold-pequeno" htmlFor="sobre">Sobre <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
+        <label className="body-semibold-muito-pequeno sm:body-semibold-pequeno" htmlFor="sobre">Sobre <span className="text-[var(--cor-resposta-obrigatoria)]">*</span></label>
 
         <textarea id="sobre" maxLength={500} required className={inputClass("sobre", sobre)} 
         autoComplete="off" placeholder="Digite aqui informações sobre a ONG..." value={sobre} onChange={(e) => atualizarCampo("sobre", e.target.value)} aria-invalid={!!erros.sobre} aria-describedby={erros.sobre ? "erro-sobre" : undefined} onBlur={() => {marcarComoTocado("sobre"), validarUmCampo("sobre");}}/>
@@ -872,27 +873,27 @@ function FormCadastroONG(props: Props) {
       {/* linha separadora */}
       <div className="border-t border-[var(--base-40)] my-2" />
 
-      <h2 className="body-semibold-medio text-center w-full my-0">
+      <h2 className="body-semibold-pequeno sm:body-semibold-medio text-center w-full my-0">
           Redes sociais e site da ONG
       </h2>
 
       {/* Redes */}
       <div>
-        <label className="body-semibold-pequeno" htmlFor="instagram">Instagram</label>
+        <label className="body-semibold-muito-pequeno sm:body-semibold-pequeno" htmlFor="instagram">Instagram</label>
         <input id="instagram" maxLength={100} type="url" className={inputClass("instagram", instagram)} value={instagram} onChange={(e) => atualizarCampo("instagram", e.target.value)} aria-invalid={!!erros.instagram} aria-describedby={erros.instagram ? "erro-instagram" : undefined} placeholder="https://instagram.com/..." onBlur={() => {marcarComoTocado("instagram"), validarUmCampo("instagram");}}/>
           
         {erros.instagram && tocados.instagram && <p id="erro-instagram" aria-live="polite" className="text-[var(--cor-resposta-errada)] text-sm">{erros.instagram}</p>}
       </div>
 
       <div>
-        <label className="body-semibold-pequeno" htmlFor="facebook">Facebook</label>
+        <label className="body-semibold-muito-pequeno sm:body-semibold-pequeno" htmlFor="facebook">Facebook</label>
 
         <input id="facebook" maxLength={100} type="url" className={inputClass("facebook", facebook)} value={facebook} onChange={(e) => atualizarCampo("facebook", e.target.value)} aria-invalid={!!erros.facebook} aria-describedby={erros.facebook ? "erro-facebook" : undefined} placeholder="https://facebook.com/..." onBlur={() => {marcarComoTocado("facebook"), validarUmCampo("facebook");}}/>
 
         {erros.facebook && tocados.facebook && <p id="erro-facebook" aria-live="polite" className="text-[var(--cor-resposta-errada)] text-sm">{erros.facebook}</p>}
       </div>
       <div>
-        <label className="body-semibold-pequeno" htmlFor="site">Site</label>
+        <label className="body-semibold-muito-pequeno sm:body-semibold-pequeno" htmlFor="site">Site</label>
 
         <input id="site" maxLength={100} type="url" className={inputClass("site", site)} value={site} onChange={(e) => atualizarCampo("site", e.target.value)} aria-invalid={!!erros.site} aria-describedby={erros.site ? "erro-site" : undefined} placeholder="https://ongsite.com/..." onBlur={() => {marcarComoTocado("site"), validarUmCampo("site");}}/>
         

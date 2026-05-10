@@ -197,55 +197,55 @@ function Conta() {
                 {dadosNormalizados ? (
                   <>
                     <div className="flex flex-col sm:flex-row sm:items-start sm:gap-2">
-                      <dt className="body-semibold-pequeno whitespace-nowrap">Nome:</dt>
-                      <dd className="body-pequeno break-words">{dadosNormalizados?.nome_completo || "Nome não informado"}</dd>
+                      <dt className="body-semibold-muito-pequeno sm:body-semibold-pequeno whitespace-nowrap">Nome:</dt>
+                      <dd className="body-muito-pequeno sm:body-pequeno break-words">{dadosNormalizados?.nome_completo || "Nome não informado"}</dd>
                     </div>
 
                     <div className="flex flex-col sm:flex-row sm:items-start sm:gap-2">
-                      <dt className="body-semibold-pequeno whitespace-nowrap">Data de nascimento:</dt>
-                      <dd className="body-pequeno">{formatarData(dadosNormalizados?.data_nascimento) || "Data de nascimento não informada"}</dd>
+                      <dt className="body-semibold-muito-pequeno sm:body-semibold-pequeno whitespace-nowrap">Data de nascimento:</dt>
+                      <dd className="body-muito-pequeno sm:body-pequeno">{formatarData(dadosNormalizados?.data_nascimento) || "Data de nascimento não informada"}</dd>
                     </div>
 
                     <div className="flex flex-col sm:flex-row sm:items-start sm:gap-2">
-                      <dt className="body-semibold-pequeno whitespace-nowrap flex-col sm:flex-row sm:items-center sm:gap-2">CPF:</dt>
-                      <dd className="body-pequeno">{formatarCPF(dadosNormalizados?.cpf)}</dd>
+                      <dt className="body-semibold-muito-pequeno sm:body-semibold-pequeno whitespace-nowrap flex-col sm:flex-row sm:items-center sm:gap-2">CPF:</dt>
+                      <dd className="body-muito-pequeno sm:body-pequeno">{formatarCPF(dadosNormalizados?.cpf)}</dd>
                     </div>
 
                     <div className="flex flex-col sm:flex-row sm:items-start sm:gap-2">
-                      <dt className="body-semibold-pequeno whitespace-nowrap flex-col sm:flex-row sm:items-center sm:gap-2">CEP:</dt>
-                      <dd className="body-pequeno">{formatarCEP(dadosNormalizados?.cep)}</dd>
+                      <dt className="body-semibold-muito-pequeno sm:body-semibold-pequeno whitespace-nowrap flex-col sm:flex-row sm:items-center sm:gap-2">CEP:</dt>
+                      <dd className="body-muito-pequeno sm:body-pequeno">{formatarCEP(dadosNormalizados?.cep)}</dd>
                     </div>
 
                     <div className="flex flex-col sm:flex-row sm:items-start sm:gap-2">
-                      <dt className="body-semibold-pequeno whitespace-nowrap flex-col sm:flex-row sm:items-center sm:gap-2">Telefone:</dt>
-                      <dd className="body-pequeno">{formatarTelefone(dadosNormalizados?.telefone)}</dd>
+                      <dt className="body-semibold-muito-pequeno sm:body-semibold-pequeno whitespace-nowrap flex-col sm:flex-row sm:items-center sm:gap-2">Telefone:</dt>
+                      <dd className="body-muito-pequeno sm:body-pequeno">{formatarTelefone(dadosNormalizados?.telefone)}</dd>
                     </div>
 
                     <div className="flex flex-col sm:flex-row sm:items-start sm:gap-2">
-                      <dt className="body-semibold-pequeno whitespace-nowrap flex-col sm:flex-row sm:items-center sm:gap-2">Email:</dt>
-                      <dd className="body-pequeno">{dadosNormalizados?.email || "Email não informado"}</dd>
+                      <dt className="body-semibold-muito-pequeno sm:body-semibold-pequeno whitespace-nowrap flex-col sm:flex-row sm:items-center sm:gap-2">Email:</dt>
+                      <dd className="body-muito-pequeno sm:body-pequeno break-all">{dadosNormalizados?.email || "Email não informado"}</dd>
                     </div>
 
                     <div className="flex flex-col sm:flex-row sm:items-start sm:gap-2">
-                      <dt className="body-semibold-pequeno whitespace-nowrap flex-col sm:flex-row sm:items-center sm:gap-2">Senha:</dt>
-                      <dd className="body-pequeno">••••••••</dd>
+                      <dt className="body-semibold-muito-pequeno sm:body-semibold-pequeno whitespace-nowrap flex-col sm:flex-row sm:items-center sm:gap-2">Senha:</dt>
+                      <dd className="body-muito-pequeno sm:body-pequeno">••••••••</dd>
                     </div>
 
                     <div className="flex flex-col sm:flex-row sm:items-start sm:gap-2">
-                      <dt className="body-semibold-pequeno whitespace-nowrap flex-col sm:flex-row sm:items-center sm:gap-2">Data de cadastro:</dt>
-                      <dd className="body-pequeno break-words">{formatarDataHora(dadosNormalizados?.data_cadastro) || "Data de cadastro não informada"}</dd>
+                      <dt className="body-semibold-muito-pequeno sm:body-semibold-pequeno whitespace-nowrap flex-col sm:flex-row sm:items-center sm:gap-2">Data de cadastro:</dt>
+                      <dd className="body-muito-pequeno sm:body-pequeno break-words">{formatarDataHora(dadosNormalizados?.data_cadastro) || "Data de cadastro não informada"}</dd>
                     </div>
 
                     <div className="flex flex-col sm:flex-row sm:items-start sm:gap-2">
-                      <dt className="body-semibold-pequeno whitespace-nowrap flex-col sm:flex-row sm:items-center sm:gap-2">Data de edição da conta:</dt>
-                      <dd className="body-pequeno break-words">{formatarDataHora(dadosNormalizados?.data_edicao_conta) || "A conta nunca foi editada"}</dd>
+                      <dt className="body-semibold-muito-pequeno sm:body-semibold-pequeno whitespace-nowrap flex-col sm:flex-row sm:items-center sm:gap-2">Data de edição da conta:</dt>
+                      <dd className="body-muito-pequeno sm:body-pequeno break-words">{formatarDataHora(dadosNormalizados?.data_edicao_conta) || "A conta nunca foi editada"}</dd>
                     </div>
 
                     {dadosNormalizados?.tipos && dadosNormalizados.tipos.length > 0 && (
                       <>
                         <div className="flex flex-col sm:flex-row sm:items-start sm:gap-2">
-                          <dt className="body-semibold-pequeno whitespace-nowrap">Tipo de conta:</dt>
-                          <dd className="body-pequeno break-words">{dadosNormalizados.tipos.join(", ")}</dd>
+                          <dt className="body-semibold-muito-pequeno sm:body-semibold-pequeno whitespace-nowrap">Tipo de conta:</dt>
+                          <dd className="body-muito-pequeno sm:body-pequeno break-words">{dadosNormalizados.tipos.join(", ")}</dd>
                         </div>
                       </>
                     )}
@@ -315,13 +315,13 @@ function Conta() {
                     Adicione o seu tipo de usuário
                   </h3>
 
-                  <p className="body-pequeno text-center mb-6">
+                  <p className="body-muito-pequeno sm:body-pequeno text-center mb-6">
                     Com o/s tipo/s de usuário/s escolhidos, você poderá acessar as funcionalidades específicas de cada tipo de usuário!
                   </p>
 
                   <p className="body-muito-pequeno text-left mb-6">
                     - Alguns tipos de usuário são exclusivos.<br />
-                    - Ao se tornar <strong>Coordenador de Processos</strong> ou <strong>Voluntário da triagem</strong>, você não poderá ter outros tipos.<br />
+                    - Ao se tornar <strong>Coordenador de Processos</strong>, você não poderá ter outros tipos.<br />
                     - E, se você for <strong>Doador</strong> ou <strong>Responsável pelo beneficiário</strong>, não poderá cadastrar uma ONG.<br />
                   </p>
                   
@@ -390,11 +390,11 @@ function Conta() {
                     Edição das informações da ONG
                   </h3>
 
-                  <p className="body-pequeno text-center mb-6">
+                  <p className="body-muito-pequeno sm:body-pequeno text-center mb-6">
                     No botão abaixo, você pode editar as informações da ONG cadastrada.
                   </p>
 
-                  <Botao variante="editar" aria-label="Botão para ir para a edição da ONG" aoClicar={() => navigate("/conta/editar-ong")} className="w-full">Editar informações da ONG</Botao>
+                  <Botao variante="editar" aria-label="Botão para ir para a edição da ONG" aoClicar={() => navigate("/conta/editar-ong")} className="w-full">Editar informações</Botao>
                 </>
               )}
 
@@ -406,7 +406,7 @@ function Conta() {
                     Edição da Renda e Familiares
                   </h3>
 
-                  <p className="body-pequeno text-center mb-6">
+                  <p className="body-muito-pequeno sm:body-pequeno text-center mb-6">
                     No botão abaixo, você pode gerenciar suas informações de renda e composição familiar.
                   </p>
 

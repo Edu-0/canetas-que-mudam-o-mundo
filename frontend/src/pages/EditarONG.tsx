@@ -389,7 +389,7 @@ function EditarONG() {
               <div className="mt-12 border-t border-[var(--base-40)] my-2" />
 
               <div>
-                <p className="mt-8 body-semibold-pequeno text-center">Gostaria de excluir a ONG?</p>
+                <p className="mt-8 body-semibold-pequeno sm:body-semibold-medio text-center">Gostaria de excluir a ONG?</p>
               </div>
               <div className="flex align-center mt-4 w-48 mx-auto">
                 <Botao variante="cancelar"  aria-label="Botão para excluir ONG"  aoClicar={() => setMostrarModalExcluir(true)}>
