@@ -5,10 +5,12 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Botao from "../components/Botao";
 import Toast from "../components/Toast";
+import ModalConfirmacao from "../components/ModalConfirmacao";
 import logo from "../assets/logo.svg";
 import { atualizarTiposUsuario, DadosUsuario, obterPerfil, criarFamiliar, obterFamiliares, atualizarFamiliar, deletarFamiliar } from "../services/usuarioService";
 import { mapearTipo, TipoUsuario, useUsuario } from "../context/UserContext";
 import { Familiar } from "../types/Familiar";
+import { validarCampoFamiliar } from "../utils/validacoesResponsavel";
 
 function CadastroBeneficiario() {
   const navigate = useNavigate();
@@ -17,6 +19,8 @@ function CadastroBeneficiario() {
   const [carregando, setCarregando] = useState(false);
   const location = useLocation();
   const dadosResponsavel = location.state?.dadosResponsavel;
+  const [modalAberto, setModalAberto] = useState(false);
+  const [tentarSair, setTentarSair] = useState(false);
 
   const [familiares, setFamiliares] = useState<Familiar[]>([
     {
@@ -31,6 +35,9 @@ function CadastroBeneficiario() {
   ]);
 
   const [familiaresOriginais, setFamiliaresOriginais] = useState<Familiar[]>([]);
+
+  const [erros, setErros] = useState<Record<number, Record<string, string>>>({});
+  const [tocados, setTocados] = useState<Record<number, Record<string, boolean>>>({});
 
   // Carregar familiares existentes ao montar o componente
   useEffect(() => {
@@ -115,12 +122,35 @@ function CadastroBeneficiario() {
     } else {
       const campo = name as keyof Omit<Familiar, "documentos">;
 
+      // Limites de caracteres
+      const limites: Record<string, number> = {
+        nome: 100,
+        parentesco: 50,
+      };
+
+      let valorLimitado = value;
+      if (limites[campo] && value.length > limites[campo]) {
+        valorLimitado = value.slice(0, limites[campo]);
+      }
+
       if (campo === "beneficiario") {
         novos[index].beneficiario = value === "true";
       } else if (campo === "renda") {
         novos[index].renda = parseFloat(value) || 0;
       } else {
-        novos[index][campo] = value as any;
+        novos[index][campo] = valorLimitado as any;
+      }
+
+      // Validar e atualizar erros
+      if (tocados[index]?.[campo]) {
+        const erro = validarCampoFamiliar(campo as keyof typeof novos[index], novos[index]);
+        setErros((prev) => ({
+          ...prev,
+          [index]: {
+            ...prev[index] || {},
+            [campo]: erro,
+          },
+        }));
       }
     }
 
@@ -131,6 +161,43 @@ function CadastroBeneficiario() {
     const novos = [...familiares];
     novos[iFam].documentos.splice(iArq, 1);
     setFamiliares(novos);
+  }
+
+  function handleBlur(index: number, campo: string) {
+    setTocados((prev) => ({
+      ...prev,
+      [index]: {
+        ...prev[index] || {},
+        [campo]: true,
+      },
+    }));
+
+    const erro = validarCampoFamiliar(campo as any, familiares[index]);
+    setErros((prev) => ({
+      ...prev,
+      [index]: {
+        ...prev[index] || {},
+        [campo]: erro,
+      },
+    }));
+  }
+
+  function validarFamiliarCompleto(familiar: Familiar): boolean {
+    const novasErros: Record<string, string> = {};
+    const campos = ["nome", "dataNascimento", "cpf", "parentesco", "renda"];
+
+    campos.forEach((campo) => {
+      const erro = validarCampoFamiliar(campo as any, familiar);
+      if (erro) {
+        novasErros[campo] = erro;
+      }
+    });
+
+    if (familiar.documentos.length === 0) {
+      novasErros["documentos"] = "Selecione pelo menos um arquivo";
+    }
+
+    return Object.keys(novasErros).length === 0;
   }
 
   function removerFamiliar(index: number) {
@@ -158,7 +225,13 @@ function CadastroBeneficiario() {
   }
 
   function handleCancelar() {
-    navigate(-1);
+    const temMudancas = JSON.stringify(familiares) !== JSON.stringify(familiaresOriginais);
+    if (temMudancas) {
+      setTentarSair(true);
+      setModalAberto(true);
+    } else {
+      navigate(-1);
+    }
   }
 
   // Converter data de DD/MM/YYYY para YYYY-MM-DD
@@ -175,6 +248,27 @@ function CadastroBeneficiario() {
     e.preventDefault();
 
     try {
+      // Validar todos os familiares
+      for (let i = 0; i < familiares.length; i++) {
+        if (!validarFamiliarCompleto(familiares[i])) {
+          setMensagem("Por favor, preencha todos os campos corretamente");
+          // Marcar todos como tocados para mostrar erros
+          const todosTocados: Record<number, Record<string, boolean>> = {};
+          familiares.forEach((_, idx) => {
+            todosTocados[idx] = {
+              nome: true,
+              dataNascimento: true,
+              cpf: true,
+              parentesco: true,
+              renda: true,
+              documentos: true,
+            };
+          });
+          setTocados(todosTocados);
+          return;
+        }
+      }
+
       setCarregando(true);
 
       // Separar familiares novos (sem id) dos existentes (com id)
@@ -211,6 +305,7 @@ function CadastroBeneficiario() {
         }
 
         await criarFamiliar(responsavelId, dadosParaEnviar);
+        setMensagem(`${familiaresNovos.length} familiar(es) criado(s) com sucesso!`);
       }
 
       // Atualizar familiares existentes que foram modificados
@@ -244,17 +339,20 @@ function CadastroBeneficiario() {
       // Deletar familiares que foram removidos
       for (const familiar of familiaresdeletados) {
         await deletarFamiliar(familiar.id!);
+        setMensagem(`Familiar removido com sucesso!`);
       }
 
       setMensagem("Familiares atualizados com sucesso!");
 
       // Navegar para confirmar
-      navigate("/confirmar-familiares", {
-        state: { 
-          familiares,
-          dadosResponsavel
-        },
-      });
+      setTimeout(() => {
+        navigate("/confirmar-familiares", {
+          state: { 
+            familiares,
+            dadosResponsavel
+          },
+        });
+      }, 1500);
 
     } catch (error: any) {
       console.error("Erro ao salvar familiares:", error);
@@ -268,10 +366,28 @@ function CadastroBeneficiario() {
     <div className="min-h-screen flex flex-col bg-[var(--base-5)]">
       <Header />
 
-      <main className="flex-1 pt-24 pb-12">
-        <div className="w-full px-6 md:px-20 flex flex-col gap-12">
+      <main className="flex-1 pt-20 pb-12 px-3 sm:px-6 md:px-20">
+        <div className="w-full flex flex-col gap-12">
 
-          <Toast mensagem={mensagem} tipo="sucesso" />
+          <Toast mensagem={mensagem} tipo={mensagem.includes("Erro") ? "erro" : "sucesso"} />
+
+          <ModalConfirmacao
+            aberto={modalAberto}
+            titulo="Descartar alterações?"
+            descricao="Você tem alterações não salvas. Tem certeza que deseja sair?"
+            botaoConfirmar="Sair sem salvar"
+            botaoCancelar="Continuar editando"
+            onConfirmar={() => {
+              setModalAberto(false);
+              navigate(-1);
+            }}
+            onCancelar={() => {
+              setModalAberto(false);
+              setTentarSair(false);
+            }}
+            varianteConfirmar="cancelar"
+            varianteCancelar="confirmar"
+          />
 
           {/* Topo */}
           <div className="flex flex-col items-center text-center gap-3">
@@ -286,9 +402,9 @@ function CadastroBeneficiario() {
 
           {/* Card */}
           <div className="flex justify-center">
-            <div className="w-full max-w-5xl bg-[var(--primario-5)] border border-[var(--base-20)] rounded-2xl shadow-lg p-8">
+            <div className="w-full max-w-5xl bg-[var(--primario-5)] border border-[var(--base-20)] rounded-2xl shadow-lg p-6 sm:p-8">
 
-              <form onSubmit={handleSubmit} className="flex flex-col gap-8">
+              <form onSubmit={handleSubmit} className="flex flex-col gap-8" noValidate>
 
                 {familiares.map((familiar, index) => (
                   <div
@@ -297,17 +413,17 @@ function CadastroBeneficiario() {
                   >
 
                     {/* Header */}
-                    <div className="flex justify-between items-center mb-4">
-                      <div className="flex items-center gap-3">
+                    <div className="flex justify-between items-center mb-4 gap-2">
+                      <div className="flex items-center gap-3 flex-wrap">
                         <h3 className="font-semibold text-[var(--base-80)]">
                           Familiar {index + 1}
                         </h3>
                         {familiar.id ? (
-                          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded whitespace-nowrap">
                             Existente
                           </span>
                         ) : (
-                          <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
+                          <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded whitespace-nowrap">
                             Novo
                           </span>
                         )}
@@ -317,7 +433,8 @@ function CadastroBeneficiario() {
                         <button
                           type="button"
                           onClick={() => removerFamiliar(index)}
-                          className="text-red-500 text-sm hover:underline"
+                          className="text-[var(--cor-resposta-errada)] text-sm hover:underline px-2 py-1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--cor-resposta-errada)] rounded"
+                          aria-label={`Remover familiar ${index + 1}`}
                         >
                           Remover
                         </button>
@@ -325,163 +442,250 @@ function CadastroBeneficiario() {
                     </div>
 
                     {/* Nome */}
-                    <Campo  label="Nome completo">
+                    <Campo label="Nome completo" erro={erros[index]?.nome}>
                       <input
                         name="nome"
                         value={familiar.nome}
                         onChange={(e) => handleChange(index, e)}
-                        className="input-padrao"
+                        onBlur={() => handleBlur(index, "nome")}
+                        placeholder="Digite o nome completo"
+                        maxLength={100}
+                        className={`input-padrao ${erros[index]?.nome && tocados[index]?.nome ? "border-[var(--cor-resposta-errada)] focus:ring-[var(--cor-resposta-errada)]" : ""}`}
+                        aria-label="Nome completo do familiar"
+                        aria-describedby={erros[index]?.nome && tocados[index]?.nome ? `erro-nome-${index}` : undefined}
                         required
                       />
+                      {erros[index]?.nome && tocados[index]?.nome && (
+                        <span id={`erro-nome-${index}`} className="text-xs text-[var(--cor-resposta-errada)] mt-1">
+                          {erros[index].nome}
+                        </span>
+                      )}
+                      {familiar.nome && !erros[index]?.nome && tocados[index]?.nome && (
+                        <span className="text-xs text-[var(--cor-resposta-correta)] mt-1">✓ Ok</span>
+                      )}
                     </Campo>
 
-                    {/* Linha */}
+                    {/* Linha: Data, CPF, Parentesco */}
                     <div className="grid md:grid-cols-3 gap-6 mt-4">
 
-                      <Campo  label="Data de nascimento">
+                      <Campo label="Data de nascimento" erro={erros[index]?.dataNascimento}>
                         <IMaskInput
                           mask="00/00/0000"
                           name="dataNascimento"
                           value={familiar.dataNascimento}
-                          onAccept={(value) =>
+                          onAccept={(value) => {
                             handleChange(index, {
                               target: { name: "dataNascimento", value },
-                            })
-                          }
-                          className="input-padrao"
+                            });
+                          }}
+                          onBlur={() => handleBlur(index, "dataNascimento")}
+                          placeholder="DD/MM/YYYY"
+                          className={`input-padrao ${erros[index]?.dataNascimento && tocados[index]?.dataNascimento ? "border-[var(--cor-resposta-errada)] focus:ring-[var(--cor-resposta-errada)]" : ""}`}
+                          aria-label="Data de nascimento"
+                          aria-describedby={erros[index]?.dataNascimento && tocados[index]?.dataNascimento ? `erro-data-${index}` : undefined}
                           required
                         />
+                        {erros[index]?.dataNascimento && tocados[index]?.dataNascimento && (
+                          <span id={`erro-data-${index}`} className="text-xs text-[var(--cor-resposta-errada)] mt-1">
+                            {erros[index].dataNascimento}
+                          </span>
+                        )}
+                        {familiar.dataNascimento && !erros[index]?.dataNascimento && tocados[index]?.dataNascimento && (
+                          <span className="text-xs text-[var(--cor-resposta-correta)] mt-1">✓ Ok</span>
+                        )}
                       </Campo>
 
-                      <Campo label="CPF">
+                      <Campo label="CPF" erro={erros[index]?.cpf}>
                         <IMaskInput
                           mask="000.000.000-00"
                           name="cpf"
                           value={familiar.cpf}
-                          onAccept={(value) =>
+                          onAccept={(value) => {
                             handleChange(index, {
                               target: { name: "cpf", value },
-                            })
-                          }
-                          className="input-padrao"
+                            });
+                          }}
+                          onBlur={() => handleBlur(index, "cpf")}
+                          placeholder="000.000.000-00"
+                          className={`input-padrao ${erros[index]?.cpf && tocados[index]?.cpf ? "border-[var(--cor-resposta-errada)] focus:ring-[var(--cor-resposta-errada)]" : ""}`}
+                          aria-label="CPF"
+                          aria-describedby={erros[index]?.cpf && tocados[index]?.cpf ? `erro-cpf-${index}` : undefined}
                           required
                         />
+                        {erros[index]?.cpf && tocados[index]?.cpf && (
+                          <span id={`erro-cpf-${index}`} className="text-xs text-[var(--cor-resposta-errada)] mt-1">
+                            {erros[index].cpf}
+                          </span>
+                        )}
+                        {familiar.cpf && !erros[index]?.cpf && tocados[index]?.cpf && (
+                          <span className="text-xs text-[var(--cor-resposta-correta)] mt-1">✓ Ok</span>
+                        )}
                       </Campo>
 
-                      <Campo label="Parentesco">
+                      <Campo label="Parentesco" erro={erros[index]?.parentesco}>
                         <input
                           name="parentesco"
                           value={familiar.parentesco}
                           onChange={(e) => handleChange(index, e)}
-                          className="input-padrao"
+                          onBlur={() => handleBlur(index, "parentesco")}
+                          placeholder="Ex: Filho, Cônjuge"
+                          maxLength={50}
+                          className={`input-padrao ${erros[index]?.parentesco && tocados[index]?.parentesco ? "border-[var(--cor-resposta-errada)] focus:ring-[var(--cor-resposta-errada)]" : ""}`}
+                          aria-label="Parentesco"
+                          aria-describedby={erros[index]?.parentesco && tocados[index]?.parentesco ? `erro-parentesco-${index}` : undefined}
                           required
                         />
+                        {erros[index]?.parentesco && tocados[index]?.parentesco && (
+                          <span id={`erro-parentesco-${index}`} className="text-xs text-[var(--cor-resposta-errada)] mt-1">
+                            {erros[index].parentesco}
+                          </span>
+                        )}
+                        {familiar.parentesco && !erros[index]?.parentesco && tocados[index]?.parentesco && (
+                          <span className="text-xs text-[var(--cor-resposta-correta)] mt-1">✓ Ok</span>
+                        )}
                       </Campo>
 
                     </div>
 
-                    {/* Financeiro */}
+                    {/* Linha: Renda e Beneficiário */}
                     <div className="grid md:grid-cols-2 gap-6 mt-4">
 
-                      <Campo label="Renda">
+                      <Campo label="Renda" erro={erros[index]?.renda}>
                         <input
-                          type="number"
-                          step="0.01"
-                          min="0"
+                          type="text"
+                          inputMode="decimal"
                           name="renda"
-                          value={familiar.renda}
-                          onChange={(e) => handleChange(index, e)}
-                          className="input-padrao"
+                          value={familiar.renda ? familiar.renda.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'R$ 0,00'}
+                          onChange={(e) => {
+                            const valor = e.target.value.replace(/\D/g, '');
+                            const numerico = (parseInt(valor || '0') / 100).toFixed(2);
+                            handleChange(index, { ...e, target: { ...e.target, name: 'renda', value: numerico } });
+                          }}
+                          onBlur={() => handleBlur(index, "renda")}
+                          placeholder="R$ 0,00"
+                          className={`input-padrao ${erros[index]?.renda && tocados[index]?.renda ? "border-[var(--cor-resposta-errada)] focus:ring-[var(--cor-resposta-errada)]" : ""}`}
+                          aria-label="Renda mensal"
+                          aria-describedby={erros[index]?.renda && tocados[index]?.renda ? `erro-renda-${index}` : undefined}
                           required
                         />
+                        {erros[index]?.renda && tocados[index]?.renda && (
+                          <span id={`erro-renda-${index}`} className="text-xs text-[var(--cor-resposta-errada)] mt-1">
+                            {erros[index].renda}
+                          </span>
+                        )}
+                        {familiar.renda !== undefined && !erros[index]?.renda && tocados[index]?.renda && (
+                          <span className="text-xs text-[var(--cor-resposta-correta)] mt-1">✓ Ok</span>
+                        )}
                       </Campo>
-                    </div>
 
-                    {/* Beneficiário */}
-                    <div className="mt-4">
-                      <label className="text-sm font-medium block mb-2">
-                        É beneficiário?
-                      </label>
+                      {/* Beneficiário */}
+                      <div className="mt-4">
+                        <label className="text-sm font-medium block mb-2" id={`beneficiario-label-${index}`}>
+                          É beneficiário?
+                        </label>
 
-                      <div className="flex items-center gap-3">
-                        <button
-                          type="button"
-                          role="switch"
-                          aria-checked={familiar.beneficiario}
-                          onClick={() => {
-                            const novos = [...familiares];
-                            novos[index].beneficiario = !novos[index].beneficiario;
-                            setFamiliares(novos);
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" || e.key === " ") {
-                              e.preventDefault();
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={familiar.beneficiario}
+                            aria-labelledby={`beneficiario-label-${index}`}
+                            onClick={() => {
                               const novos = [...familiares];
                               novos[index].beneficiario = !novos[index].beneficiario;
                               setFamiliares(novos);
-                            }
-                          }}
-                          className={`relative inline-flex items-center w-14 h-7 rounded-full transition-colors
-                            ${familiar.beneficiario ? "bg-[var(--base-40)]" : "bg-gray-300"}
-                            focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2
-                          `}
-                        >
-                          <span
-                            className={`inline-block w-5 h-5 transform bg-white rounded-full transition-transform
-                              ${familiar.beneficiario ? "translate-x-7" : "translate-x-1"}
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                const novos = [...familiares];
+                                novos[index].beneficiario = !novos[index].beneficiario;
+                                setFamiliares(novos);
+                              }
+                            }}
+                            className={`relative inline-flex items-center w-14 h-7 rounded-full transition-colors
+                              ${familiar.beneficiario ? "bg-[var(--base-40)]" : "bg-gray-300"}
+                              focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--base-80)]
                             `}
-                          />
-                        </button>
+                          >
+                            <span
+                              className={`inline-block w-5 h-5 transform bg-white rounded-full transition-transform
+                                ${familiar.beneficiario ? "translate-x-7" : "translate-x-1"}
+                              `}
+                            />
+                          </button>
 
-                        <span
-                          className={`text-sm font-medium leading-none
-                            ${familiar.beneficiario ? "text-black" : "text-[var(--base-70)]"}
-                          `}
-                        >
-                          {familiar.beneficiario ? "Sim" : "Não"}
-                        </span>
+                          <span
+                            className={`text-sm font-medium leading-none
+                              ${familiar.beneficiario ? "text-black" : "text-[var(--base-70)]"}
+                            `}
+                          >
+                            {familiar.beneficiario ? "Sim" : "Não"}
+                          </span>
+                        </div>
                       </div>
+
                     </div>
 
                     {/* Upload */}
                     <div className="mt-6">
-                      
-                      <label className="block text-sm font-medium">
-                        Arquivos *
+                      <label className="block text-sm font-medium mb-2" id={`upload-label-${index}`}>
+                        Arquivos <span className="text-[var(--cor-resposta-obrigatoria)]">*</span>
                       </label>
 
-                      <div className="flex justify-between items-center border rounded-lg px-4 py-3 mt-1">
+                      <div className={`flex justify-between items-center border rounded-lg px-4 py-3 ${
+                        erros[index]?.documentos && tocados[index]?.documentos 
+                          ? "border-[var(--cor-resposta-errada)] bg-red-50" 
+                          : "border-[var(--base-20)] bg-[var(--primario-5)]"
+                      }`}>
                         <span className="text-sm text-[var(--base-60)]">
                           Selecione ou arraste arquivos
                         </span>
 
-                        <label className="cursor-pointer text-sm border px-3 py-1 rounded-md">
+                        <label className="cursor-pointer text-sm border px-3 py-1 rounded-md bg-[var(--base-0)] hover:bg-[var(--base-10)]">
                           Selecionar
                           <input
                             type="file"
                             multiple
                             name="documentos"
-                            onChange={(e) => handleChange(index, e)}
+                            onChange={(e) => {
+                              handleChange(index, e);
+                              setTocados((prev) => ({
+                                ...prev,
+                                [index]: {
+                                  ...prev[index] || {},
+                                  documentos: true,
+                                },
+                              }));
+                            }}
                             className="hidden"
+                            aria-labelledby={`upload-label-${index}`}
                             required
                           />
                         </label>
                       </div>
+
+                      {erros[index]?.documentos && tocados[index]?.documentos && (
+                        <span className="text-xs text-[var(--cor-resposta-errada)] mt-1 block">
+                          {erros[index].documentos}
+                        </span>
+                      )}
 
                       {familiar.documentos.length > 0 && (
                         <div className="mt-3 flex flex-col gap-2">
                           {familiar.documentos.map((file, i) => (
                             <div
                               key={i}
-                              className="flex justify-between text-sm bg-[var(--base-5)] px-3 py-2 rounded"
+                              className="flex justify-between text-sm bg-[var(--base-5)] px-3 py-2 rounded border border-[var(--base-20)] items-center"
                             >
-                              {file.name}
+                              <span className="truncate flex-1">{file.name}</span>
                               <button
                                 type="button"
                                 onClick={() => removerArquivo(index, i)}
-                                className="text-red-500"
+                                className="text-[var(--cor-resposta-errada)] hover:font-semibold ml-2 flex-shrink-0"
+                                aria-label={`Remover arquivo ${file.name}`}
                               >
-                                remover
+                                ✕
                               </button>
                             </div>
                           ))}
@@ -495,7 +699,7 @@ function CadastroBeneficiario() {
                 {/* Add */}
                 <div
                   onClick={adicionarFamiliar}
-                 className="border border-dashed border-[var(--base-30)] rounded-xl p-6 text-center cursor-pointer hover:bg-[var(--base-5)]"
+                  className="border border-dashed border-[var(--base-30)] rounded-xl p-6 text-center cursor-pointer hover:bg-[var(--base-5)]"
                 >
                   + Adicionar outro familiar
                 </div>
@@ -523,14 +727,11 @@ function CadastroBeneficiario() {
 }
 
 /* 🔹 Campo reutilizável */
-function Campo({ titulo, label, children }: any) {
+function Campo({ label, children, erro }: any) {
   return (
     <div className="flex flex-col gap-1">
-      <span className="text-xs text-[var(--base-60)]">
-        {titulo}
-      </span>
       <label className="text-sm font-medium">
-        {label} *
+        {label} {label.includes("*") ? "" : <span className="text-[var(--cor-resposta-obrigatoria)]">*</span>}
       </label>
       {children}
     </div>
