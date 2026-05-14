@@ -15,10 +15,15 @@ PERMISSOES_POR_FUNCAO = {
         "ong:criar"
     },
     TipoUsuario.DOADOR: {
-        "ong:listar"
+        "ong:listar",
+        "doacao:criar",
+        "doacao_item:alterar_status"
     },
     TipoUsuario.TRIAGEM: {
-        "usuario:atualizar"
+        "usuario:atualizar",
+        "doacao_item:avaliar",
+        "doacao_item:alterar_status",
+        "doacao:notificar_status"
     },
     TipoUsuario.RESPONSAVEL_BENEFICIARIO: {
         "usuario:atualizar",
@@ -38,7 +43,8 @@ PERMISSOES_POR_FUNCAO = {
         "usuario_funcao:criar",
         "usuario_funcao:atualizar",
         "usuario_funcao:deletar",
-        "ong:listar"
+        "ong:listar",
+        "doacao_item:alterar_status"
     },
     TipoUsuario.COORDENADOR_PROCESSOS:{
         "ong:editar",

@@ -8,6 +8,7 @@ from app.database.connection import engine
 from app.models.user import Base
 from app.models.user import Usuario
 from app.models.ong import Ong
+from app.models.doacao import Doacao, ItemDoacao, FotoItemDoacao, AvaliacaoTriagemDoacao
 from app.models import auth as auth_model 
 
 Base.metadata.create_all(bind=engine)
@@ -53,5 +54,6 @@ app.add_middleware(
 app.include_router(users.router)
 app.include_router(auth.router)
 app.include_router(ong.router)
+# app.include_router(doacao.router) Em desenvolvimento!
 app.include_router(password.router)
 app.include_router(demo_files.router)
