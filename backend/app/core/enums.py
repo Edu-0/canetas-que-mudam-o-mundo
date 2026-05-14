@@ -16,3 +16,15 @@ class BeneficiosUsuario(enum.Enum):
 class QualidadeImagem(enum.Enum):
     APTO = "Apto"
     INAPTO = "Inapto"
+
+class StatusDoacao(enum.Enum):
+    AGUARDANDO_TRIAGEM = "AGUARDANDO_TRIAGEM"
+    PRE_APROVADO = "PRE_APROVADO"
+    INAPTO = "INAPTO"
+    DISPONIVEL = "DISPONIVEL"
+    MATERIAL_COLETADO = "MATERIAL_COLETADO"
+    CANCELADO = "CANCELADO"
+
+class ResultadoTriagemDoacao(enum.Enum):
+    PRE_APROVADO = "PRE_APROVADO"
+    INAPTO = "INAPTO"

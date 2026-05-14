@@ -24,6 +24,12 @@ class Usuario(Base):
     perfil_responsavel = relationship("UsuarioResponsavel", back_populates="usuario", uselist=False)
     ong = relationship("Ong", back_populates="dono", uselist=False)
     vinculo_voluntario = relationship("VoluntarioOng", back_populates="usuario", uselist=False)
+    doacoes = relationship("Doacao", back_populates="doador")
+    avaliacoes_triagem_doacao = relationship(
+        "AvaliacaoTriagemDoacao",
+        back_populates="voluntario_triagem",
+        foreign_keys="AvaliacaoTriagemDoacao.voluntario_triagem_id"
+    )
     
 class UsuarioResponsavel(Base):
     __tablename__ = 'usuario_responsavel'
