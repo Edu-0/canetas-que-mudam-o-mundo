@@ -17,10 +17,12 @@ PERMISSOES_POR_FUNCAO = {
     TipoUsuario.DOADOR: {
         "ong:listar",
         "doacao:criar",
+        "doacao:listar",
         "doacao_item:alterar_status"
     },
     TipoUsuario.TRIAGEM: {
         "usuario:atualizar",
+        "doacao:listar",
         "doacao_item:avaliar",
         "doacao_item:alterar_status",
         "doacao:notificar_status"

@@ -92,6 +92,12 @@ class RespostaDoacao(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class RespostaListagemDoacao(RespostaDoacao):
+    tempo_cadastrada_dias: int
+    tempo_cadastrada_tag: str
+    status_tag: str
+
+
 class AtualizarStatusItemDoacao(BaseModel):
     status: StatusDoacao
     motivo_inaptidao: Optional[str] = Field(default=None, max_length=5000)

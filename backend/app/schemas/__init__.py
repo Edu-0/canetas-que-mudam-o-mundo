@@ -3,6 +3,7 @@ from .doacao import (
     CriarItemDoacao,
     CriarFotoItemDoacao,
     RespostaDoacao,
+    RespostaListagemDoacao,
     RespostaItemDoacao,
     RespostaFotoItemDoacao,
     CriarAvaliacaoTriagemDoacao,
