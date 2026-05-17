@@ -63,6 +63,7 @@ def apagar_ong_e_vinculos(ong_id: int, usuario_atual: Usuario, db: Session):
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Erro interno ao deletar a ONG: {str(e)}")
+    
 def limpar_tokens_vencidos(ong_id: int):
     with Session(engine) as db:
         try:
