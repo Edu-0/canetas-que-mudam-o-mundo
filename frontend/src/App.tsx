@@ -6,6 +6,7 @@ import Conta from "./pages/Conta";
 import EditarConta from "./pages/EditarConta";
 import CadastroBeneficiario from "./pages/CadastroBeneficiario";
 import Doar from "./pages/Doar";
+import Doacoes from "./pages/Doacoes";
 import Triagem from "./pages/Triagem";
 import Pedido from "./pages/PedidoMaterial";
 import Relatorio from "./pages/Relatorio";
@@ -19,6 +20,7 @@ import CadastroONG from "./pages/CadastroONG";
 import LinkParaVoluntario from "./pages/LinkParaVoluntario";
 import EditarONG from "./pages/EditarONG";
 import ListarONGs from "./pages/ListaONGs";
+import ListaTriagem from "./pages/ListaTriagem";
 import StatusMateriais from "./pages/StatusMateriais";
 
 function App() {
@@ -28,13 +30,13 @@ function App() {
         <Route path="/" element={<Inicio />} />
         <Route path="/logar" element={<Logar />} />
         <Route path="/cadastro" element={<Cadastro />} />
-        <Route path="/cadastro-voluntario" element={<Cadastro />} />
+        <Route path="/cadastro-voluntario" element={<Cadastro />} /> {/* para cadastrar com link */}
         <Route path="/conta" element={<Conta />} />
         <Route path="/conta/editar" element={<EditarConta />} />
         <Route path="/conta/cadastro-responsavel" element={<CadastroResponsavel />} />
         <Route path="/conta/cadastro-beneficiario" element={<CadastroBeneficiario />} />
-        <Route path="/doar" element={<Doar />} />
-        <Route path="/triagem" element={<Triagem />} />
+        <Route path="/doacoes" element={<Doacoes />} />
+        <Route path="/doacoes/doar" element={<Doar />} />
         <Route path="/pedido" element={<Pedido />} />
         <Route path="/relatorio" element={<Relatorio />} />
         <Route path="/auditoria" element={<Auditoria />} />
@@ -47,6 +49,9 @@ function App() {
         <Route path="/links-para-voluntarios" element={<LinkParaVoluntario />} />
         <Route path="/conta/editar-ong" element={<EditarONG />} />
         <Route path="/ongs" element={<ListarONGs />} />
+        <Route path="/lista-triagem" element={<ListaTriagem />} />
+        <Route path="/lista-triagem/triagem" element={<Triagem />} />
+        <Route path="/lista-triagem/triagem/:id" element={<Triagem />} /> {/* usando ID da doação */}
       </Routes>
     </BrowserRouter>
   );

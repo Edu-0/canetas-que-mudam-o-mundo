@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import logo from "../assets/logo.svg";
-import { obterTodasONGs } from "../services/usuarioService";
+import { obterTodasONGs } from "../services/ongService";
 import { ONG } from "../context/OngContext";
 import { useFiltroONGs } from "../hooks/useFiltroONGs";
 import Paginacao from "../components/Paginacao";

@@ -1,7 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useUsuario, mapearTipo, TipoUsuario, Usuario } from "../context/UserContext";
-import { atualizarTiposUsuario, criarONG, obterONG, obterPerfil } from "../services/usuarioService";
+import { atualizarTiposUsuario, obterPerfil } from "../services/usuarioService";
+import { criarONG, obterONG } from "../services/ongService";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import logo from "../assets/logo.svg";

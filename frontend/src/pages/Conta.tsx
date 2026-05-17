@@ -157,7 +157,7 @@ function Conta() {
       try {
         
       const atualizado = await obterPerfil(); // pega os dados atualizados do backend
-      console.log("Perfil atualizado carregado:", atualizado);
+      // console.log("Perfil atualizado carregado:", atualizado);
       setPerfil(atualizado);
 
       } catch (error) {
@@ -288,10 +288,10 @@ function Conta() {
                       try {
                         if (!usuario?.id) return;
                         
-                        console.log("Confirmando exclusão da conta para usuario_id:", usuario.id);
+                        // console.log("Confirmando exclusão da conta para usuario_id:", usuario.id);
                         await excluirConta(usuario.id);
 
-                        console.log("Conta excluída com sucesso, saindo...");
+                        // console.log("Conta excluída com sucesso, saindo...");
                         
                         setMostrarModal(false);
                         definirUsuario(null);

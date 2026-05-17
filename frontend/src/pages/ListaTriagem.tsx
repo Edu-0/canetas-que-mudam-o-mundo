@@ -1,0 +1,381 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import logo from "../assets/logo.svg";
+import Paginacao from "../components/Paginacao";
+import { obterONG } from "../services/ongService";
+import { obterDoacoes } from "../services/triagemService";
+import Botao from "../components/Botao";
+import Toast from "../components/Toast";
+import { useONG } from "../context/OngContext";
+import { Doacao } from "../context/DoacaoContext";
+import { dataNaoFutura, dataValida, intervaloDataValido } from "../utils/validacoesTriagem";
+
+function ListaTriagem() {
+  const navigate = useNavigate();
+  const { ong } = useONG();
+  const ong_id = ong?.id;
+  const [mostrarModal, setMostrarModal] = useState(false);
+  const [carregandoExclusao, setCarregandoExclusao] = useState(false);
+  const [mensagem, setMensagem] = useState("");
+  const [erroModal, setErroModal] = useState<{
+    campo?: string;
+    mensagem: string;
+  } | null>(null);
+
+  const [tipoMensagem, setTipoMensagem] = useState<"sucesso" | "erro">("sucesso");
+  const [doacaoSelecionada, setDoacaoSelecionada] = useState<number | null>(null);
+
+  const ITENS_POR_PAGINA = 5;
+  const [paginaAtual, setPaginaAtual] = useState(1);
+
+  const [doacoes, setDoacoes] = useState<Doacao[]>([]);
+  
+  const [buscaNome, setBuscaNome] = useState("");
+
+  const [ordem, setOrdem] = useState<"data-asc" | "data-desc">("data-desc");
+  
+  const [statusFiltro, setStatusFiltro] = useState<"todos" | "triagem" | "nova_triagem">("todos");
+  const [dataInicio, setDataInicio] = useState("");
+  const [dataFim, setDataFim] = useState("");
+
+  const [erroBusca, setErroBusca] = useState("");
+  const [tocadoBusca, setTocadoBusca] = useState(false);
+
+  const doacoesFiltradas = doacoes;
+
+  const totalPaginas = Math.max(1, Math.ceil(doacoesFiltradas.length / ITENS_POR_PAGINA)); // garente pelo menos 1 página
+
+  const doacoesPagina = doacoesFiltradas.slice(
+    (paginaAtual - 1) * ITENS_POR_PAGINA,
+    paginaAtual * ITENS_POR_PAGINA
+  );
+
+  function formatarDataHora(data?: string) {
+  if (!data) return "N/A";
+
+  const iso = data.replace(" ", "T");
+  const d = new Date(iso);
+
+  const dataFormatada = d.toLocaleDateString("pt-BR");
+  const horaFormatada = d.toLocaleTimeString("pt-BR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  return `${dataFormatada} às ${horaFormatada}`;
+}
+
+  function calcularTempo(data?: string) {
+    if (!data) return { meses: 0, dias: 0 };
+
+    const inicio = new Date(data);
+    const hoje = new Date();
+
+    let meses =
+      (hoje.getFullYear() - inicio.getFullYear()) * 12 +
+      (hoje.getMonth() - inicio.getMonth());
+
+    if (hoje.getDate() < inicio.getDate()) {
+      meses--;
+    }
+
+    const diffMs = hoje.getTime() - inicio.getTime();
+    const dias = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    return {
+      meses: Math.max(meses, 0),
+      dias: Math.max(dias, 0),
+    };
+  }
+
+  function formatarTempo(data?: string) {
+    if (!data) {
+      return { texto: "Sem data", tipo: "antigo" };
+    }
+
+    const { meses, dias } = calcularTempo(data);
+
+    // se tiver menos de 24h
+    if (dias <= 1) {
+      return { texto: "Últimas 24h", tipo: "novo" };
+    }
+
+    // se tiver menos de 1 mês
+    if (meses < 1) {
+      return { texto: `${dias} dia${dias === 1 ? "" : "s"}`, tipo: "recente" };
+    }
+
+     // se tiver mais de 1 mês
+    return { texto: `${meses} mês${meses === 1 ? "" : "es"}`, tipo: "antigo" };
+  }
+
+  const validarDatas = () => {
+    if (dataInicio && !dataValida(dataInicio)) {
+      return "Data inicial inválida";
+    }
+
+    if (dataFim && !dataValida(dataFim)) {
+      return "Data final inválida";
+    }
+
+    if (dataInicio && !dataNaoFutura(dataInicio)) {
+      return "Data inicial não pode ser futura";
+    }
+
+    if (dataFim && !dataNaoFutura(dataFim)) {
+      return "Data final não pode ser futura";
+    }
+
+    if (!intervaloDataValido(dataInicio, dataFim)) {
+      return "A data inicial deve ser antes da final";
+    }
+
+    return "";
+  };
+
+  const validarDatasComValores = (inicio: string, fim: string) => {
+    if (inicio && !dataValida(inicio)) {
+      return "Data inicial inválida";
+    }
+
+    if (fim && !dataValida(fim)) {
+      return "Data final inválida";
+    }
+
+    if (inicio && !dataNaoFutura(inicio)) {
+      return "Data inicial não pode ser futura";
+    }
+
+    if (fim && !dataNaoFutura(fim)) {
+      return "Data final não pode ser futura";
+    }
+
+    if (!intervaloDataValido(inicio, fim)) {
+      return "A data inicial deve ser antes da final";
+    }
+
+    return "";
+  };
+
+  useEffect(() => {
+    async function carregar() {
+      try {
+
+        if (!ong_id) {
+          setMensagem("ONG não encontrada. Faça login novamente.");
+          setTipoMensagem("erro");
+          return;
+        }
+
+        const resposta = await obterDoacoes({
+          data_inicio: dataInicio || undefined,
+          data_final: dataFim || undefined,
+          status:
+            statusFiltro === "triagem"
+              ? "AGUARDANDO_TRIAGEM"
+              : statusFiltro === "nova_triagem"
+              ? "AGUARDANDO_NOVA_TRIAGEM"
+              : undefined,
+          ordem,
+        });
+
+        const dados = resposta.data as Doacao[];
+
+        setDoacoes(dados);
+
+      } catch (erro: any) {
+        console.error("Erro ao carregar doações:", erro);
+
+        const status = erro?.response?.status;
+
+        if (status === 403) {
+          setMensagem("Você não tem permissão para ver essas doações.");
+        } else if (status === 404) {
+          setMensagem("ONG não encontrada.");
+        } else {
+          setMensagem("Erro ao carregar doações.");
+        }
+
+        setTipoMensagem("erro");
+      }
+    }
+
+    if (erroBusca) return; // evita chamar backend com data inválida
+
+    carregar();
+  }, [statusFiltro, dataInicio, dataFim, ordem, ong_id]); // recarrega ao mudar filtros ou ONG
+
+  useEffect(() => {
+    const total = Math.ceil(doacoesFiltradas.length / ITENS_POR_PAGINA);
+
+    if (paginaAtual > totalPaginas) {
+      setPaginaAtual(totalPaginas);
+    }
+  }, [doacoesFiltradas]);
+
+  return (
+    <div className="min-h-screen flex flex-col bg-[var(--base-5)]">
+      
+      {/* header */}
+      <Header />
+
+      {/* body */}
+      <main className="flex-1 pt-24 pb-10">
+        <div className="w-full px-6 md:px-20 flex flex-col gap-10">
+          <Toast mensagem={mensagem} tipo={tipoMensagem} />
+
+          {/* título e logo da caneta */}
+          <div className="flex items-center justify-center gap-4 flex-wrap text-center">
+            <img src={logo} alt="Logo" className="h-16 md:h-20" />
+        
+            <h1 className="header-medio text-center">
+              Canetas que Mudam o Mundo
+            </h1>
+          </div>
+
+          <div className="flex flex-col items-center px-4">
+
+            {/* título do formulário */}
+            <div className="w-full max-w-4xl bg-[var(--primario-5)] shadow-[2px_10px_40px_rgba(0,0,0,0.1)] rounded-lg p-6">
+
+              <h2 className="header-pequeno text-center mb-6">
+                LISTA DE TRIAGEM
+              </h2>
+
+              <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch gap-3 mb-6 border rounded-lg bg-[var(--base-20)] border-[var(--base-70)] p-2">
+
+                <div className="text-black text-2xl font-extrabold font-['Nunito'] flex items-center self-stretch">Filtros:</div>
+
+                <div className="justify-start w-full sm:w-56 flex flex-col">
+                  <label className="body-muito-pequeno" htmlFor="busca-status">Status da doação</label>
+                  {/* status */}
+                  <select id="busca-status" value={statusFiltro} onChange={(e) => { setStatusFiltro(e.target.value as any); setPaginaAtual(1);}} className="input-padrao h-9 w-full sm:w-56 hover:border-2 border-[var(--base-70)] focus-acessivel" aria-label="Selcionar o status das doações">
+                    <option value="todos">Todos os status</option>
+                    <option value="triagem">Aguardando triagem</option>
+                    <option value="nova_triagem">Aguardando nova triagem</option>
+                  </select>
+                </div>
+
+                <div className="justify-start w-full sm:w-44 flex flex-col">
+                  <label className="body-muito-pequeno" htmlFor="busca-ordem">Ordem de exibição</label>
+                  <select id="busca-ordem" value={ordem} onChange={(e) => { setOrdem(e.target.value as any); setPaginaAtual(1);}} className="input-padrao h-9 w-full sm:w-44 hover:border-2 border-[var(--base-70)] focus-acessivel" aria-label="Selcionar a ordem de exibição das doações">
+                    <option value="data-desc">Doações mais novas</option>
+                    <option value="data-asc">Doações mais antigas</option>
+                  </select>
+                </div>
+
+                <div className="border rounded-lg bg-[var(--base-30)] border-[var(--base-70)] px-1 pb-1 flex-1 min-w-0">
+                  <div className="flex flex-col gap-1 min-w-0">
+                    <div className="flex flex-col sm:flex-row gap-2 w-full">
+
+                      {/* Data início */}
+                      <div className="flex flex-col flex-1 min-w-0 w-full">
+                        <label className="body-muito-pequeno" htmlFor="dataInicio">Período (inicio) </label>
+
+                        <input id="dataInicio" type="date" value={dataInicio} onChange={(e) => {const valor = e.target.value; setDataInicio(valor); setPaginaAtual(1); const erro = validarDatasComValores(valor, dataFim); setErroBusca(erro);}}
+                          onBlur={() => { setErroBusca(validarDatas()); }} className={`input-padrao h-8 px-2 w-full ${ erroBusca ? "border-[var(--cor-resposta-errada)]" : "hover:border-2 border-[var(--base-70)] focus-acessivel" }`} aria-invalid={!!erroBusca}
+                          aria-describedby={erroBusca ? "erro-dataFim" : undefined} />
+                      </div>
+
+                      <span className="body-muito-pequeno flex items-center justify-center sm:items-end">até</span>
+
+                      {/* Data fim */}
+                      <div className="flex flex-col flex-1 min-w-0 w-full">
+                        <label className="body-muito-pequeno" htmlFor="dataFim">Período (final) </label>
+
+                        <input id="dataFim" type="date" value={dataFim} onChange={(e) => {const valor = e.target.value; setDataFim(valor); setPaginaAtual(1); const erro = validarDatasComValores(dataInicio, valor); setErroBusca(erro);}}
+                          onBlur={() => { setErroBusca(validarDatas()); }} className={`input-padrao h-8 px-2 w-full ${ erroBusca ? "border-[var(--cor-resposta-errada)]" : "hover:border-2 border-[var(--base-70)] focus-acessivel" }` } aria-invalid={!!erroBusca}
+                          aria-describedby={erroBusca ? "erro-dataInicio" : undefined} />
+                      </div>
+                    </div>
+
+                    {/* erro */}
+                    {erroBusca && <div className="text-[var(--cor-resposta-errada)] mt-1 text-sm">{erroBusca}</div>}
+                  </div>
+                </div>
+
+              </div>
+
+              {doacoes.length === 0 ? (
+                <div className="text-center body-semibold-pequeno py-6">
+                  Nenhuma doação vinculada a esta ONG.
+                </div> 
+
+              ) : doacoesPagina.length === 0 ? (
+                <div className="text-center body-semibold-pequeno py-6">
+                  Nenhuma doação encontrada com esses filtros.
+                </div>
+
+              ) : (
+                <div className="flex flex-col gap-4">
+                  {doacoesPagina.map((d, index) => {
+
+                    const criadoEm = formatarDataHora(d.created_at);
+                    const tempo = formatarTempo(d.created_at);
+
+                    return (
+                      <div key={d.id} className="flex flex-col sm:flex-row gap-3 border-b py-3 w-full">
+
+                        {/* Esquerda */}
+                        <div className="flex flex-col min-w-0 flex-1">
+
+                          <span className="font-['Nunito'] font-semibold text-sm sm:text-base md:text-lg truncate">
+                            {String((paginaAtual - 1) * ITENS_POR_PAGINA + index + 1).padStart(3, "0")} {/* número sequencial considerando a paginação */}
+                          </span>
+
+                          {/* data */}
+                          <span className="body-muito-pequeno mt-1">
+                            <strong>Registrado em: </strong> {criadoEm}
+                          </span>
+
+                          {/* tempo desde o registro */}
+                          <span className={`
+                            text-[10px] sm-text-[12px] px-1 py-[2px] text-center leading-none rounded-sm w-fit mt-1
+                            ${
+                              tempo.tipo === "novo"
+                                ? "bg-[var(--base-15)] text-black"
+                                : tempo.tipo === "recente"
+                                ? "bg-blue-100 text-black"
+                                : "bg-[var(--secundario-100)] text-black"
+                            }`}>
+                            {tempo.texto}
+                          </span> 
+
+                          {/* status */}
+                          <span className="bg-yellow-100 px-2 py-1 text-xs rounded w-fit mt-1">
+                            {d.status.replaceAll("_", " ")}
+                          </span>
+                        
+                        </div>
+
+                        {/* Direita */}
+                        <div className="flex flex-row items-center justify-between gap-2 mt-2 sm:mt-0 w-full sm:w-auto">
+
+                          {/* já vai com o ID da doação */}
+                          <Botao variante="botao-pequeno-editar" aoClicar={() => navigate(`/lista-triagem/triagem/${d.id}`)}>Analisar</Botao>
+                        </div>
+                      </div>
+                    );
+                  })}
+              
+                  <Paginacao
+                    paginaAtual={paginaAtual}
+                    totalPaginas={totalPaginas}
+                    setPagina={setPaginaAtual}
+                  />
+                </div>
+              )}
+
+            </div>
+          </div>
+        </div>
+      </main>
+
+      {/* footer */}
+      <Footer />
+    </div>
+  );
+}
+export default ListaTriagem;
