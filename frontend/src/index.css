@@ -20,6 +20,7 @@
   --base-10: #F2F7E2;
   --base-15: #EAF0D3;
   --base-20: #E4EEBF;
+  --base-30: #DCE99F;
   --base-40: #C4D86E;
   --base-50: #A9C04B;
   --base-60: #838513;
@@ -298,6 +299,14 @@
 
   .btn-inapto-selecionado:hover {
     @apply bg-red-500 border-black text-white;
+  }
+
+  .btn-incompleto-selecionado {
+    @apply bg-yellow-500 border-black text-white;
+  }
+
+  .btn-incompleto-selecionado:hover {
+    @apply bg-yellow-600 border-black text-white;
   }
 
   /* paginação */

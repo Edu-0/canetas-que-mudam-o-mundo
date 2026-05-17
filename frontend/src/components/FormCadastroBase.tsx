@@ -242,7 +242,7 @@ function FormCadastroBase(props: Props) {
           ...(token ? { token_convite: token } : {}) // se tiver token na URL, envia para o backend para vincular à ONG e tipo de voluntário correspondente
         });
 
-        console.log("Usuário cadastrado com sucesso:", usuarioCadastrado);
+        //console.log("Usuário cadastrado com sucesso:", usuarioCadastrado);
 
         // Após o cadastro, autentica automaticamente para habilitar rotas protegidas.
         const loginResponse = await api.post("/auth/login", {

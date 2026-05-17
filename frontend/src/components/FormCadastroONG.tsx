@@ -5,7 +5,7 @@ import { validarCampo } from "../utils/validacoesONG";
 import { normalizarUrl } from "../utils/validacoes";
 import { useUsuario } from "../context/UserContext";
 import { useONG } from "../context/OngContext";
-import { atualizarONG, AtualizarONGEnvio } from "../services/usuarioService";
+import { atualizarONG, AtualizarONGEnvio } from "../services/ongService";
 
 type PropsCadastro = {
   modo: "cadastro";
@@ -558,7 +558,7 @@ function FormCadastroONG(props: Props) {
         aoErro?.({ mensagem: "Erro inesperado" });
       }
 
-      console.log("ERRO BACKEND COMPLETO:", error.response?.data);
+      // console.log("ERRO BACKEND COMPLETO:", error.response?.data);
       
       const erroBackend = error.response?.data?.detail;
 

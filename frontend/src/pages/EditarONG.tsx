@@ -8,15 +8,14 @@ import Toast from "../components/Toast";
 import FormCadastroONG from "../components/FormCadastroONG";
 import { useAvisoAlteracoesNaoSalvas } from "../hooks/useAvisoAlteracoesNaoSalvas";
 import ModalConfirmacao from "../components/ModalConfirmacao";
-import { atualizarONG, obterONG } from "../services/usuarioService";
+import { atualizarONG, obterONG } from "../services/ongService";
 import { useONG } from "../context/OngContext";
 import Botao from "../components/Botao";
-import { excluirONG } from "../services/usuarioService";
+import { excluirONG } from "../services/ongService";
 
 function EditarONG() {
   const { usuario, definirUsuario } = useUsuario();
   const {ong, definirONG} = useONG();
-  console.log("EditarONG.render", { usuarioId: usuario?.id, ongId: ong?.id });
   const navigate = useNavigate();
   const [mensagem, setMensagem] = useState("");
   const [carregandoONG, setCarregandoONG] = useState(true);
