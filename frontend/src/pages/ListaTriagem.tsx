@@ -4,7 +4,6 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import logo from "../assets/logo.svg";
 import Paginacao from "../components/Paginacao";
-import { obterONG } from "../services/ongService";
 import { obterDoacoes } from "../services/triagemService";
 import Botao from "../components/Botao";
 import Toast from "../components/Toast";
@@ -15,7 +14,6 @@ import { dataNaoFutura, dataValida, intervaloDataValido } from "../utils/validac
 function ListaTriagem() {
   const navigate = useNavigate();
   const { ong } = useONG();
-  const ong_id = ong?.id;
   const [mostrarModal, setMostrarModal] = useState(false);
   const [carregandoExclusao, setCarregandoExclusao] = useState(false);
   const [mensagem, setMensagem] = useState("");
@@ -31,12 +29,10 @@ function ListaTriagem() {
   const [paginaAtual, setPaginaAtual] = useState(1);
 
   const [doacoes, setDoacoes] = useState<Doacao[]>([]);
-  
-  const [buscaNome, setBuscaNome] = useState("");
 
-  const [ordem, setOrdem] = useState<"data-asc" | "data-desc">("data-desc");
+  const [ordem, setOrdem] = useState<"asc" | "desc">("desc");
   
-  const [statusFiltro, setStatusFiltro] = useState<"todos" | "triagem" | "nova_triagem">("todos");
+  const [statusFiltro, setStatusFiltro] = useState<"todos" | "AGUARDANDO_TRIAGEM" | "AGUARDANDO_NOVA_TRIAGEM">("todos");
   const [dataInicio, setDataInicio] = useState("");
   const [dataFim, setDataFim] = useState("");
 
@@ -163,27 +159,19 @@ function ListaTriagem() {
     async function carregar() {
       try {
 
-        if (!ong_id) {
-          setMensagem("ONG não encontrada. Faça login novamente.");
-          setTipoMensagem("erro");
-          return;
-        }
-
         const resposta = await obterDoacoes({
           data_inicio: dataInicio || undefined,
           data_final: dataFim || undefined,
           status:
-            statusFiltro === "triagem"
+            statusFiltro === "AGUARDANDO_TRIAGEM"
               ? "AGUARDANDO_TRIAGEM"
-              : statusFiltro === "nova_triagem"
+              : statusFiltro === "AGUARDANDO_NOVA_TRIAGEM"
               ? "AGUARDANDO_NOVA_TRIAGEM"
               : undefined,
           ordem,
         });
 
-        const dados = resposta.data as Doacao[];
-
-        setDoacoes(dados);
+        setDoacoes(resposta.data as Doacao[]); // resposta já vem filtrada do backend
 
       } catch (erro: any) {
         console.error("Erro ao carregar doações:", erro);
@@ -205,7 +193,7 @@ function ListaTriagem() {
     if (erroBusca) return; // evita chamar backend com data inválida
 
     carregar();
-  }, [statusFiltro, dataInicio, dataFim, ordem, ong_id]); // recarrega ao mudar filtros ou ONG
+  }, [statusFiltro, dataInicio, dataFim, ordem]); // recarrega ao mudar filtros ou ONG
 
   useEffect(() => {
     const total = Math.ceil(doacoesFiltradas.length / ITENS_POR_PAGINA);
@@ -253,16 +241,16 @@ function ListaTriagem() {
                   {/* status */}
                   <select id="busca-status" value={statusFiltro} onChange={(e) => { setStatusFiltro(e.target.value as any); setPaginaAtual(1);}} className="input-padrao h-9 w-full sm:w-56 hover:border-2 border-[var(--base-70)] focus-acessivel" aria-label="Selcionar o status das doações">
                     <option value="todos">Todos os status</option>
-                    <option value="triagem">Aguardando triagem</option>
-                    <option value="nova_triagem">Aguardando nova triagem</option>
+                    <option value="AGUARDANDO_TRIAGEM">Aguardando triagem</option>
+                    <option value="AGUARDANDO_NOVA_TRIAGEM">Aguardando nova triagem</option>
                   </select>
                 </div>
 
                 <div className="justify-start w-full sm:w-44 flex flex-col">
                   <label className="body-muito-pequeno" htmlFor="busca-ordem">Ordem de exibição</label>
                   <select id="busca-ordem" value={ordem} onChange={(e) => { setOrdem(e.target.value as any); setPaginaAtual(1);}} className="input-padrao h-9 w-full sm:w-44 hover:border-2 border-[var(--base-70)] focus-acessivel" aria-label="Selcionar a ordem de exibição das doações">
-                    <option value="data-desc">Doações mais novas</option>
-                    <option value="data-asc">Doações mais antigas</option>
+                    <option value="desc">Doações mais novas</option>
+                    <option value="asc">Doações mais antigas</option>
                   </select>
                 </div>
 
@@ -300,7 +288,7 @@ function ListaTriagem() {
 
               {doacoes.length === 0 ? (
                 <div className="text-center body-semibold-pequeno py-6">
-                  Nenhuma doação vinculada a esta ONG.
+                  Nenhuma doação encontrada.
                 </div> 
 
               ) : doacoesPagina.length === 0 ? (
@@ -322,12 +310,12 @@ function ListaTriagem() {
                         <div className="flex flex-col min-w-0 flex-1">
 
                           <span className="font-['Nunito'] font-semibold text-sm sm:text-base md:text-lg truncate">
-                            {String((paginaAtual - 1) * ITENS_POR_PAGINA + index + 1).padStart(3, "0")} {/* número sequencial considerando a paginação */}
+                            {String((paginaAtual - 1) * ITENS_POR_PAGINA + index + 1).padStart(3, "0")} - {"Solicitação de Triagem"} {/* número sequencial considerando a paginação */}
                           </span>
 
                           {/* data */}
                           <span className="body-muito-pequeno mt-1">
-                            <strong>Registrado em: </strong> {criadoEm}
+                            <strong className="body-semibold-muito-pequeno">Registrado em: </strong> {criadoEm}
                           </span>
 
                           {/* tempo desde o registro */}
@@ -346,7 +334,7 @@ function ListaTriagem() {
                           {/* status */}
                           <span className="bg-yellow-100 px-2 py-1 text-xs rounded w-fit mt-1">
                             {d.status.replaceAll("_", " ")}
-                          </span>
+                          </span> 
                         
                         </div>
 

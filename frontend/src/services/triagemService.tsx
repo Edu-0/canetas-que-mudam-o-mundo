@@ -9,8 +9,9 @@ export type StatusDoacao =
   | "DISPONIVEL"
   | "MATERIAL_COLETADO"
   | "CANCELADO"
+  | "INCOMPLETO";
 
-export type ResultadoTriagem = "PRE_APROVAD" | "INAPTO";
+export type ResultadoTriagem = "PRE_APROVADO" | "INAPTO";
 
 // Triagem
 export type CriarTriagemEnvio = {
@@ -23,8 +24,17 @@ export type CriarTriagemEnvio = {
 
 
 // listar todas as doações da ONG
-export async function obterDoacoes(p0: { data_inicio: string | undefined; data_final: string | undefined; status: string | undefined; ordem: "data-asc" | "data-desc"; }) {
-  return api.get("/doacoes");
+export async function obterDoacoes(params: {data_inicio?: string; data_final?: string; status?: string; ordem: "asc" | "desc";}) {
+  const ordemBackend = params.ordem === "asc" ? "asc" : "desc";
+
+  return api.get("/doacoes/", {
+    params: {
+      data_inicio: params.data_inicio,
+      data_final: params.data_final,
+      status: params.status,
+      ordem: ordemBackend,
+    },
+  });
 }
 
 // obter uma doação específica

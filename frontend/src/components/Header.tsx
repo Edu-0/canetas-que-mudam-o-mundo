@@ -58,8 +58,6 @@ function Header(){
     tipos.forEach((tipo) => {
       // console.log("Tipo individual:", tipo);
 
-      if (tipo === "Genérico") return;
-
       const botoes = mapaTipos[tipo];
 
       if (botoes) {
