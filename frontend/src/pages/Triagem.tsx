@@ -1,16 +1,20 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import logo from "../assets/logo.svg";
-import { obterDoacao } from "../services/triagemService";
+import { criarTriagem, atualizarStatusDoacao, obterDoacao } from "../services/triagemService";
 import { Doacao } from "../context/DoacaoContext";
 import Toast from "../components/Toast";
 import ModalConfirmacao from "../components/ModalConfirmacao";
+import icon_check from "../assets/icon_check.png";
+import Botao from "../components/Botao";
+import { ResultadoTriagem, StatusDoacao } from "../services/triagemService";
 
 function Triagem() {
 
   const { id } = useParams();
+  const navigate = useNavigate();
   const [doacao, setDoacao] = useState<Doacao | null>(null);
   const [carregando, setCarregando] = useState(true);
 
@@ -21,7 +25,10 @@ function Triagem() {
   const [carregandoFinalizacao, setCarregandoFinalizacao] = useState(false);
 
   const [checklist, setChecklist] = useState<Record<number, boolean>>({});
-  const [statusTriagem, setStatusTriagem] = useState<string | null>(null);
+
+  const [statusDoacao, setStatusDoacao] = useState<StatusDoacao | null>(null);
+  const [statusTriagem, setStatusTriagem] = useState<ResultadoTriagem | null>(null);
+
   const [observacaoTriagem, setObservacaoTriagem] = useState("");
 
   const itensChecklist = [
@@ -37,6 +44,16 @@ function Triagem() {
       [index]: !prev[index],
     }));
   }
+
+  function selecionarStatusDoacao(status: StatusDoacao) {
+    setStatusDoacao((prev) => (prev === status ? null : status));
+  }
+
+  function selecionarStatusTriagem(status: ResultadoTriagem) {
+    setStatusTriagem((prev) => (prev === status ? null : status));
+  }
+
+  const checklistCompleto = itensChecklist.length > 0 && itensChecklist.every((_, index) => checklist[index]);
 
   const [modalArquivoAberto, setModalArquivoAberto] = useState(false);
   const [arquivoSelecionado, setArquivoSelecionado] = useState<string | null>(null);
@@ -69,23 +86,32 @@ function Triagem() {
   }, [id]);
 
   async function finalizarTriagem() {
+    if (!doacao || !statusDoacao) return;
+
     setCarregandoFinalizacao(true);
 
     try {
-      // chamar depois o backend para salvar a triagem, usando checklist, statusTriagem e observacaoTriagem
-      console.log({
-        checklist,
-        statusTriagem,
-        observacaoTriagem,
-      });
+      const resultadoTriagem: ResultadoTriagem = statusDoacao === "PRE_APROVADO" ? "PRE_APROVADO" : "INAPTO";
+
+      for (const item of doacao.itens) {
+        console.log(`Criando triagem item ${item.id}`);
+
+        await criarTriagem(item.id, {
+          resultado: resultadoTriagem,
+          checklist: checklist, 
+          comentario: observacaoTriagem,
+          em_quarentena: false,
+        });
+      }
 
       setMensagem("Triagem finalizada com sucesso!");
       setTipoMensagem("sucesso");
 
-      setMostrarModalFinal(false);
+      navigate("/lista-triagem");
 
-    } catch (e) {
-      console.error(e);
+    } catch (e: any) {
+      console.error("Erro ao finalizar triagem:", e);
+      console.log(e?.response?.data);
 
       setMensagem("Erro ao finalizar triagem.");
       setTipoMensagem("erro");
@@ -125,7 +151,7 @@ function Triagem() {
 
               {carregando ? (
                 <p className="text-center body-semibold-pequeno py-6">
-                  Carregando links...
+                  Carregando informações...
                 </p>
 
               ) : !doacao ? (
@@ -199,12 +225,20 @@ function Triagem() {
                       <div className="flex flex-col gap-3">
                         {itensChecklist.map((item, index) => (
                           <label key={index} className="flex items-center gap-2 cursor-pointer" >
-                            <input type="checkbox" checked={!!checklist[index]} onChange={() => toggleChecklist(index)} />
+                            <input type="checkbox" checked={!!checklist[index]} onChange={() => toggleChecklist(index)} className="hidden"/>
+                              <div className={`w-5 h-5 flex items-center justify-center rounded border-2 transition hover:scale-110 ${checklist[index]  ? "bg-[var(--base-40)] border-black"  : "bg-white border-gray-400"} `}>
+                                  {checklist[index] && (
+                                      <img src={icon_check} alt="Check" className="w-4 h-4" />
+                                  )}
+                              </div>
                             <span className="body-pequeno">{item}</span>
                           </label>
+                          
                         ))}
                       </div>
                     </div>
+
+                    <div className="body-muito-pequeno"> Se nenhum estiver faltando confirmar algum item do ckecklist, é bloqueado o botão para selecionar o status da triagem como pre aprovado, já que tem alguma coisa faltando. </div>
 
                     <div className="border-t pt-4 flex flex-col gap-3">
 
@@ -214,16 +248,23 @@ function Triagem() {
 
                       <div className="flex gap-3 justify-center flex-wrap">
 
-                        <button onClick={() => setStatusTriagem("apto")} className="px-4 py-2 btn-apto-selecionado">Apto</button>
+                        {/* // Quero que os botoes estejam cinzas e se selecionado fiquem com a cor do que sao, ex apto_selecioando. E se outro boto for selecioando o que estava selecionado volta a cor cinza e o novo selecionado fica com a cor do status. E se clicar no mesmo botão selecionado ele desmarca e volta para cinza e o status fica nulo. E só pode selecionar um status por vez. */}
+                        <div className="flex-1">
+                          <Botao variante={statusDoacao === "PRE_APROVADO" ? "apto_selecionado" : "padrao"}  desabilitado={!checklistCompleto} aoClicar={() => {if (!checklistCompleto) return; setStatusDoacao("PRE_APROVADO");}}>Pré-aprovado</Botao>
+                        </div>
+                      
+                        <div className="flex-1">
+                          <Botao variante={`${statusDoacao === "INAPTO" ? "inapto_selecionado" : "padrao"}`} aoClicar={() => setStatusDoacao("INAPTO")}>Inapto</Botao>
+                        </div>
 
-                        <button onClick={() => setStatusTriagem("inapto")} className="px-4 py-2 btn-inapto-selecionado">Inapto</button>
-
-                        <button onClick={() => setStatusTriagem("incompleto")} className="px-4 py-2 btn-incompleto-selecionado">Incompleto</button>
+                        <div className="flex-1">
+                          <Botao variante={`${statusDoacao === "INCOMPLETO" ? "incompleto_selecionado" : "padrao"}`} aoClicar={() => setStatusDoacao("INCOMPLETO")}>Incompleto</Botao>
+                        </div>
 
                       </div>
                     </div>
 
-                    {(statusTriagem === "inapto" || statusTriagem === "incompleto") && (
+                    {(statusDoacao === "INAPTO" || statusDoacao === "INCOMPLETO") && (
                       <div className="border-t pt-4 flex flex-col gap-2">
 
                         <h4 className="body-bold-pequeno text-center">
@@ -241,7 +282,7 @@ function Triagem() {
                       </div>
                     )}
 
-                    <button disabled={ (statusTriagem === "inapto" || statusTriagem === "incompleto") && observacaoTriagem.trim() === ""}
+                    <button disabled={!statusDoacao || ((statusDoacao === "INAPTO" || statusDoacao === "INCOMPLETO") && observacaoTriagem.trim() === "")}
                       className="w-full mt-4 py-2 btn-confirmar rounded" onClick={() => setMostrarModalFinal(true)}>   {/* w-full mt-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50 */}
                       Finalizar Triagem
                     </button>
@@ -253,11 +294,17 @@ function Triagem() {
               <ModalConfirmacao
                 aberto={mostrarModalFinal}
                 titulo="Finalizar triagem"
-                descricao="Tem certeza que deseja finalizar a triagem? Essa ação não poderá ser desfeita."
+                descricao={
+                  `Resumo:\n\n` +
+                  `• Status da doação: ${statusDoacao ?? "nenhum"}\n` +
+                  `• Resultado triagem: ${statusDoacao === "PRE_APROVADO" ? "PRE_APROVADO" : "INAPTO"
+                  }\n` +
+                  `\nFinalizar triagem?`
+                }
                 botaoCancelar="Cancelar"
                 botaoConfirmar="Finalizar"
-                varianteCancelar="cancelar"
                 varianteConfirmar="confirmar"
+                varianteCancelar="cancelar"
                 onCancelar={() => setMostrarModalFinal(false)}
                 onConfirmar={finalizarTriagem}
               />
