@@ -3,13 +3,12 @@ import { useParams, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import logo from "../assets/logo.svg";
-import { criarTriagem, atualizarStatusDoacao, obterDoacao } from "../services/triagemService";
 import { Doacao } from "../context/DoacaoContext";
 import Toast from "../components/Toast";
 import ModalConfirmacao from "../components/ModalConfirmacao";
 import icon_check from "../assets/icon_check.png";
 import Botao from "../components/Botao";
-import { ResultadoTriagem, StatusDoacao } from "../services/triagemService";
+import { obterDoacao, criarTriagem, ResultadoTriagem, StatusDoacao, obterAvaliacoes  } from "../services/triagemService";
 
 function Triagem() {
 
@@ -22,6 +21,7 @@ function Triagem() {
   const [tipoMensagem, setTipoMensagem] = useState<"sucesso" | "erro">("sucesso");
 
   const [mostrarModalFinal, setMostrarModalFinal] = useState(false);
+  const [mostrarModalCancelar, setMostrarModalCancelar] = useState(false);
   const [carregandoFinalizacao, setCarregandoFinalizacao] = useState(false);
 
   const [checklist, setChecklist] = useState<Record<number, boolean>>({});
@@ -29,7 +29,11 @@ function Triagem() {
   const [statusDoacao, setStatusDoacao] = useState<StatusDoacao | null>(null);
   const [statusTriagem, setStatusTriagem] = useState<ResultadoTriagem | null>(null);
 
+  const [historicoAberto, setHistoricoAberto] = useState<Record<number, boolean>>({});
   const [observacaoTriagem, setObservacaoTriagem] = useState("");
+  const [comentarioOpcional, setComentarioOpcional] = useState("");
+  const [avaliacoes, setAvaliacoes] = useState<Record<number, any[]>>({});
+  const jaFoiTriada = Object.values(avaliacoes).some(arr => arr.length > 0); // verifica se algum item já tem avaliação de triagem
 
   const itensChecklist = [
     "Material em boas condições",
@@ -42,6 +46,13 @@ function Triagem() {
     setChecklist((prev) => ({
       ...prev,
       [index]: !prev[index],
+    }));
+  }
+
+  function toggleHistorico(itemId: number) {
+    setHistoricoAberto(prev => ({
+      ...prev,
+      [itemId]: !prev[itemId]
     }));
   }
 
@@ -68,13 +79,45 @@ function Triagem() {
     setArquivoSelecionado(null);
   }
 
+  function formatarDataHora(data?: string) {
+    if (!data) return "N/A";
+
+    const iso = data.replace(" ", "T");
+    const d = new Date(iso);
+
+    const dataFormatada = d.toLocaleDateString("pt-BR");
+    const horaFormatada = d.toLocaleTimeString("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    return `${dataFormatada} às ${horaFormatada}`;
+  }
+
   useEffect(() => {
     async function carregar() {
       try {
         if (!id) return;
 
         const resposta = await obterDoacao(Number(id));
-        setDoacao(resposta.data);
+        const dadosDoacao = resposta.data;
+
+        setDoacao(dadosDoacao);
+
+        const avaliacoesMap: Record<number, any[]> = {};
+
+        // obter a avaliação de triagem para a doação
+        for (const item of dadosDoacao.itens) {
+          try {
+            const respAval = await obterAvaliacoes(item.id);
+            avaliacoesMap[item.id] = respAval.data;
+          } catch {
+            avaliacoesMap[item.id] = [];
+          }
+        }
+
+        setAvaliacoes(avaliacoesMap);
+
       } catch (erro) {
         console.error("Erro ao carregar doação:", erro);
       } finally {
@@ -99,7 +142,8 @@ function Triagem() {
         await criarTriagem(item.id, {
           resultado: resultadoTriagem,
           checklist: checklist, 
-          comentario: observacaoTriagem,
+          motivo_inaptidao: observacaoTriagem,
+          comentario: comentarioOpcional || undefined, // enviar comentário apenas se tiver sido preenchido
           em_quarentena: false,
         });
       }
@@ -170,10 +214,10 @@ function Triagem() {
                     {/* Observação do doador */}
                     {doacao.observacao_doador && (
                       <div className="border-t pt-3">
-                        <h4 className="body-bold-pequeno mb-2 text-center">
+                        <h4 className="body-bold-muito-pequeno sm:body-bold-pequeno mb-2 text-center">
                           Observação do doador
                         </h4>
-                        <p className="body-pequeno text-center">
+                        <p className="body-muito-pequeno sm:body-pequeno text-center">
                           {doacao.observacao_doador}
                         </p>
                       </div>
@@ -181,30 +225,30 @@ function Triagem() {
 
                     {/* Itens da doação */}
                     <div className="border-t pt-3">
-                      <h4 className="body-bold-pequeno mb-2 text-center">
+                      <h4 className="body-bold-muito-pequeno sm:body-bold-pequeno mb-2 text-center">
                         Itens doados
                       </h4>
 
                       <div className="flex flex-col gap-4">
                         {doacao.itens.map((item) => (
                           <div key={item.id} className="border rounded-lg p-3 bg-[var(--base-10)] flex flex-col gap-2" >
-                            <p className="body-pequeno">
-                              <strong>Tipo:</strong> {item.tipo_material}
+                            <p className="body-muito-pequeno sm:body-pequeno">
+                              <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Tipo:</strong> {item.tipo_material}
                             </p>
 
-                            <p className="body-pequeno">
-                              <strong>Descrição:</strong> {item.descricao}
+                            <p className="body-muito-pequeno sm:body-pequeno">
+                              <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Descrição:</strong> {item.descricao}
                             </p>
 
-                            <p className="body-pequeno">
-                              <strong>Quantidade:</strong> {item.quantidade}
+                            <p className="body-muito-pequeno sm:body-pequeno">
+                              <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Quantidade:</strong> {item.quantidade}
                             </p>
 
                             {/* Fotos */}
                             {item.fotos.length > 0 && (
                               <div>
-                                <p className="body-pequeno mb-1">
-                                  <strong>Fotos:</strong>
+                                <p className="body-muito-pequeno sm:body-pequeno mb-1">
+                                  <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Fotos:</strong>
                                 </p>
 
                                 <div className="flex flex-wrap gap-2">
@@ -214,13 +258,100 @@ function Triagem() {
                                 </div>
                               </div>
                             )}
+
+                            <p className="body-muito-pequeno sm:body-pequeno">
+                              <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Registrado em:</strong> {formatarDataHora(doacao.created_at)}
+                            </p>
+
+                            {/* Só mostrar data de atualização se a doação já foi triada */}
+                            {jaFoiTriada && (
+                              <p className="body-muito-pequeno sm:body-pequeno">
+                                <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Atualizado em:</strong> {formatarDataHora(doacao.updated_at)}
+                              </p>
+                            )}
+
+                            
+                            {avaliacoes[item.id]?.length > 0 && (
+                              <div className="border-t pt-3">
+
+                                {/* ultima triagem */}
+                                {(() => {
+                                  const ordenadas = [...avaliacoes[item.id]].sort(
+                                    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+                                  );
+
+                                  const ultima = ordenadas[0];
+
+                                  return (
+                                    <div className="bg-white border rounded p-2 mb-2">
+                                      <p className="body-muito-pequeno sm:body-pequeno">
+                                        <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Última triagem:</strong> {ultima.resultado}
+                                      </p>
+
+                                      <p className="body-muito-pequeno sm:body-pequeno">
+                                        <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Data:</strong> {formatarDataHora(ultima.created_at)}
+                                      </p>
+
+                                      <p className="body-muito-pequeno sm:body-pequeno">
+                                        <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Triado por:</strong> {ultima.voluntario_triagem_id}
+                                      </p>
+                                    </div>
+                                  );
+                                })()}
+
+                                <button onClick={() => toggleHistorico(item.id)} aria-label="Botão para expandir ou recolher histórico da doação" className="absolute top-2 right-2 text-xs sm:text-sm text-black body-semibold-muito-pequeno sm:body-semibold-pequeno p-2 rounded-full bg-[var(--base-10)] hover:bg-[var(--base-20)] transition">
+                                  {historicoAberto[item.id] ? "Ocultar histórico" : "Ver histórico"}
+                                </button>
+
+                                {/* histórico */}
+                                {historicoAberto[item.id] && (
+                                  <div className="mt-2">
+                                    {avaliacoes[item.id]
+                                      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                                      
+                                      .map((av) => (
+                                        <div key={av.id} className="bg-gray-50 border rounded p-2 mb-2">
+
+                                          <p className="body-muito-pequeno sm:body-pequeno">
+                                            <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Resultado:</strong> {av.resultado}
+                                          </p>
+
+                                          <p className="body-muito-pequeno sm:body-pequeno">
+                                            <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Triado em:</strong> {formatarDataHora(av.created_at)}
+                                          </p>
+
+                                          <p className="body-muito-pequeno sm:body-pequeno">
+                                            <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Triado por:</strong> {av.voluntario_triagem_id}
+                                          </p>
+
+                                          {av.comentario && (
+                                            <p className="body-muito-pequeno sm:body-pequeno">
+                                              <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Comentário:</strong> {av.comentario}
+                                            </p>
+                                          )}
+
+                                          {av.motivo_inaptidao && (
+                                            <p className="body-muito-pequeno sm:body-pequeno">
+                                              <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Motivo:</strong> {av.motivo_inaptidao}
+                                            </p>
+                                          )}
+
+                                        </div>
+                                    ))}
+                                  </div>
+                                )}
+
+                              </div>
+                            )}
+
+
                           </div>
                         ))}
                       </div>
                     </div>
 
                     <div className="border-t pt-4">
-                      <h4 className="body-bold-pequeno mb-3 text-center"> Checklist de Triagem </h4>
+                      <h4 className="body-bold-muito-pequeno sm:body-bold-pequeno mb-3 text-center"> Checklist de Triagem </h4>
 
                       <div className="flex flex-col gap-3">
                         {itensChecklist.map((item, index) => (
@@ -231,34 +362,43 @@ function Triagem() {
                                       <img src={icon_check} alt="Check" className="w-4 h-4" />
                                   )}
                               </div>
-                            <span className="body-pequeno">{item}</span>
+                            <span className="body-muito-pequeno sm:body-pequeno">{item}</span>
                           </label>
                           
                         ))}
                       </div>
                     </div>
 
-                    <div className="body-muito-pequeno"> Se nenhum estiver faltando confirmar algum item do ckecklist, é bloqueado o botão para selecionar o status da triagem como pre aprovado, já que tem alguma coisa faltando. </div>
+                    <div className="body-muito-pequeno sm:text-[13px]">O botão para selecionar o status da triagem como 'Pré-aprovado' permanece bloqueado enquanto houver itens pendentes no checklist.</div>
+
+
+                    <div className="border-t pt-4 flex flex-col gap-2">
+                      <h4 className="body-bold-muito-pequeno sm:body-bold-pequeno text-center">
+                        Comentário adicional (opcional)
+                      </h4>
+
+                      <textarea value={comentarioOpcional} onChange={(e) => setComentarioOpcional(e.target.value)} className="border rounded p-2 w-full" placeholder="Escreva algo adicional sobre a triagem (opcional)..."/>
+                    </div>
 
                     <div className="border-t pt-4 flex flex-col gap-3">
 
-                      <h4 className="body-bold-pequeno text-center">
-                        Resultado da Triagem
+                      <h4 className="body-bold-muito-pequeno sm:body-bold-pequeno text-center">
+                        Resultado da Doação
                       </h4>
 
                       <div className="flex gap-3 justify-center flex-wrap">
 
                         {/* // Quero que os botoes estejam cinzas e se selecionado fiquem com a cor do que sao, ex apto_selecioando. E se outro boto for selecioando o que estava selecionado volta a cor cinza e o novo selecionado fica com a cor do status. E se clicar no mesmo botão selecionado ele desmarca e volta para cinza e o status fica nulo. E só pode selecionar um status por vez. */}
                         <div className="flex-1">
-                          <Botao variante={statusDoacao === "PRE_APROVADO" ? "apto_selecionado" : "padrao"}  desabilitado={!checklistCompleto} aoClicar={() => {if (!checklistCompleto) return; setStatusDoacao("PRE_APROVADO");}}>Pré-aprovado</Botao>
+                          <Botao variante={statusDoacao === "PRE_APROVADO" ? "apto_selecionado" : "status-neutro"} className={statusDoacao === "PRE_APROVADO" ? "" : "btn-status-neutro btn-hover-apto"}  desabilitado={!checklistCompleto} aoClicar={() => {if (!checklistCompleto) return; selecionarStatusDoacao("PRE_APROVADO");}}>Pré-aprovado</Botao>
                         </div>
                       
                         <div className="flex-1">
-                          <Botao variante={`${statusDoacao === "INAPTO" ? "inapto_selecionado" : "padrao"}`} aoClicar={() => setStatusDoacao("INAPTO")}>Inapto</Botao>
+                          <Botao variante={`${statusDoacao === "INAPTO" ? "inapto_selecionado" : "status-neutro"}`} className={statusDoacao === "INAPTO" ? "" : "btn-status-neutro btn-hover-inapto"} aoClicar={() => selecionarStatusDoacao("INAPTO")}>Inapto</Botao>
                         </div>
 
                         <div className="flex-1">
-                          <Botao variante={`${statusDoacao === "INCOMPLETO" ? "incompleto_selecionado" : "padrao"}`} aoClicar={() => setStatusDoacao("INCOMPLETO")}>Incompleto</Botao>
+                          <Botao variante={`${statusDoacao === "INCOMPLETO" ? "incompleto_selecionado" : "status-neutro"}`} className={statusDoacao === "INCOMPLETO" ? "" : "btn-status-neutro btn-hover-incompleto"} aoClicar={() => selecionarStatusDoacao("INCOMPLETO")}>Incompleto</Botao>
                         </div>
 
                       </div>
@@ -267,26 +407,39 @@ function Triagem() {
                     {(statusDoacao === "INAPTO" || statusDoacao === "INCOMPLETO") && (
                       <div className="border-t pt-4 flex flex-col gap-2">
 
-                        <h4 className="body-bold-pequeno text-center">
+                        <h4 className="body-bold-muito-pequeno sm:body-bold-pequeno text-center">
                           Observação obrigatória
                         </h4>
 
                         <textarea value={observacaoTriagem} onChange={(e) => setObservacaoTriagem(e.target.value)} className="border rounded p-2 w-full" placeholder="Descreva o que falta ou o problema encontrado..."/>
 
-                        {observacaoTriagem.trim() === "" && (
-                          <p className="text-red-500 text-sm text-center">
+                        {observacaoTriagem.trim() === "" ? (
+                          <p className="text-[var(--cor-resposta-obrigatoria)] text-sm text-center">
                             Observação obrigatória para este status
                           </p>
-                        )}
+                        ) : observacaoTriagem.trim().length > 0 && observacaoTriagem.trim().length < 20 ? (
+                          <p className="text-[var(--cor-resposta-obrigatoria)] text-sm text-center">
+                            A observação deve conter pelo menos 20 caracteres
+                          </p>
+                        ) : null}
 
                       </div>
                     )}
 
-                    <button disabled={!statusDoacao || ((statusDoacao === "INAPTO" || statusDoacao === "INCOMPLETO") && observacaoTriagem.trim() === "")}
-                      className="w-full mt-4 py-2 btn-confirmar rounded" onClick={() => setMostrarModalFinal(true)}>   {/* w-full mt-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50 */}
-                      Finalizar Triagem
-                    </button>
+                    <div className="flex gap-3 justify-center flex-wrap mt-4">
+                      <div className="flex-1">
+                        <Botao variante="cancelar" className="w-full" aoClicar={() => setMostrarModalCancelar(true)}>  
+                          Cancelar triagem
+                        </Botao>
+                      </div>
 
+                      <div className="flex-1">
+                        <Botao variante="confirmar" desabilitado={!statusDoacao || ((statusDoacao === "INAPTO" || statusDoacao === "INCOMPLETO") && observacaoTriagem.trim() === "")}
+                          className="w-full" aoClicar={() => setMostrarModalFinal(true)}>  
+                          Finalizar Triagem
+                        </Botao>
+                      </div>
+                    </div>
                   </div>
                 </>
               )}
@@ -295,11 +448,11 @@ function Triagem() {
                 aberto={mostrarModalFinal}
                 titulo="Finalizar triagem"
                 descricao={
-                  `Resumo:\n\n` +
+                  `Resumo:\n` +
                   `• Status da doação: ${statusDoacao ?? "nenhum"}\n` +
                   `• Resultado triagem: ${statusDoacao === "PRE_APROVADO" ? "PRE_APROVADO" : "INAPTO"
                   }\n` +
-                  `\nFinalizar triagem?`
+                  `\nGostaria de finalizar a triagem?`
                 }
                 botaoCancelar="Cancelar"
                 botaoConfirmar="Finalizar"
@@ -307,6 +460,25 @@ function Triagem() {
                 varianteCancelar="cancelar"
                 onCancelar={() => setMostrarModalFinal(false)}
                 onConfirmar={finalizarTriagem}
+              />
+
+              <ModalConfirmacao
+                aberto={mostrarModalCancelar}
+                titulo="Cancelar triagem"
+                descricao="Tem certeza que deseja cancelar a triagem?"
+                botaoCancelar="Não"
+                botaoConfirmar="Sim"
+                varianteConfirmar="confirmar"
+                varianteCancelar="cancelar"
+                onCancelar={() => setMostrarModalCancelar(false)}
+                onConfirmar={() => {  
+                  setMostrarModalCancelar(false);
+
+                  const rota = sessionStorage.getItem("rotaDestino");
+                  sessionStorage.removeItem("rotaDestino");
+
+                  navigate(rota || "/lista-triagem");
+                }}
               />
 
             </div>
@@ -323,24 +495,15 @@ function Triagem() {
           <div className="bg-white w-[90%] h-[90%] rounded-lg relative overflow-hidden">
 
             {/* botão fechar */}
-            <button
-              onClick={fecharModal}
-              className="absolute top-2 right-3 text-black text-2xl z-10"
-            >
+            <button onClick={fecharModal} className="absolute top-2 right-3 text-white text-2xl z-10">
               ✕
             </button>
 
             {/* viewer automático */}
             {arquivoSelecionado.endsWith(".pdf") ? (
-              <iframe
-                src={arquivoSelecionado}
-                className="w-full h-full"
-              />
+              <iframe src={arquivoSelecionado} className="w-full h-full" />
             ) : (
-              <img
-                src={arquivoSelecionado}
-                className="w-full h-full object-contain bg-black"
-              />
+              <img src={arquivoSelecionado} className="w-full h-full object-contain bg-black"/>
             )}
 
           </div>

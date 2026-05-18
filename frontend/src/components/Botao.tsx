@@ -5,7 +5,7 @@ type PropriedadesBotao = {
   children: ReactNode; // o que tem dentro do botão
   ativo?: boolean; // se o botão está selecionado
   aoClicar?: () => void;
-  variante?: "padrao" | "confirmar" | "cancelar" | "editar" | "sair" | "tipo-selecionado" | "apto_selecionado" | "inapto_selecionado" | "incompleto_selecionado" | "quiz-resposta" | "botao-pequeno-editar" | "botao-pequeno-confirmar" | "botao-pequeno-desativar" | "paginacao";
+  variante?: "padrao" | "confirmar" | "cancelar" | "editar" | "sair" | "tipo-selecionado" | "apto_selecionado" | "inapto_selecionado" | "incompleto_selecionado" | "quiz-resposta" | "botao-pequeno-editar" | "botao-pequeno-confirmar" | "botao-pequeno-desativar" | "paginacao" | "status-neutro";
   tipo?: "button" | "submit";
   desabilitado?: boolean;
   navegacao?: string; // navegação ou botão
@@ -29,6 +29,7 @@ export default function Botao({children, ativo = false, aoClicar, variante = "pa
   else if (variante === "botao-pequeno-confirmar") estilo = "btn-pequeno-confirmar";
   else if (variante === "botao-pequeno-desativar") estilo = "btn-pequeno-desativar";
   else if (variante === "paginacao") estilo = "";
+  else if (variante === "status-neutro") estilo = "btn-status-neutro";
 
   if (ativo && variante === "padrao") {
     estilo = "btn-ativado";

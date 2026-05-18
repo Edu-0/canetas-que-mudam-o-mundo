@@ -51,3 +51,13 @@ export async function atualizarStatusDoacao(itemId: number, dados: { status: Sta
 export async function criarTriagem(itemId: number, dados: CriarTriagemEnvio) {
   return api.post(`/doacoes/itens/${itemId}/avaliacoes`, dados);
 }
+
+// obter avaliações de triagem de um item [Não tem no backend, mas pode ser útil para mostrar histórico de avaliações na página da triagem da doação]
+export async function obterAvaliacoes(itemId: number) {
+  return api.get(`/doacoes/itens/${itemId}/avaliacoes`); 
+}
+
+// obter status de uma doação
+export async function obterStatusDoacao(itemId: number) {
+  return api.get(`/doacoes/itens/${itemId}/status`);
+}

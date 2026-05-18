@@ -155,6 +155,25 @@ function ListaTriagem() {
     return "";
   };
 
+  function formatarStatus(status: string) {
+    return status
+      .toLowerCase()
+      .replaceAll("_", " ");
+  }
+
+  function corStatus(status: string) {
+    switch (status) {
+      case "AGUARDANDO_TRIAGEM":
+        return "bg-yellow-100 text-black";
+
+      case "AGUARDANDO_NOVA_TRIAGEM":
+        return "bg-orange-100 text-black";
+
+      default:
+        return "bg-gray-100 text-black";
+    }
+  }
+
   useEffect(() => {
     async function carregar() {
       try {
@@ -310,7 +329,7 @@ function ListaTriagem() {
                         <div className="flex flex-col min-w-0 flex-1">
 
                           <span className="font-['Nunito'] font-semibold text-sm sm:text-base md:text-lg truncate">
-                            {String((paginaAtual - 1) * ITENS_POR_PAGINA + index + 1).padStart(3, "0")} - {"Solicitação de Triagem"} {/* número sequencial considerando a paginação */}
+                            {String((paginaAtual - 1) * ITENS_POR_PAGINA + index + 1).padStart(3, "0")} - {"Doação " + d.id} {/* número sequencial considerando a paginação */}
                           </span>
 
                           {/* data */}
@@ -332,9 +351,9 @@ function ListaTriagem() {
                           </span> 
 
                           {/* status */}
-                          <span className="bg-yellow-100 px-2 py-1 text-xs rounded w-fit mt-1">
-                            {d.status.replaceAll("_", " ")}
-                          </span> 
+                          <span className={`px-2 py-1  text-[10px] sm-text-[12px] rounded w-fit mt-1 capitalize ${corStatus(d.status)}`}>
+                            {formatarStatus(d.status)}
+                          </span>
                         
                         </div>
 
