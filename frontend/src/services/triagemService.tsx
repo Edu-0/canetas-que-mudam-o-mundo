@@ -9,8 +9,9 @@ export type StatusDoacao =
   | "DISPONIVEL"
   | "MATERIAL_COLETADO"
   | "CANCELADO"
+  | "INCOMPLETO";
 
-export type ResultadoTriagem = "PRE_APROVAD" | "INAPTO";
+export type ResultadoTriagem = "PRE_APROVADO" | "INAPTO";
 
 // Triagem
 export type CriarTriagemEnvio = {
@@ -23,8 +24,17 @@ export type CriarTriagemEnvio = {
 
 
 // listar todas as doações da ONG
-export async function obterDoacoes(p0: { data_inicio: string | undefined; data_final: string | undefined; status: string | undefined; ordem: "data-asc" | "data-desc"; }) {
-  return api.get("/doacoes");
+export async function obterDoacoes(params: {data_inicio?: string; data_final?: string; status?: string; ordem: "asc" | "desc";}) {
+  const ordemBackend = params.ordem === "asc" ? "asc" : "desc";
+
+  return api.get("/doacoes/", {
+    params: {
+      data_inicio: params.data_inicio,
+      data_final: params.data_final,
+      status: params.status,
+      ordem: ordemBackend,
+    },
+  });
 }
 
 // obter uma doação específica
@@ -40,4 +50,14 @@ export async function atualizarStatusDoacao(itemId: number, dados: { status: Sta
 // criar avaliação de triagem
 export async function criarTriagem(itemId: number, dados: CriarTriagemEnvio) {
   return api.post(`/doacoes/itens/${itemId}/avaliacoes`, dados);
+}
+
+// obter avaliações de triagem de um item [Não tem no backend, mas pode ser útil para mostrar histórico de avaliações na página da triagem da doação]
+export async function obterAvaliacoes(itemId: number) {
+  return api.get(`/doacoes/itens/${itemId}/avaliacoes`); 
+}
+
+// obter status de uma doação
+export async function obterStatusDoacao(itemId: number) {
+  return api.get(`/doacoes/itens/${itemId}/status`);
 }

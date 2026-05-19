@@ -285,6 +285,22 @@
     @apply bg-[#1976D2] border-black text-white;
   }
 
+  .btn-status-neutro {
+    @apply bg-gray-200 border-gray-400 text-black;
+  }
+
+  .btn-hover-apto:hover {
+    @apply bg-[var(--cor-resposta-correta)] text-white;
+  }
+
+  .btn-hover-inapto:hover {
+    @apply bg-[var(--cor-resposta-errada)] text-white;
+  }
+
+  .btn-hover-incompleto:hover {
+    @apply bg-yellow-500 text-white;
+  }
+
   .btn-apto-selecionado {
     @apply bg-[var(--cor-resposta-correta)] border-black text-white;
   }
