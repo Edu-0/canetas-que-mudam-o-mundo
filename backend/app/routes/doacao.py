@@ -24,6 +24,7 @@ from app.models import doacao as m
 from app.models.user import Usuario
 from app.schemas import doacao as s
 from app.services import doacao_service as service
+from app.services import pedido_material_service as pedido_service
 from app.services.firebase_storage import FirebaseStorageService
 
 
@@ -218,16 +219,25 @@ def avaliar_item_doacao(
 def alterar_status_item_doacao(
     item_doacao_id: int,
     dados: s.AtualizarStatusItemDoacao,
+    background_tasks: BackgroundTasks,
     db: SessionDep,
     usuario_atual: Usuario = Depends(get_current_user),
     permissao=Depends(VerificarPermissao("doacao_item:alterar_status")),
 ):
-    return service.alterar_status_item_doacao(
+    item = service.alterar_status_item_doacao(
         db=db,
         usuario_atual=usuario_atual,
         item_doacao_id=item_doacao_id,
         dados=dados,
     )
+
+    if item.status == StatusDoacao.DISPONIVEL:
+        mensagens = pedido_service.registrar_notificacoes_material_disponivel(db=db, item_doacao=item)
+        fm = FastMail(conf)
+        for mensagem in mensagens:
+            background_tasks.add_task(fm.send_message, mensagem)
+
+    return item
 
 
 @router.post("/{doacao_id}/notificar-pre-aprovacao", response_model=s.RespostaNotificacaoDoacao)

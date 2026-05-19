@@ -75,6 +75,10 @@ class Doacao(Base):
     def status_tag(self) -> str:
         return self.status.value.replace("_", " ").capitalize()
 
+    @property
+    def codigo_coleta(self) -> str:
+        return f"D-{self.id:08d}" if self.id is not None else ""
+
 
 class ItemDoacao(Base):
     __tablename__ = "item_doacao"
