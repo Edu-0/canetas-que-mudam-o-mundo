@@ -214,6 +214,26 @@ def avaliar_item_doacao(
     )
 
 
+
+@router.get("/analises/{ong_id}", response_model=list[s.RespostaAvaliacaoTriagemDoacao])
+def listar_analises_rota(
+    db: SessionDep,
+    ong_id:int,
+    usuario_atual: Usuario = Depends(get_current_user),
+    permissao=Depends(VerificarPermissao("analise-triagem:listar-analises"))
+):
+    ong_do_usuario = service.obter_ong(db, usuario_atual)
+    
+    if not ong_do_usuario or ong_do_usuario.id != ong_id:
+        raise HTTPException(status_code=403, detail="Você não tem permissão para visualizar as triagens desta ONG.")
+
+    return service.listar_analises(
+        db=db,
+        ong_id=ong_id
+    )
+
+
+
 @router.patch("/itens/{item_doacao_id}/status", response_model=s.RespostaItemDoacao)
 def alterar_status_item_doacao(
     item_doacao_id: int,
@@ -257,7 +277,7 @@ def notificar_pre_aprovacao(
         hora_fechamento=str(doacao.ong.hora_fechamento),
     )
 
-@router.get("/analises/listar-quarentena/{ong_id}", response_model=list[s.RespostaListagemQuarentena]) # <-- Envolvido em list[]
+@router.get("/analises/{ong_id}/em-quarentena", response_model=list[s.RespostaListagemQuarentena]) # <-- Envolvido em list[]
 def listar_analises_quarentena_rota( 
     ong_id: int,
     db: SessionDep,

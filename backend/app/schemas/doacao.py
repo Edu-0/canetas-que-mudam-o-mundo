@@ -130,6 +130,7 @@ class RespostaAvaliacaoTriagemDoacao(BaseModel):
     resultado_validado: Optional[bool] = None
     validado_em: Optional[datetime] = None
     created_at: datetime
+    voluntario_triagem: ResumoVoluntario 
 
     model_config = ConfigDict(from_attributes=True)
 
