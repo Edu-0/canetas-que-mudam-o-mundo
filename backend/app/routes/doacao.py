@@ -18,7 +18,7 @@ from pydantic import ValidationError
 
 from app.core.config_email import conf
 from app.core.deps_auth import VerificarPermissao, get_current_user
-from app.core.enums import StatusDoacao
+from app.core.enums import StatusDoacao, ResultadoTriagemDoacao
 from app.database.connection import SessionDep
 from app.models import doacao as m
 from app.models.user import Usuario
@@ -204,15 +204,25 @@ def avaliar_item_doacao(
     item_doacao_id: int,
     dados: s.CriarAvaliacaoTriagemDoacao,
     db: SessionDep,
+    background_tasks: BackgroundTasks,
     usuario_atual: Usuario = Depends(get_current_user),
     permissao=Depends(VerificarPermissao("doacao_item:avaliar")),
 ):
-    return service.avaliar_item_doacao(
+    avaliacao = service.avaliar_item_doacao(
         db=db,
         voluntario=usuario_atual,
         item_doacao_id=item_doacao_id,
         dados=dados,
     )
+
+    # Envia e-mail automático ao doador quando item for pré-aprovado
+    if avaliacao.resultado == ResultadoTriagemDoacao.PRE_APROVADO:
+        item = db.get(m.ItemDoacao, item_doacao_id)
+        if item and item.doacao:
+            fm = FastMail(conf)
+            background_tasks.add_task(fm.send_message, _montar_email_pre_aprovacao(item.doacao))
+
+    return avaliacao
 
 
 @router.patch("/itens/{item_doacao_id}/status", response_model=s.RespostaItemDoacao)

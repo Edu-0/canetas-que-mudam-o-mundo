@@ -91,7 +91,26 @@ export async function criarUsuarioResponsavel(usuarioId: number, formData: FormD
 
 // Criar familiar para beneficiário
 export async function criarFamiliar(responsavel_id: number, dados: DadosFamilia[]) {
-  const response = await api.post(`/usuario/${responsavel_id}/familia-responsavel`, dados);
+  const formData = new FormData();
+
+  const dadosFamiliares = dados.map(({ documentos, ...rest }) => rest);
+  formData.append("dados_familiares", JSON.stringify(dadosFamiliares));
+
+  dados.forEach((familiar) => {
+    if (familiar.documentos && familiar.documentos[0]) {
+      formData.append("arquivos", familiar.documentos[0]);
+    }
+  });
+
+  const response = await api.post(
+    `/usuario/${responsavel_id}/familia-responsavel`,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
   return response.data;
 }
 
