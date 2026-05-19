@@ -111,6 +111,12 @@ class ItemDoacao(Base):
     )
 
     doacao = relationship("Doacao", back_populates="itens")
+    estoque = relationship(
+        "ItemEstoque",
+        back_populates="item_doacao",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
     fotos = relationship(
         "FotoItemDoacao",
         back_populates="item_doacao",
