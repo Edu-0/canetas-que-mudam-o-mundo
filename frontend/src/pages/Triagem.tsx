@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
@@ -9,6 +9,7 @@ import ModalConfirmacao from "../components/ModalConfirmacao";
 import icon_check from "../assets/icon_check.png";
 import Botao from "../components/Botao";
 import { obterDoacao, criarTriagem, ResultadoTriagem, StatusDoacao, obterAvaliacoes  } from "../services/triagemService";
+import ModalImagem from "../components/ModalImagem";
 
 function Triagem() {
 
@@ -66,18 +67,72 @@ function Triagem() {
 
   const checklistCompleto = itensChecklist.length > 0 && itensChecklist.every((_, index) => checklist[index]);
 
-  const [modalArquivoAberto, setModalArquivoAberto] = useState(false);
-  const [arquivoSelecionado, setArquivoSelecionado] = useState<string | null>(null);
+  const [modalImagemAberto, setModalImagemAberto] = useState(false);
+  const [imagemSelecionadaIndex, setImagemSelecionadaIndex] = useState<number | null>(null);
+  const [imagensAtuais, setImagensAtuais] = useState<string[]>([]);
+  
+  const [zoom, setZoom] = useState(1);
+  const [posicao, setPosicao] = useState({ x: 0, y: 0 });
+  const ZOOM_MIN = 1;
+  const ZOOM_MAX = 3;
 
-  function abrirDocumento(url: string) {
-    setArquivoSelecionado(url);
-    setModalArquivoAberto(true);
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  function abrirImagem(imagens: string[], index: number) {
+    setImagensAtuais(imagens);
+    setImagemSelecionadaIndex(index);
+    setZoom(1); // reseta zoom ao abrir nova imagem
+    setPosicao({ x: 0, y: 0 }); // reseta posição ao abrir nova imagem
+    setModalImagemAberto(true);
+  }
+
+  function handleWheel(e: React.WheelEvent) {
+    e.preventDefault();
+
+    setZoom((prev) => {
+      const novoZoom = prev + (e.deltaY > 0 ? -0.1 : 0.1);
+
+      // não deixa diminuir abaixo de 1
+      if (novoZoom < ZOOM_MIN) return ZOOM_MIN;
+
+      // limite máximo
+      if (novoZoom > ZOOM_MAX) return ZOOM_MAX;
+
+      return novoZoom;
+    });
   }
 
   function fecharModal() {
-    setModalArquivoAberto(false);
-    setArquivoSelecionado(null);
+    setModalImagemAberto(false);
+    setImagemSelecionadaIndex(null);
   }
+
+  function proximaImagem() {
+    if (imagemSelecionadaIndex === null) return;
+
+    setImagemSelecionadaIndex((prev) =>
+      prev !== null ? (prev + 1) % imagensAtuais.length : 0
+    );
+  }
+
+  function imagemAnterior() {
+    if (imagemSelecionadaIndex === null) return;
+
+    setImagemSelecionadaIndex((prev) =>
+      prev !== null
+        ? (prev - 1 + imagensAtuais.length) % imagensAtuais.length
+        : 0
+    );
+  }
+
+  useEffect(() => {
+    if (modalImagemAberto) {
+      modalRef.current?.focus();
+      document.body.style.overflow = "hidden"; // trava scroll da página
+    } else {
+      document.body.style.overflow = "auto"; // libera scroll da página
+    }
+  }, [modalImagemAberto]);
 
   function formatarDataHora(data?: string) {
     if (!data) return "N/A";
@@ -252,8 +307,10 @@ function Triagem() {
                                 </p>
 
                                 <div className="flex flex-wrap gap-2">
-                                  {item.fotos.map((foto) => (
-                                    <img key={foto.id} src={foto.url} alt="Foto do item" onClick={() => abrirDocumento(foto.url)} className="w-24 h-24 object-cover rounded-md border cursor-pointer hover:scale-105 transition" />
+                                  {item.fotos.map((foto, index) => (
+                                    <img key={foto.id} src={foto.url} alt={`Foto ${index + 1} do item`} tabIndex={0} role="button" onClick={() => abrirImagem(item.fotos.map(f => f.url), index)} 
+                                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); abrirImagem(item.fotos.map(f => f.url), index);}}}
+                                    className=" w-24 h-24 object-cover rounded-md border cursor-pointer hover:scale-110 hover:shadow-md transition focus:outline-none focus:ring-2 focus:ring-[var(--base-50)]"/>
                                   ))}
                                 </div>
                               </div>
@@ -355,8 +412,8 @@ function Triagem() {
 
                       <div className="flex flex-col gap-3">
                         {itensChecklist.map((item, index) => (
-                          <label key={index} className="flex items-center gap-2 cursor-pointer" >
-                            <input type="checkbox" checked={!!checklist[index]} onChange={() => toggleChecklist(index)} className="hidden"/>
+                          <label key={index} className="flex items-center gap-2 cursor-pointer focus-within:ring-2 focus-within:ring-[var(--base-50)] rounded px-1" >
+                            <input type="checkbox" checked={!!checklist[index]} onChange={() => toggleChecklist(index)} className="sr-only"/>
                               <div className={`w-5 h-5 flex items-center justify-center rounded border-2 transition hover:scale-110 ${checklist[index]  ? "bg-[var(--base-40)] border-black"  : "bg-white border-gray-400"} `}>
                                   {checklist[index] && (
                                       <img src={icon_check} alt="Check" className="w-4 h-4" />
@@ -489,26 +546,13 @@ function Triagem() {
       {/* footer */}
       <Footer />
 
-      {modalArquivoAberto && arquivoSelecionado && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-          
-          <div className="bg-white w-[90%] h-[90%] rounded-lg relative overflow-hidden">
+      <ModalImagem
+        aberto={modalImagemAberto}
+        imagens={imagensAtuais}
+        indexInicial={imagemSelecionadaIndex ?? 0}
+        onFechar={() => setModalImagemAberto(false)}
+      />
 
-            {/* botão fechar */}
-            <button onClick={fecharModal} className="absolute top-2 right-3 text-white text-2xl z-10">
-              ✕
-            </button>
-
-            {/* viewer automático */}
-            {arquivoSelecionado.endsWith(".pdf") ? (
-              <iframe src={arquivoSelecionado} className="w-full h-full" />
-            ) : (
-              <img src={arquivoSelecionado} className="w-full h-full object-contain bg-black"/>
-            )}
-
-          </div>
-        </div>
-      )}
     </div>
   );
 }
