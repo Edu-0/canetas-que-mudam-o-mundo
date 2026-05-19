@@ -10,6 +10,7 @@ from app.models.doacao import (
     FotoItemDoacao,
     ItemDoacao,
 )
+from app.models.estoque import ItemEstoque
 from app.models.ong import Ong
 from app.models.user import Usuario
 from app.schemas.doacao import (
@@ -84,6 +85,19 @@ def sincronizar_status_doacao(doacao: Doacao) -> None:
         doacao.status = StatusDoacao.CANCELADO
 
 
+def sincronizar_item_estoque(db: Session, item: ItemDoacao, agora: datetime) -> None:
+    if item.status == StatusDoacao.DISPONIVEL:
+        if item.estoque is None:
+            item.estoque = ItemEstoque(item_doacao_id=item.id, disponivel_em=agora)
+        else:
+            item.estoque.disponivel_em = agora
+        item.estoque.retirado_em = None
+        return
+
+    if item.status == StatusDoacao.MATERIAL_COLETADO and item.estoque is not None:
+        item.estoque.retirado_em = agora
+
+
 def criar_doacao(db: Session, doador: Usuario, dados: CriarDoacao) -> Doacao:
     validar_usuario_doador(doador)
 
@@ -147,11 +161,13 @@ def listar_doacoes(
             detail="Data inicial não pode ser maior que a data final.",
         )
 
-    if status_doacao and status_doacao not in STATUS_LISTAGEM_TRIAGEM:
-        raise HTTPException(
-            status_code=400,
-            detail="Esta listagem aceita apenas AGUARDANDO_TRIAGEM ou AGUARDANDO_NOVA_TRIAGEM.",
-        )
+    # Ajuste de comportamento de listagem:
+    # - Se foi passado um status específico, permite filtrar por ele para os usuários
+    #   autorizados (Doador, Triagem ou Coordenador).
+    # - Se não foi passado status, por padrão Voluntário da Triagem e
+    #   Coordenador de Processos recebem apenas itens aguardando triagem,
+    #   enquanto Doadores recebem todas as suas doações sem filtro de status.
+    
 
     ordem_normalizada = ordem.strip().lower()
     ordens_ascendentes = {"asc", "crescente", "antigas", "mais_antigas"}
@@ -178,18 +194,34 @@ def listar_doacoes(
                 detail="Voluntário da triagem não possui vínculo com ONG.",
             )
         query = query.filter(Doacao.ong_id == usuario_atual.vinculo_voluntario.ong_id)
+    elif usuario_tem_funcao(usuario_atual, TipoUsuario.COORDENADOR_PROCESSOS):
+        if not usuario_atual.ong:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Coordenador não possui ONG vinculada.",
+            )
+        query = query.filter(Doacao.ong_id == usuario_atual.ong.id)
     elif usuario_tem_funcao(usuario_atual, TipoUsuario.DOADOR):
         query = query.filter(Doacao.doador_id == usuario_atual.id)
     else:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Apenas Doador ou Voluntário da Triagem podem listar doações.",
+            detail="Apenas Doador, Voluntário da Triagem ou Coordenador de Processos podem listar doações.",
         )
 
-    status_permitidos = (
-        [status_doacao] if status_doacao else list(STATUS_LISTAGEM_TRIAGEM)
-    )
-    query = query.filter(Doacao.status.in_(status_permitidos))
+    if status_doacao:
+        status_permitidos = [status_doacao]
+    else:
+        if usuario_tem_funcao(usuario_atual, TipoUsuario.TRIAGEM) or usuario_tem_funcao(
+            usuario_atual, TipoUsuario.COORDENADOR_PROCESSOS
+        ):
+            status_permitidos = list(STATUS_LISTAGEM_TRIAGEM)
+        else:
+            status_permitidos = None
+    
+    if status_permitidos:
+        query = query.filter(Doacao.status.in_(status_permitidos))
+    
 
     if data_inicio:
         query = query.filter(Doacao.created_at >= datetime.combine(data_inicio, time.min))
@@ -285,6 +317,7 @@ def alterar_status_item_doacao(
         item.recebido_por_id = usuario_atual.id
         item.recebido_em = agora
         item.disponivel_em = agora
+        sincronizar_item_estoque(db, item, agora)
 
     elif novo_status == StatusDoacao.MATERIAL_COLETADO:
         if not (
@@ -304,6 +337,7 @@ def alterar_status_item_doacao(
         item.status = StatusDoacao.MATERIAL_COLETADO
         item.coletado_por_id = usuario_atual.id
         item.coletado_em = agora
+        sincronizar_item_estoque(db, item, agora)
 
     elif novo_status == StatusDoacao.INAPTO:
         validar_voluntario_triagem(usuario_atual, item.doacao.ong_id)
