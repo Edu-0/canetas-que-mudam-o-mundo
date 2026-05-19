@@ -48,6 +48,10 @@ class criarUsuario(usuarioBase):
   
         return senha
 
+class ResumoVoluntario(BaseModel):
+    nome_completo: str
+    model_config = ConfigDict(from_attributes=True)
+
 class criarUsuarioResponsavel(BaseModel):
     qtd_familiares: int = Field(default=0, ge=0)
     renda: float
