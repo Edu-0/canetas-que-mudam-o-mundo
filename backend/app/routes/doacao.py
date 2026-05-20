@@ -225,6 +225,27 @@ def avaliar_item_doacao(
     return avaliacao
 
 
+
+@router.get("/itens/{item_doacao_id}/avaliacoes", response_model=list[s.RespostaAvaliacaoTriagemDoacao])
+def listar_historico_avaliacoes(
+    item_doacao_id: int, 
+    db: SessionDep,
+    usuario_atual: Usuario = Depends(get_current_user),
+    permissao=Depends(VerificarPermissao("avaliacao-triagem-doacao:listar-historico-item"))
+):
+    ong_do_usuario = service.obter_ong(db, usuario_atual)
+    
+    if not ong_do_usuario:
+        raise HTTPException(status_code=403, detail="Você não está vinculado a uma ONG.")
+
+    return service.listar_historico_avaliacoes_item(
+        db=db,
+        item_doacao_id=item_doacao_id,
+        ong_id=ong_do_usuario.id 
+    )
+
+
+
 @router.patch("/itens/{item_doacao_id}/status", response_model=s.RespostaItemDoacao)
 def alterar_status_item_doacao(
     item_doacao_id: int,
@@ -276,3 +297,56 @@ def notificar_pre_aprovacao(
         hora_abertura=str(doacao.ong.hora_abertura),
         hora_fechamento=str(doacao.ong.hora_fechamento),
     )
+
+@router.get("/analises/em-quarentena", response_model=list[s.RespostaListagemQuarentena]) 
+def listar_analises_quarentena_rota( 
+    db: SessionDep,
+    usuario_atual: Usuario = Depends(get_current_user),
+    permissao = Depends(VerificarPermissao("avaliacao-triagem-doacao:listar-analises"))
+):
+    ong_do_usuario = service.obter_ong(db, usuario_atual)
+    
+    if not ong_do_usuario:
+        raise HTTPException(
+            status_code=403, 
+            detail="Você não está vinculado a nenhuma ONG para visualizar análises."
+        )
+
+    return service.listar_analises_quarentena(
+        db=db,
+        ong_id=ong_do_usuario.id
+    )
+
+
+@router.put("/analises/{analise_id}", response_model=s.RespostaRevisarAvaliacaoTriagem)
+def verificar_analise_do_voluntario(
+    analise_id: int, 
+    dados: s.RevisarAvaliacaoTriagem, 
+    db: SessionDep, 
+    usuario_atual: Usuario = Depends(get_current_user),
+    permissao = Depends(VerificarPermissao("avaliacao-triagem-doacao:verificar-analise"))
+):
+    ong_do_usuario = service.obter_ong(db, usuario_atual)
+    
+    if not ong_do_usuario:
+        raise HTTPException(status_code=403, detail="Você não está vinculado a uma ONG.")
+
+    analise = service.obter_analise_material(db, analise_id) 
+    
+    if not analise:
+        raise HTTPException(status_code=404, detail="Análise não encontrada.")
+
+
+    if analise.item_doacao.doacao.ong_id != ong_do_usuario.id:
+        raise HTTPException(
+            status_code=403, 
+            detail="Você não tem permissão para analisar uma triagem de outra ONG."
+        )
+    
+    return service.avaliar_analise_de_doacao(
+        db=db,
+        coordenador=usuario_atual,
+        analise_id=analise.id,
+        dados=dados
+    )
+

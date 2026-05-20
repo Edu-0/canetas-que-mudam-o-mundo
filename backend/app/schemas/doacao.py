@@ -5,7 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.core.enums import ResultadoTriagemDoacao, StatusDoacao
 from app.models.doacao import MAX_TAMANHO_FOTO_DOACAO_BYTES
-
+from app.schemas.user import ResumoVoluntario
 
 class CriarFotoItemDoacao(BaseModel):
     url: str = Field(min_length=1, max_length=2000)
@@ -109,7 +109,6 @@ class CriarAvaliacaoTriagemDoacao(BaseModel):
     checklist: Optional[dict[str, Any]] = None
     comentario: Optional[str] = Field(default=None, max_length=5000)
     motivo_inaptidao: Optional[str] = Field(default=None, max_length=5000)
-    em_quarentena: bool = False
 
     @field_validator("motivo_inaptidao")
     @classmethod
@@ -128,14 +127,32 @@ class RespostaAvaliacaoTriagemDoacao(BaseModel):
     checklist: Optional[dict[str, Any]] = None
     comentario: Optional[str] = None
     motivo_inaptidao: Optional[str] = None
-    em_quarentena: bool
     coordenador_revisor_id: Optional[int] = None
     resultado_validado: Optional[bool] = None
     validado_em: Optional[datetime] = None
     created_at: datetime
+    voluntario_triagem: ResumoVoluntario 
 
     model_config = ConfigDict(from_attributes=True)
 
+class RespostaListagemQuarentena(BaseModel):
+    id: int
+    resultado: str
+    created_at: datetime
+    voluntario_triagem: ResumoVoluntario 
+
+    model_config = ConfigDict(from_attributes=True)
+
+class RespostaRevisarAvaliacaoTriagem(BaseModel):
+    resultado_validado: bool = Field(
+        ..., 
+        description="True se o coordenador concorda com a análise do voluntário, False se discorda."
+    )
+    comentario_coordenador: Optional[str] = Field(
+        default=None, 
+        max_length=5000,
+        description="Feedback do coordenador sobre a avaliação em quarentena."
+    )
 
 class RespostaNotificacaoDoacao(BaseModel):
     doacao_id: int

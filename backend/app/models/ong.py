@@ -53,5 +53,6 @@ class VoluntarioOng(Base):
     id = Column(Integer, primary_key = True)
     usuario_id = Column(Integer, ForeignKey('usuario.id'), nullable = False, unique = True)
     ong_id = Column(Integer, ForeignKey('ong.id'), nullable = False)
+    nivel_confianca = Column(Integer, default = 0, nullable=False)
     usuario = relationship("Usuario", back_populates = "vinculo_voluntario")
     ong = relationship("Ong", back_populates = "voluntarios")

@@ -27,7 +27,8 @@ PERMISSOES_POR_FUNCAO = {
         "doacao_item:alterar_status",
         "doacao:notificar_status",
         "pedido:listar",
-        "pedido:alterar_status"
+        "pedido:alterar_status",
+        "avaliacao-triagem-doacao:listar-historico-item"
     },
     TipoUsuario.RESPONSAVEL_BENEFICIARIO: {
         "usuario:atualizar",
@@ -60,7 +61,10 @@ PERMISSOES_POR_FUNCAO = {
         "pedido:listar",
         "pedido:alterar_status",
         "voluntario_ong:gerar-link-voluntario",
-        "voluntario_ong:deletar-voluntario"
+        "voluntario_ong:deletar-voluntario",
+        "avaliacao-triagem-doacao:listar-analises",
+        "avaliacao-triagem-doacao:verificar-analise",
+        "avaliacao-triagem-doacao:listar-historico-item"
     }
 }
 
