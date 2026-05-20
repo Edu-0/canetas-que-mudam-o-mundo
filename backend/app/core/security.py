@@ -54,7 +54,9 @@ PERMISSOES_POR_FUNCAO = {
         "ong:listar",
         "doacao:listar",
         "voluntario_ong:gerar-link-voluntario",
-        "voluntario_ong:deletar-voluntario"
+        "voluntario_ong:deletar-voluntario",
+        "analise-triagem:listar-analises",
+        "analise-triagem:verificar-analise"
     }
 }
 

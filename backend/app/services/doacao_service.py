@@ -1,15 +1,16 @@
 from datetime import date, datetime, time
 
 from fastapi import HTTPException, status
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session, selectinload,joinedload
 
 from app.core.enums import ResultadoTriagemDoacao, StatusDoacao, TipoUsuario
 from app.models.doacao import (
     AvaliacaoTriagemDoacao,
     Doacao,
     FotoItemDoacao,
-    ItemDoacao,
+    ItemDoacao
 )
+from app.models.ong import Ong, VoluntarioOng
 from app.models.estoque import ItemEstoque
 from app.models.ong import Ong
 from app.models.user import Usuario
@@ -17,7 +18,12 @@ from app.schemas.doacao import (
     AtualizarStatusItemDoacao,
     CriarAvaliacaoTriagemDoacao,
     CriarDoacao,
+    RespostaRevisarAvaliacaoTriagem,
+    RespostaAvaliacaoTriagemDoacao,
+    RespostaListagemQuarentena
 )
+
+
 
 
 STATUS_LISTAGEM_TRIAGEM = {
@@ -37,6 +43,18 @@ def validar_usuario_doador(usuario: Usuario) -> None:
             detail="Apenas usuários com perfil Doador podem criar doações.",
         )
 
+def validar_usuario_coordenador(usuario:Usuario, ong_id) -> None:
+    if not usuario_tem_funcao(usuario, TipoUsuario.COORDENADOR_PROCESSOS):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Apenas usuários com perfil Coordenador de Processos podem avaliar análises.",
+        )
+
+    if not usuario.ong or usuario.ong.ong_id != ong_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Coordenador não gerencia a ONG vinculada a esta análise.",
+        )
 
 def validar_voluntario_triagem(usuario: Usuario, ong_id: int) -> None:
     if not usuario_tem_funcao(usuario, TipoUsuario.TRIAGEM):
@@ -58,6 +76,27 @@ def obter_item_doacao(db: Session, item_doacao_id: int) -> ItemDoacao:
         raise HTTPException(status_code=404, detail="Item de doação não encontrado.")
     return item
 
+def obter_analise_material(db: Session, analise_id: int) -> AvaliacaoTriagemDoacao:
+    analise = db.query(AvaliacaoTriagemDoacao).filter(AvaliacaoTriagemDoacao.id == analise_id).first()
+    if not analise:
+        raise HTTPException(status_code=404, detail="Análise de doação não encontrado.")
+    return analise
+ 
+def obter_vinculo_voluntario(db:Session, voluntario_id:int, ong_id:int) -> VoluntarioOng:
+    vinculo_voluntario = db.query(VoluntarioOng).filter(
+        VoluntarioOng.usuario_id == voluntario_id,
+        VoluntarioOng.ong_id == ong_id
+    ).first()
+    if not vinculo_voluntario:
+        raise HTTPException(status_code=404, detail="Vínculo de voluntário não encontrado.")
+
+def obter_ong(db:Session, usuario):
+    ong = db.query(Ong).filter(Ong.id == usuario.ong.id).first()
+    if not ong:
+        raise HTTPException(status_code=404, detail="ONG não encontrada.")
+    return ong
+
+   
 
 def sincronizar_status_doacao(doacao: Doacao) -> None:
     statuses = {item.status for item in doacao.itens}
@@ -232,6 +271,19 @@ def listar_doacoes(
     return query.order_by(*ordenacao).all()
 
 
+def listar_analises_quarentena(db: Session, ong_id: int):
+    
+    analises = db.query(AvaliacaoTriagemDoacao)\
+        .join(ItemDoacao, AvaliacaoTriagemDoacao.item_doacao_id == ItemDoacao.id)\
+        .join(Doacao, ItemDoacao.doacao_id == Doacao.id)\
+        .options(joinedload(AvaliacaoTriagemDoacao.voluntario_triagem))\
+        .filter(
+            AvaliacaoTriagemDoacao.em_quarentena == True, 
+            Doacao.ong_id == ong_id                       
+        ).all()
+        
+    return analises
+
 def avaliar_item_doacao(
     db: Session,
     voluntario: Usuario,
@@ -260,10 +312,14 @@ def avaliar_item_doacao(
         resultado=dados.resultado,
         checklist=dados.checklist,
         comentario=dados.comentario,
-        motivo_inaptidao=dados.motivo_inaptidao,
-        em_quarentena=dados.em_quarentena,
+        motivo_inaptidao=dados.motivo_inaptidao
     )
 
+    vinculo = obter_vinculo_voluntario(db,voluntario,item.doacao.ong_id)
+
+    if vinculo.nivel_confianca < 10:
+        avaliacao.em_quarentena = True
+    
     item.triado_por_id = voluntario.id
     item.triado_em = agora
 
@@ -288,6 +344,45 @@ def avaliar_item_doacao(
             status_code=400,
             detail=f"Erro ao registrar avaliação de triagem: {str(exc)}",
         ) from exc
+
+
+def avaliar_analise_de_doacao(
+    db: Session,
+    coordenador: Usuario,
+    analise_id: int,
+    dados: RespostaAvaliacaoTriagemDoacao
+) -> AvaliacaoTriagemDoacao:
+
+    analise = obter_analise_material(db,analise_id)
+    item = obter_item_doacao(db, analise.item_doacao.id)
+    
+    validar_usuario_coordenador(coordenador, item.doacao.ong_id)
+
+    analise.coordenador_revisor_id = coordenador.id
+    analise.em_quarentena = False
+    analise.resultado_validado = dados.resultado_validado
+    agora = datetime.now()
+    analise.validado_em = agora
+
+    vinculo_voluntario = obter_vinculo_voluntario(db, analise.voluntario_triagem_id,item.doacao.ong_id)
+
+    if dados.resultado_validado:
+        vinculo_voluntario.nivel_confianca += 1
+
+    else:
+        analise.resultado = ResultadoTriagemDoacao.AGUARDANDO_TRIAGEM
+        sincronizar_status_doacao(item.doacao)
+        if hasattr(dados, 'comentario_coordenador') and dados.comentario_coordenador:
+            analise.comentario = f"[Revisão da Coordenação]: {dados.comentario_coordenador}"
+        vinculo_voluntario.nivel_confianca -= 1
+
+    try:
+        db.commit() 
+        db.refresh(analise)
+        return analise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Erro ao atualizar a revisão.")
 
 
 def alterar_status_item_doacao(

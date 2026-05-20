@@ -11,8 +11,7 @@ from typing import List
 from app.services import ong_service as service
 import uuid
 from datetime import datetime
-import logging
-
+from app.services.ong_service import apagar_ong_e_vinculos
 
 router = APIRouter(prefix="/ong", tags=["ong"])
 
