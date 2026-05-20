@@ -1,52 +1,36 @@
 # Backend - Canetas que Mudam o Mundo
 
-API REST em FastAPI para autenticação, usuários, upload de arquivos e validação OCR.
+API REST construída com FastAPI responsável por autenticação, gerenciamento de usuários, upload e processamento OCR de documentos, persistência em PostgreSQL e integração com Firebase Storage.
 
 ## Requisitos
 
-- Python 3.11+ recomendado.
-- PostgreSQL acessível localmente ou via `DATABASE_URL`.
-- Dependências nativas para OCR instaladas pelo `pip` do ambiente selecionado.
-- Credenciais do Firebase configuradas se os endpoints de arquivos forem utilizados.
+- Python 3.11+
+- PostgreSQL acessível (local ou remoto)
+- Dependências listadas em `backend/requirements.txt` (inclui pacotes nativos para OCR)
+- Credenciais do Firebase para Storage (quando necessário)
 
-## Instalação
+## Instalação rápida
 
-Crie e ative um ambiente virtual, depois instale as dependências:
+Usando `venv`:
 
-```bash
+```powershell
+cd backend
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-No Windows com conda, o script raiz assume um ambiente chamado `py311`.
+No Windows este projeto também suporta execução via Conda; o script raiz usa um ambiente `py311` por conveniência.
 
-## Configuração
+## Configuração (variáveis de ambiente)
 
-Crie um arquivo `.env` dentro de `backend/`.
+Crie `backend/.env` com as variáveis principais:
 
-### Banco de dados
+- `DATABASE_URL` ou `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT`, `DB_NAME`
+- `SECRET_KEY`, `ALGORITHM` (p.ex. `HS256`), `ACCESS_TOKEN_EXPIRE_MINUTES`
+- `FIREBASE_CREDENTIALS` (caminho para JSON), `FIREBASE_STORAGE_BUCKET`
 
-Use `DATABASE_URL` se quiser passar a string completa de conexão. Se ela não estiver definida, o backend tenta montar a conexão com:
-
-- `DB_USER`
-- `DB_PASSWORD`
-- `DB_HOST`
-- `DB_PORT`
-- `DB_NAME`
-
-### Autenticação
-
-- `SECRET_KEY`: chave usada para gerar tokens.
-- `ALGORITHM`: algoritmo JWT, com padrão `HS256`.
-- `ACCESS_TOKEN_EXPIRE_MINUTES`: tempo de expiração do token em minutos.
-
-### Firebase
-
-- `FIREBASE_CREDENTIALS`: caminho para o arquivo JSON da service account.
-- `FIREBASE_STORAGE_BUCKET`: nome do bucket do Storage.
-
-Exemplo:
+Exemplo mínimo (`backend/.env`):
 
 ```env
 DATABASE_URL=postgresql+psycopg2://usuario:senha@localhost:5432/nome_banco
@@ -57,79 +41,138 @@ FIREBASE_CREDENTIALS=app/credentials/firebase/firebase-service-account.json
 FIREBASE_STORAGE_BUCKET=seu-bucket.appspot.com
 ```
 
-## Como Executar
+## Executando o servidor
 
-```bash
-python -m uvicorn app.main:app --reload
+```powershell
+cd backend
+python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-O backend fica em `http://localhost:8000`.
-
-Endpoints de documentação:
+Docs interativas (quando rodando):
 
 - Swagger: `http://localhost:8000/docs`
 - ReDoc: `http://localhost:8000/redoc`
 
-## Rotas Principais
+## Estrutura e localização de responsabilidades
 
-### Auth
+- `app/main.py` — inicialização da aplicação e inclusão de routers.
+- `app/core/` — configurações centrais: `config.py`, `security.py`, `firebase.py`, `deps_auth.py`.
+- `app/database/connection.py` — criação da engine SQLAlchemy e sessão.
+- `app/models/` — modelos ORM (`user.py`, `doacao.py`, `estoque.py`, `ong.py`, etc.).
+- `app/schemas/` — pydantic schemas de entrada/saída.
+- `app/routes/` — rotas agrupadas por domínio (`auth.py`, `users.py`, `doacao.py`, `estoque.py`, `ong.py`, `password.py`).
+- `app/services/` — lógica de negócio e integrações (OCR, Firebase upload, regras de doação/ONG).
+- `app/templates/` — templates HTML para emails (recuperar senha).
+- `app/utils/funcoes.py` — utilitários compartilhados.
 
-- `POST /auth/login`
-- `POST /auth/logout`
-- `GET /auth/me`
+Arquivos importantes:
 
-### Usuários
+- [app/main.py](backend/app/main.py)
+- [app/core/config.py](backend/app/core/config.py)
+- [app/routes/auth.py](backend/app/routes/auth.py)
+- [app/services/firebase_storage.py](backend/app/services/firebase_storage.py)
 
-- `GET /usuario/`
-- `GET /usuario/{usuario_id}`
-- `POST /usuario/generico`
-- `POST /usuario/{usuario_id}/responsavel`
-- `POST /usuario/{perfil_id}/familia-responsavel`
-- `PUT /usuario/{usuario_id}`
-- `PUT /usuario/{perfil_id}/responsavel`
-- `PUT /usuario/{familia_id}/familia-responsavel`
-- `PUT /usuario/{documento_id}/documento`
+## Rotas principais (resumo)
 
-### Arquivos e OCR
+- Autenticação: `/auth/*` — login, logout, refresh e `me`.
+- Usuários: `/usuario/*` — criação, leitura e atualização de perfis e famílias.
+- Arquivos/OCR: `/files/*` — upload, remoção e endpoints de OCR (identidade, comprovante de renda, validação).
 
-- `POST /files/upload`
-- `DELETE /files/delete`
-- `POST /files/ocr/comprovante-renda`
-- `POST /files/ocr/identidade`
-- `POST /files/ocr/validar-documento-ocr`
+Consulte os módulos de rota em `backend/app/routes/` para a lista completa de endpoints.
 
-## Estrutura do Projeto
+## Rotas (detalhadas)
 
-```text
-app/
-	main.py
-	routes/
-	models/
-	schemas/
-	services/
-	database/
-	core/
-```
+Abaixo uma lista consolidada dos endpoints expostos pelo backend (método — caminho — descrição curta).
 
-## Observações Técnicas
+- Auth
+	- `POST /auth/login` — autenticação, retorna token JWT.
+	- `POST /auth/logout` — revoga token atual (logout).
+	- `GET /auth/me` — retorna dados do usuário autenticado.
 
-- As tabelas são criadas automaticamente na inicialização com `Base.metadata.create_all(...)`.
-- O CORS está liberado para todas as origens no ambiente atual.
-- O OCR usa `paddleocr`, `paddlepaddle`, `pypdfium2` e `Pillow`.
-- O suporte a PDF processa a primeira página do arquivo.
+- Usuários (`/usuario`)
+	- `GET /usuario/` — listar usuários (permissão necessária).
+	- `GET /usuario/perfil/me` — obter perfil do usuário atual.
+	- `DELETE /usuario/deletar-conta/{usuario_id}` — excluir conta do usuário (apenas próprio usuário).
+	- `GET /usuario/{usuario_id}` — obter usuário por id.
+	- `POST /usuario/generico` — criar usuário genérico (cadastro básico).
+	- `PUT /usuario/{usuario_id}` — atualizar dados do usuário.
+	- `POST /usuario/{usuario_id}/responsavel` — transformar/registrar usuário como responsável (envio de documento).
+	- `PUT /usuario/{perfil_id}/responsavel` — atualizar perfil de responsável.
+	- `POST /usuario/{responsavel_id}/documentacao` — upload de documento para responsável.
+	- `GET /usuario/{responsavel_id}/documentacao` — listar documentos de um responsável.
+	- `DELETE /usuario/documentacao/{documento_id}` — marcar documento de usuário para exclusão.
+	- `GET /usuario/familia/all` — listar familiares do responsável autenticado.
+	- `POST /usuario/{responsavel_id}/familia-responsavel` — cadastrar familiares via payload JSON + arquivos.
+	- `PUT /usuario/{familia_id}/familia-responsavel` — atualizar familiar.
+	- `POST /usuario/familia/{familiar_id}/documentacao` — upload documento de familiar.
+	- `GET /usuario/familia/{familiar_id}/documentacao` — listar documentos de familiar.
+	- `DELETE /usuario/familia/{familiar_id}` — deletar registro de familiar.
+	- `DELETE /usuario/familia/documentacao/{documento_id}` — marcar documento de familiar para exclusão.
+	- `POST /usuario/quiz/triagem` — salvar resultado de triagem (concede papel de triagem quando aprovado).
+	- `PUT /usuario/{usuario_id}/funcao` — atualizar funções/perfis do usuário.
+	- `DELETE /usuario/{usuario_id}/funcao/{tipo_funcao}` — remover função do usuário.
 
-## Dependências Relevantes
+- Doações (`/doacoes`)
+	- `POST /doacoes/` — criar doação (JSON).
+	- `POST /doacoes/formulario` — criar doação via formulário com fotos (multipart).
+	- `GET /doacoes/` — listar doações (filtros por data/status disponíveis).
+	- `GET /doacoes/{doacao_id}` — obter doação por id.
+	- `POST /doacoes/itens/{item_doacao_id}/avaliacoes` — avaliar item na triagem.
+	- `PATCH /doacoes/itens/{item_doacao_id}/status` — alterar status de item doação.
+	- `POST /doacoes/{doacao_id}/notificar-pre-aprovacao` — notificar doador sobre pré-aprovação (envia email).
 
-- `fastapi`: framework web.
-- `uvicorn[standard]`: servidor ASGI.
-- `sqlalchemy` e `sqlalchemy-utils`: acesso e criação do banco.
-- `psycopg2-binary`: driver PostgreSQL.
-- `python-jose[cryptography]`: JWT.
-- `firebase-admin`: Storage do Firebase.
-- `paddleocr`, `paddlepaddle`, `pypdfium2`: OCR e leitura de PDF.
+- Arquivos e OCR (`/files`)
+	- `POST /files/upload` — upload simples para Firebase Storage.
+	- `POST /files/ocr/comprovante-renda` — validar comprovante de renda via OCR.
+	- `POST /files/ocr/identidade` — validar identidade via OCR.
+	- `POST /files/validar-documento-ocr` — valida ambos documentos e retorna resumo.
+	- `DELETE /files/delete` — remover arquivo do storage por URL.
 
-## Problemas Comuns
+- ONG (`/ong`)
+	- `GET /ong/` — listar ONGs.
+	- `GET /ong/minha-ong` — obter ONG vinculada ao usuário atual.
+	- `GET /ong/{ong_id}/voluntarios` — listar voluntários de uma ONG.
+	- `GET /ong/convite/validar` — validar token de convite (query param `token`).
+	- `POST /ong/cadastro-ong` — criar ONG (usuário genérico -> coordenador).
+	- `PUT /ong/editar-ong/{ong_id}` — atualizar ONG.
+	- `DELETE /ong/deletar-voluntario/{voluntario_id}` — remover voluntário de ONG.
+	- `POST /ong/gerar-token-ong/{ong_id}` — gerar token de convite para ONG.
+	- `GET /ong/listar-token-ong/{ong_id}` — listar tokens ativos de ONG.
+	- `DELETE /ong/desativar-token-ong/{ong_id}/{token_id}` — desativar token de ONG.
 
-- Se o banco não subir, confirme se `DATABASE_URL` ou `DB_*` estão corretos e se o PostgreSQL está acessível.
-- Se o upload falhar, verifique `FIREBASE_CREDENTIALS` e `FIREBASE_STORAGE_BUCKET`.
-- Se o OCR falhar no Windows, rode com o ambiente `py311` e confirme as dependências de OCR instaladas.
+- Estoque (`/estoque`)
+	- `GET /estoque/` — listar itens disponíveis no estoque (filtros por data/ordem).
+
+- Senha/Recuperação (`/password`)
+	- `POST /password/recuperar-senha` — solicitar link de recuperação por email.
+	- `POST /password/redefinir-senha` — redefinir senha usando token recebido.
+
+Para ver implementações e descrições mais detalhadas, consulte os arquivos em `backend/app/routes/`.
+
+## Observações técnicas
+
+- Ao subir, o projeto cria tabelas via SQLAlchemy `Base.metadata.create_all(...)` — para produção considere usar migrações (alembic).
+- O processamento OCR usa `paddleocr` e `paddlepaddle` e pode requerer dependências nativas; no Windows recomenda-se usar o ambiente `py311` provido nos scripts.
+- Uploads de arquivos enviam para Firebase Storage quando as credenciais estão configuradas.
+
+## Dependências relevantes
+
+- `fastapi`, `uvicorn[standard]`
+- `sqlalchemy`, `sqlalchemy-utils`, `psycopg2-binary`
+- `python-jose[cryptography]` (JWT)
+- `firebase-admin`
+- `paddleocr`, `paddlepaddle`, `pypdfium2`, `Pillow`
+
+## Debug e problemas comuns
+
+- Banco não conecta: verifique `DATABASE_URL` ou variáveis `DB_*` e se o serviço PostgreSQL está rodando.
+- Erro em upload: confira `FIREBASE_CREDENTIALS` e permissões do bucket.
+- OCR falhando: confirme instalação e versões de `paddlepaddle`; no Windows prefira o ambiente `py311`.
+
+## Testes e desenvolvimento local
+
+- Não há testes automatizados incluídos no repositório atualmente; recomenda-se adicionar testes unitários e de integração para serviços críticos.
+
+---
+
+Se quiser, posso adicionar exemplos de requisições cURL para endpoints principais ou esboçar um `docker-compose` para banco + app.

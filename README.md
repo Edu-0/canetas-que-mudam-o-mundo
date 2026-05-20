@@ -1,43 +1,50 @@
-# Canetas que Mudam o Mundo
+## Canetas que Mudam o Mundo
 
-Plataforma full stack para triagem e validação de dados, com backend em FastAPI e frontend em React + Vite.
+Plataforma full‑stack para triagem, validação e gerenciamento de dados sociais. Esta base reúne uma API em Python (FastAPI) e um cliente web em React + TypeScript.
 
-## Visão Geral
+**Objetivo**: facilitar cadastro, verificação documental (OCR), gestão de doações e triagem social para organizações parceiras.
 
-O repositório está dividido em duas partes principais:
+**Principais tecnologias**: Python 3.11, FastAPI, SQLAlchemy, PostgreSQL, Firebase Storage, PaddleOCR; React 18, TypeScript, Vite, Tailwind CSS, Axios.
 
-- `backend/`: API REST, autenticação, persistência em PostgreSQL, upload de arquivos e OCR.
-- `frontend/`: interface em React com rotas de cadastro, conta e edição de conta.
+## Estrutura do repositório
 
-## Execução Rápida
+- [backend/](backend/README.md) — API REST em FastAPI (autenticação, upload, OCR, modelos e serviços). Ver documentação específica.
+- [frontend/](frontend/README.md) — Aplicação cliente em React + TypeScript (componentes, páginas e contextos).
+- `start-dev.ps1` — script Windows que abre simultaneamente backend e frontend (usa Conda por padrão).
+- `package.json` — scripts de conveniência para desenvolvimento (raiz).
 
-### Opção 1: iniciar tudo pelo repositório raiz
+## Conteúdo desta documentação
 
-No Windows, o script raiz abre backend e frontend em janelas separadas:
+Este README apresenta visão geral, pré-requisitos e comandos rápidos. As seções específicas de backend e frontend estão em seus respectivos READMEs.
+
+## Pré-requisitos
+
+- Python 3.11+
+- Node.js 18+
+- PostgreSQL (local ou remoto)
+- (Opcional) Conda para o fluxo `start-dev.ps1`
+- Credenciais do Firebase (quando usar upload/Storage)
+
+## Quickstart — desenvolvimento (modo rápido)
+
+Opção A — rodar ambos com o script (Windows):
 
 ```powershell
 npm run dev
 ```
 
-Esse fluxo usa o script [start-dev.ps1](start-dev.ps1) e assume:
+Esse comando executa `start-dev.ps1` que abre o backend e o frontend em janelas separadas. Parâmetros úteis:
+- `BackendEnv` (padrão `py311`) — nome do ambiente Conda a usar.
+- `-NoBrowser` — não abre o navegador automaticamente.
 
-- ambiente conda chamado `py311` para o backend;
-- frontend com dependências instaladas via `npm install`.
+Opção B — executar manualmente
 
-Ao final, a aplicação fica disponível em:
+Backend (ex.: venv ou Conda):
 
-- Frontend: `http://localhost:5173`
-- Backend: `http://localhost:8000`
-- Swagger: `http://localhost:8000/docs`
-
-### Opção 2: subir manualmente
-
-Backend:
-
-```bash
+```powershell
 cd backend
 pip install -r requirements.txt
-python -m uvicorn app.main:app --reload
+python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 Frontend:
@@ -48,78 +55,34 @@ npm install
 npm run dev
 ```
 
-## Pré-requisitos
+Padrões de portas:
+- Frontend: `http://localhost:5173`
+- Backend: `http://localhost:8000`
+- Swagger (docs): `http://localhost:8000/docs`
 
-- Python 3.11+ recomendado para o backend.
-- Node.js 18+ recomendado para o frontend.
-- PostgreSQL disponível localmente ou via URL remota.
-- Credenciais do Firebase configuradas se você for usar upload de arquivos.
+## Variáveis de ambiente importantes (resumo)
 
-## Configuração do Backend
+- `DATABASE_URL` ou `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT`, `DB_NAME`
+- `SECRET_KEY`, `ALGORITHM`, `ACCESS_TOKEN_EXPIRE_MINUTES`
+- `FIREBASE_CREDENTIALS`, `FIREBASE_STORAGE_BUCKET`
 
-O backend lê variáveis de ambiente do arquivo `.env` dentro de `backend/`.
+Um exemplo mínimo pode ser encontrado em `backend/README.md` (seção de configuração).
 
-Use uma das duas estratégias de banco:
+## Boas práticas para desenvolvimento
 
-- `DATABASE_URL` com a string completa de conexão.
-- Ou `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT` e `DB_NAME`.
+- Ajuste o endereço da API no cliente em [frontend/src/services/api.tsx](frontend/src/services/api.tsx).
+- Mantenha credenciais fora do repositório; use `.env` ou variáveis de ambiente.
+- Para trabalhar com OCR no Windows, siga o ambiente `py311` (scripts e notas em `backend/README.md`).
 
-Também são usados:
+## Próximos passos e contribuições
 
-- `SECRET_KEY`
-- `ALGORITHM`
-- `ACCESS_TOKEN_EXPIRE_MINUTES`
-- `FIREBASE_CREDENTIALS`
-- `FIREBASE_STORAGE_BUCKET`
+- Abra issues para bugs e propostas de melhoria.
+- Para mudanças no banco, considere adicionar scripts de migração (alembic não está incluído atualmente).
+- Se quiser, posso unificar formato e exemplos entre os READMEs e adicionar um `CONTRIBUTING.md`.
 
-Exemplo mínimo:
+---
 
-```env
-DATABASE_URL=postgresql+psycopg2://usuario:senha@localhost:5432/nome_banco
-SECRET_KEY=troque-esta-chave
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=60
-FIREBASE_CREDENTIALS=app/credentials/firebase/firebase-service-account.json
-FIREBASE_STORAGE_BUCKET=seu-bucket.appspot.com
-```
-
-## Estrutura do Projeto
-
-### Backend
-
-```text
-backend/
-  app/
-    main.py
-    routes/
-    models/
-    schemas/
-    services/
-    database/
-    core/
-  requirements.txt
-```
-
-### Frontend
-
-```text
-frontend/
-  src/
-    components/
-    pages/
-    services/
-    hooks/
-    context/
-    utils/
-    assets/
-    App.tsx
-    main.tsx
-  public/
-  package.json
-  vite.config.js
-```
-
-## Documentação Detalhada
+Para documentação mais detalhada veja as páginas:
 
 - [Backend](backend/README.md)
 - [Frontend](frontend/README.md)
