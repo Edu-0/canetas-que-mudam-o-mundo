@@ -21,7 +21,8 @@ from app.core.deps_auth import VerificarPermissao, get_current_user
 from app.core.enums import StatusDoacao, ResultadoTriagemDoacao, TipoUsuario
 from app.database.connection import SessionDep
 from app.models import doacao as m
-from app.models.user import Usuario
+from app.models.ong import Ong, VoluntarioOng
+from app.models.user import Usuario, UsuarioFuncao
 from app.schemas import doacao as s
 from app.services import doacao_service as service
 from app.services import pedido_material_service as pedido_service
@@ -233,11 +234,14 @@ def listar_historico_avaliacoes(
     usuario_atual: Usuario = Depends(get_current_user),
     permissao=Depends(VerificarPermissao("avaliacao-triagem-doacao:listar-historico-item"))
 ):
-    ong_do_usuario = None
-    if usuario_atual.funcao == TipoUsuario.COORDENADOR_PROCESSOS:
+    tipos_atuais_objs = db.query(UsuarioFuncao).filter(UsuarioFuncao.usuario_id == usuario_atual.id).all()
+    tipos_atuais = [f.tipo_usuario for f in tipos_atuais_objs]
+    
+    if TipoUsuario.COORDENADOR_PROCESSOS in tipos_atuais:
         ong_do_usuario = service.obter_ong(db, usuario_atual)
-    elif usuario_atual.funcao == TipoUsuario.TRIAGEM:
-        ong_do_usuario = service.obter_vinculo_voluntario(db, usuario_atual.id )
+    elif TipoUsuario.TRIAGEM in tipos_atuais:
+        vinculo = service.obter_vinculo_voluntario(db, usuario_atual.id )
+        ong_do_usuario = db.query(Ong).filter(Ong.id == vinculo.ong_id).first()
 
     if not ong_do_usuario:
         raise HTTPException(status_code=403, detail="Você não está vinculado a uma ONG.")
