@@ -10,9 +10,12 @@ from app.models.doacao import Doacao, ItemDoacao
 from app.models.estoque import ItemEstoque
 from app.models.ong import Ong
 from app.models.pedido_material import ItemPedidoMaterial, PedidoMaterial
+from app.models.reserva_estoque import ReservaEstoque
+from app.models.movimento_estoque import MovimentoEstoque
 from app.models.user import FamiliaResponsavel, Usuario, UsuarioResponsavel
 from app.schemas.pedido_material import CriarPedidoMaterial
 from app.utils.funcoes import gerar_codigo_numerico
+from app.services.doacao_service import sincronizar_status_doacao
 
 
 PRAZO_MAXIMO_RETIRADA_DIAS = 7
@@ -298,6 +301,72 @@ def aprovar_item_pedido_material(
         agora + timedelta(days=PRAZO_MAXIMO_RETIRADA_DIAS)
     )
     item.pedido.notificacao_aprovacao_enviada_em = agora
+    # Reservar estoque para este item do pedido (evita overbooking)
+    quantidade_necessaria = item.quantidade
+    if quantidade_necessaria > 0:
+        itens_doacao_disponiveis = (
+            db.query(ItemDoacao)
+            .join(ItemEstoque, ItemEstoque.item_doacao_id == ItemDoacao.id)
+            .join(Doacao, Doacao.id == ItemDoacao.doacao_id)
+            .filter(
+                Doacao.ong_id == item.pedido.ong_id,
+                ItemDoacao.tipo_material == item.tipo_material,
+                ItemDoacao.status == StatusDoacao.DISPONIVEL,
+            )
+            .filter(ItemEstoque.retirado_em.is_(None))
+            .order_by(ItemDoacao.disponivel_em.asc())
+            .all()
+        )
+
+        restante = quantidade_necessaria
+        reservas: list[ReservaEstoque] = []
+        for item_doacao in itens_doacao_disponiveis:
+            if restante <= 0:
+                break
+
+            disponivel = int(item_doacao.quantidade or 0)
+            if disponivel <= 0:
+                continue
+
+            if disponivel <= restante:
+                reservado = disponivel
+                restante -= disponivel
+                # consumir todo o item_doacao (reservado)
+                item_doacao.status = StatusDoacao.MATERIAL_COLETADO
+                item_doacao.coletado_em = agora
+                if item_doacao.estoque is not None:
+                    item_doacao.estoque.retirado_em = agora
+            else:
+                reservado = restante
+                # consumir parcialmente: reduzir quantidade disponível
+                item_doacao.quantidade = disponivel - restante
+                restante = 0
+
+            reserva = ReservaEstoque(
+                item_pedido_material_id=item.id,
+                item_doacao_id=item_doacao.id,
+                quantidade=reservado,
+                reservado_em=agora,
+            )
+            reservas.append(reserva)
+
+        # registrar movimentos de reserva
+        for reservado in reservas:
+            mov = MovimentoEstoque(
+                tipo="RESERVA",
+                item_pedido_material_id=item.id,
+                item_doacao_id=reservado.item_doacao_id,
+                quantidade=reservado.quantidade,
+                usuario_id=usuario.id,
+            )
+            db.add(mov)
+
+        if restante > 0:
+            db.rollback()
+            raise HTTPException(status_code=400, detail="Estoque insuficiente para aprovar este item do pedido.")
+
+        for r in reservas:
+            db.add(r)
 
     try:
         db.commit()
@@ -340,6 +409,223 @@ def coletar_item_pedido_material(
         for item_pedido in item.pedido.itens
     ):
         item.pedido.status = StatusPedidoMaterial.MATERIAL_COLETADO
+
+    # Alocar / subtrair do estoque: consumir ItemDoacao DISPONIVEL do mesmo tipo
+    quantidade_necessaria = item.quantidade
+    if quantidade_necessaria > 0:
+        itens_doacao_disponiveis = (
+            db.query(ItemDoacao)
+            .join(ItemEstoque, ItemEstoque.item_doacao_id == ItemDoacao.id)
+            .join(Doacao, Doacao.id == ItemDoacao.doacao_id)
+            .filter(
+                Doacao.ong_id == item.pedido.ong_id,
+                ItemDoacao.tipo_material == item.tipo_material,
+                ItemDoacao.status == StatusDoacao.DISPONIVEL,
+            )
+            .filter(ItemEstoque.retirado_em.is_(None))
+            .order_by(ItemDoacao.disponivel_em.asc())
+            .all()
+        )
+
+        # Preferir consumo a partir de reservas existentes
+        reservas_pendentes = (
+            db.query(ReservaEstoque)
+            .filter(ReservaEstoque.item_pedido_material_id == item.id)
+            .filter(ReservaEstoque.consumido_em.is_(None))
+            .order_by(ReservaEstoque.reservado_em.asc())
+            .all()
+        )
+
+        restante = quantidade_necessaria
+        consumidos_ids = set()
+        # consumir a partir das reservas
+        for reserva in reservas_pendentes:
+            if restante <= 0:
+                break
+            disponivel_reserva = int(reserva.quantidade or 0)
+            if disponivel_reserva <= 0:
+                continue
+            usar = min(disponivel_reserva, restante)
+
+            # registrar movimento de consumo parcial/total
+            mov = MovimentoEstoque(
+                tipo="CONSUMO",
+                item_pedido_material_id=item.id,
+                item_doacao_id=reserva.item_doacao_id,
+                quantidade=usar,
+                usuario_id=usuario.id,
+            )
+            db.add(mov)
+
+            if usar >= disponivel_reserva:
+                # consumo total da reserva
+                reserva.consumido_em = agora
+                reserva.consumido_por_id = usuario.id
+            else:
+                # consumo parcial da reserva -> reduzir quantidade reservada
+                reserva.quantidade = disponivel_reserva - usar
+
+            restante -= usar
+            consumidos_ids.add(reserva.item_doacao_id)
+            # marcar item_doacao/estoque
+            item_doacao = db.get(ItemDoacao, reserva.item_doacao_id)
+            if item_doacao:
+                if usar >= int(item_doacao.quantidade or 0):
+                    item_doacao.status = StatusDoacao.MATERIAL_COLETADO
+                    item_doacao.coletado_em = agora
+                    if item_doacao.estoque is not None:
+                        item_doacao.estoque.retirado_em = agora
+                else:
+                    item_doacao.quantidade = int(item_doacao.quantidade or 0) - usar
+
+        # se ainda faltar, consumir diretamente do estoque disponível (fallback)
+        if restante > 0:
+            itens_doacao_disponiveis = (
+                db.query(ItemDoacao)
+                .join(ItemEstoque, ItemEstoque.item_doacao_id == ItemDoacao.id)
+                .join(Doacao, Doacao.id == ItemDoacao.doacao_id)
+                .filter(
+                    Doacao.ong_id == item.pedido.ong_id,
+                    ItemDoacao.tipo_material == item.tipo_material,
+                    ItemDoacao.status == StatusDoacao.DISPONIVEL,
+                )
+                .filter(ItemEstoque.retirado_em.is_(None))
+                .order_by(ItemDoacao.disponivel_em.asc())
+                .all()
+            )
+
+            for item_doacao in itens_doacao_disponiveis:
+                if restante <= 0:
+                    break
+                disponivel = int(item_doacao.quantidade or 0)
+                if disponivel <= 0:
+                    continue
+                usar = min(disponivel, restante)
+                if usar >= disponivel:
+                    item_doacao.status = StatusDoacao.MATERIAL_COLETADO
+                    item_doacao.coletado_em = agora
+                    if item_doacao.estoque is not None:
+                        item_doacao.estoque.retirado_em = agora
+                else:
+                    item_doacao.quantidade = disponivel - usar
+
+                mov = MovimentoEstoque(
+                    tipo="CONSUMO",
+                    item_pedido_material_id=item.id,
+                    item_doacao_id=item_doacao.id,
+                    quantidade=usar,
+                    usuario_id=usuario.id,
+                )
+                db.add(mov)
+                restante -= usar
+                consumidos_ids.add(item_doacao.id)
+
+        if restante > 0:
+            db.rollback()
+            raise HTTPException(status_code=400, detail="Estoque insuficiente para coletar este item do pedido.")
+
+        # sincronizar status das doações afetadas
+        # pegar todos item_doacao envolvidos (reservas + fallback)
+        for item_doacao_id in consumidos_ids:
+            item_doacao = db.get(ItemDoacao, item_doacao_id)
+            if item_doacao:
+                sincronizar_status_doacao(item_doacao.doacao)
+
+
+def cancelar_item_pedido_material(
+    db: Session,
+    usuario: Usuario,
+    item_id: int,
+) -> ItemPedidoMaterial:
+    ong_id = validar_usuario_ong(usuario)
+    item = _carregar_item_com_relacoes(db, item_id)
+
+    if item.pedido.ong_id != ong_id:
+        raise HTTPException(
+            status_code=403,
+            detail="Pedido não pertence à ONG do usuário atual.",
+        )
+
+    if item.status != StatusPedidoMaterial.AGUARDANDO_RETIRADA:
+        raise HTTPException(
+            status_code=400,
+            detail="Apenas itens que estejam AGUARDANDO_RETIRADA podem ser cancelados.",
+        )
+
+    # liberar reservas associadas
+    reservas = (
+        db.query(ReservaEstoque)
+        .filter(ReservaEstoque.item_pedido_material_id == item.id)
+        .all()
+    )
+
+    for reserva in reservas:
+        item_doacao = db.get(ItemDoacao, reserva.item_doacao_id)
+        if not item_doacao:
+            continue
+
+        # devolver quantidade reservada
+        item_doacao.quantidade = int(item_doacao.quantidade or 0) + int(reserva.quantidade or 0)
+
+        # marcar disponível caso tivesse sido marcado como MATERIAL_COLETADO durante reserva
+        if item_doacao.status == StatusDoacao.MATERIAL_COLETADO:
+            item_doacao.status = StatusDoacao.DISPONIVEL
+            item_doacao.coletado_em = None
+
+        if item_doacao.estoque is not None and item_doacao.estoque.retirado_em is not None:
+            item_doacao.estoque.retirado_em = None
+
+        sincronizar_status_doacao(item_doacao.doacao)
+        # registrar movimento de liberação (histórico)
+        mov = MovimentoEstoque(
+            tipo="LIBERACAO",
+            item_pedido_material_id=item.id,
+            item_doacao_id=reserva.item_doacao_id,
+            quantidade=reserva.quantidade,
+            usuario_id=usuario.id,
+            detalhe="Liberação de reserva por cancelamento de pedido",
+        )
+        db.add(mov)
+        db.delete(reserva)
+
+    item.status = StatusPedidoMaterial.CANCELADO
+
+    try:
+        db.commit()
+        db.refresh(item)
+        return item
+    except Exception as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=400,
+            detail=f"Erro ao cancelar item do pedido: {str(exc)}",
+        ) from exc
+
+
+def listar_movimentos_pedido(db: Session, usuario: Usuario, pedido_id: int) -> list[MovimentoEstoque]:
+    pedido = db.get(PedidoMaterial, pedido_id)
+    if not pedido:
+        raise HTTPException(status_code=404, detail="Pedido não encontrado.")
+
+    # autorização: responsáveis veem apenas seus pedidos; ONG vê pedidos da ONG
+    if usuario_tem_funcao(usuario, TipoUsuario.RESPONSAVEL_BENEFICIARIO):
+        if pedido.responsavel_id != usuario.id:
+            raise HTTPException(status_code=403, detail="Acesso negado ao histórico deste pedido.")
+    else:
+        ong_id = validar_usuario_ong(usuario)
+        if pedido.ong_id != ong_id:
+            raise HTTPException(status_code=403, detail="Acesso negado ao histórico deste pedido.")
+
+    item_ids = [it.id for it in pedido.itens]
+
+    movimentos = (
+        db.query(MovimentoEstoque)
+        .filter(MovimentoEstoque.item_pedido_material_id.in_(item_ids))
+        .order_by(MovimentoEstoque.created_at.asc())
+        .all()
+    )
+
+    return movimentos
 
     try:
         db.commit()

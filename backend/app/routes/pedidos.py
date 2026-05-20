@@ -8,6 +8,7 @@ from app.database.connection import SessionDep
 from app.models.user import Usuario
 from app.schemas import pedido_material as s
 from app.services import pedido_material_service as service
+from app.schemas import movimento_estoque as ms
 
 
 router = APIRouter(prefix="/pedidos", tags=["pedidos"])
@@ -65,6 +66,19 @@ def alterar_status_item_pedido(
 
     if dados.status == StatusPedidoMaterial.MATERIAL_COLETADO:
         return service.coletar_item_pedido_material(db=db, usuario=usuario_atual, item_id=item_id)
+
+    if dados.status == StatusPedidoMaterial.CANCELADO:
+        return service.cancelar_item_pedido_material(db=db, usuario=usuario_atual, item_id=item_id)
+
+
+@router.get("/{pedido_id}/historico", response_model=list[ms.MovimentoEstoqueResposta])
+def historico_pedido(
+    pedido_id: int,
+    db: SessionDep,
+    usuario_atual: Usuario = Depends(get_current_user),
+    permissao=Depends(VerificarPermissao("pedido:listar")),
+):
+    return service.listar_movimentos_pedido(db=db, usuario=usuario_atual, pedido_id=pedido_id)
 
     from fastapi import HTTPException
 
