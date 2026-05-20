@@ -88,6 +88,7 @@ def obter_vinculo_voluntario(db:Session, voluntario_id:int) -> VoluntarioOng:
     ).first()
     if not vinculo_voluntario:
         raise HTTPException(status_code=404, detail="Vínculo de voluntário não encontrado.")
+    return vinculo_voluntario
 
 def obter_ong(db:Session, usuario):
     print('Usuario top:', usuario)
