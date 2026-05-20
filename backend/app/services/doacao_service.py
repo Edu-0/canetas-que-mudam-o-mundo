@@ -271,6 +271,18 @@ def listar_doacoes(
     return query.order_by(*ordenacao).all()
 
 
+def listar_analises(db: Session, ong_id: int):
+    
+    analises = db.query(AvaliacaoTriagemDoacao)\
+        .join(ItemDoacao, AvaliacaoTriagemDoacao.item_doacao_id == ItemDoacao.id)\
+        .join(Doacao, ItemDoacao.doacao_id == Doacao.id)\
+        .options(joinedload(AvaliacaoTriagemDoacao.voluntario_triagem))\
+        .filter(
+            Doacao.ong_id == ong_id                       
+        ).all()
+        
+    return analises
+
 def listar_analises_quarentena(db: Session, ong_id: int):
     
     analises = db.query(AvaliacaoTriagemDoacao)\
