@@ -215,21 +215,22 @@ def avaliar_item_doacao(
 
 
 
-@router.get("/analises/{ong_id}", response_model=list[s.RespostaAvaliacaoTriagemDoacao])
-def listar_analises_rota(
+@router.get("/itens/{item_doacao_id}/avaliacoes", response_model=list[s.RespostaAvaliacaoTriagemDoacao])
+def listar_historico_avaliacoes(
+    item_doacao_id: int, 
     db: SessionDep,
-    ong_id:int,
     usuario_atual: Usuario = Depends(get_current_user),
-    permissao=Depends(VerificarPermissao("analise-triagem:listar-analises"))
+    permissao=Depends(VerificarPermissao("avaliacao-triagem-doacao:listar-historico-item"))
 ):
     ong_do_usuario = service.obter_ong(db, usuario_atual)
     
-    if not ong_do_usuario or ong_do_usuario.id != ong_id:
-        raise HTTPException(status_code=403, detail="Você não tem permissão para visualizar as triagens desta ONG.")
+    if not ong_do_usuario:
+        raise HTTPException(status_code=403, detail="Você não está vinculado a uma ONG.")
 
-    return service.listar_analises(
+    return service.listar_historico_avaliacoes_item(
         db=db,
-        ong_id=ong_id
+        item_doacao_id=item_doacao_id,
+        ong_id=ong_do_usuario.id 
     )
 
 

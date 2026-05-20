@@ -26,7 +26,7 @@ PERMISSOES_POR_FUNCAO = {
         "doacao_item:avaliar",
         "doacao_item:alterar_status",
         "doacao:notificar_status",
-        "analise-triagem:listar-analises"
+        "avaliacao-triagem-doacao:listar-historico-item"
     },
     TipoUsuario.RESPONSAVEL_BENEFICIARIO: {
         "usuario:atualizar",
