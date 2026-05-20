@@ -271,14 +271,15 @@ def listar_doacoes(
     return query.order_by(*ordenacao).all()
 
 
-def listar_analises(db: Session, ong_id: int):
+def listar_historico_avaliacoes_item(db: Session, item_doacao_id: int, ong_id: int):
     
     analises = db.query(AvaliacaoTriagemDoacao)\
         .join(ItemDoacao, AvaliacaoTriagemDoacao.item_doacao_id == ItemDoacao.id)\
         .join(Doacao, ItemDoacao.doacao_id == Doacao.id)\
         .options(joinedload(AvaliacaoTriagemDoacao.voluntario_triagem))\
         .filter(
-            Doacao.ong_id == ong_id                       
+            AvaliacaoTriagemDoacao.item_doacao_id == item_doacao_id,
+            Doacao.ong_id == ong_id                     
         ).all()
         
     return analises
