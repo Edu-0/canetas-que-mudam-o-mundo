@@ -10,10 +10,12 @@ import Toast from "../components/Toast";
 import { useONG } from "../context/OngContext";
 import { Doacao } from "../context/DoacaoContext";
 import { dataNaoFutura, dataValida, intervaloDataValido } from "../utils/validacoesTriagem";
+import { useUsuario } from "../context/UserContext";
 
 function ListaTriagem() {
   const navigate = useNavigate();
   const { ong } = useONG();
+  const { usuario } = useUsuario();
   const [mostrarModal, setMostrarModal] = useState(false);
   const [carregandoExclusao, setCarregandoExclusao] = useState(false);
   const [mensagem, setMensagem] = useState("");
@@ -38,6 +40,8 @@ function ListaTriagem() {
 
   const [erroBusca, setErroBusca] = useState("");
   const [tocadoBusca, setTocadoBusca] = useState(false);
+
+  const temPermissao = Boolean(usuario?.tipos?.includes("Voluntário da triagem"));
 
   const doacoesFiltradas = doacoes;
 
@@ -176,6 +180,12 @@ function ListaTriagem() {
 
   useEffect(() => {
     async function carregar() {
+      if (!temPermissao) {
+        setMensagem("Voce nao tem permissao para acessar a triagem.");
+        setTipoMensagem("erro");
+        return;
+      }
+
       try {
 
         const resposta = await obterDoacoes({
@@ -212,7 +222,7 @@ function ListaTriagem() {
     if (erroBusca) return; // evita chamar backend com data inválida
 
     carregar();
-  }, [statusFiltro, dataInicio, dataFim, ordem]); // recarrega ao mudar filtros ou ONG
+  }, [statusFiltro, dataInicio, dataFim, ordem, temPermissao]); // recarrega ao mudar filtros ou ONG
 
   useEffect(() => {
     const total = Math.ceil(doacoesFiltradas.length / ITENS_POR_PAGINA);

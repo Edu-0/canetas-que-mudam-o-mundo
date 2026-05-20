@@ -9,3 +9,12 @@ from .doacao import (
     CriarAvaliacaoTriagemDoacao,
     RespostaAvaliacaoTriagemDoacao,
 )
+from .pedido_material import (
+    CriarItemPedidoMaterial,
+    CriarPedidoMaterial,
+    RespostaItemPedidoMaterial,
+    RespostaPedidoMaterial,
+    RespostaOpcaoMaterial,
+    AtualizarStatusPedidoMaterial,
+    RespostaNotificacaoPedidoMaterial,
+)

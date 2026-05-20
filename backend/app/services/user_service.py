@@ -215,19 +215,18 @@ def remover_dados_familiares(usuario_id: int, db: SessionDep) -> None:
         remover_arquivos_do_storage(urls_arquivos)
 
     try:
-        for familiar in familiares:
-            anonimizar_familiar(familiar)
-
         for doc in documentos_usuario:
             db.delete(doc)
 
         for doc in documentos_familia:
             db.delete(doc)
-            
-        responsavel.qtd_familiares = 0
-        responsavel.renda = 0.0
-        responsavel.auxilio = BeneficiosUsuario.NENHUM
-        responsavel.documentacao_aprovada = False
+
+        for familiar in familiares:
+            anonimizar_familiar(familiar)
+            db.delete(familiar)
+
+        anonimizar_responsavel_perfil(responsavel)
+        db.delete(responsavel)
 
         db.flush() 
 

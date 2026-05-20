@@ -83,6 +83,7 @@ class RespostaDoacao(BaseModel):
     doador_id: int
     ong_id: int
     status: StatusDoacao
+    codigo_coleta: str
     observacao_doador: Optional[str] = None
     email_status_enviado_em: Optional[datetime] = None
     created_at: datetime

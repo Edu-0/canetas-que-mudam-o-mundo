@@ -10,6 +10,7 @@ import { useONG } from "../context/OngContext";
 import { Doacao } from "../context/DoacaoContext";
 import { obterDoacoes } from "../services/triagemService";
 import { atualizarStatusPedido, obterPedidos } from "../services/statusMateriaisService";
+import { useUsuario } from "../context/UserContext";
 
   type TipoItem = "DOACAO" | "PEDIDO";
 
@@ -54,6 +55,7 @@ import { atualizarStatusPedido, obterPedidos } from "../services/statusMateriais
 
 function StatusMateriais() {
   const navigate = useNavigate();
+  const { usuario } = useUsuario();
 
   const [mostrarModal, setMostrarModal] = useState(false);
   const [mensagem, setMensagem] = useState("");
@@ -73,6 +75,8 @@ function StatusMateriais() {
 
   const [erroBusca, setErroBusca] = useState("");
   const [tocadoBusca, setTocadoBusca] = useState(false);
+
+  const temPermissao = Boolean(usuario?.tipos?.includes("Voluntário da triagem"));
 
   function formatarStatus(status: string) {
     return status
@@ -121,6 +125,12 @@ function StatusMateriais() {
   // carregar doações e pedidos
   useEffect(() => {
     async function carregar() {
+      if (!temPermissao) {
+        setTipoMensagem("erro");
+        setMensagem("Voce nao tem permissao para acessar os materiais.");
+        return;
+      }
+
       const doacoes = await obterDoacoes({ ordem, status: undefined });
       const pedidos = await obterPedidos({ ordem, status: undefined });
 
@@ -154,7 +164,7 @@ function StatusMateriais() {
     }
 
     carregar();
-  }, [ordem]);
+  }, [ordem, temPermissao]);
 
   async function concluir(item: ItemUnificado) {
     await atualizarStatusPedido(item.id, {
