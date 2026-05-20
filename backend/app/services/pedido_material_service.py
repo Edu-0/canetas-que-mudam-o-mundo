@@ -15,11 +15,7 @@ from app.models.movimento_estoque import MovimentoEstoque
 from app.models.user import FamiliaResponsavel, Usuario, UsuarioResponsavel
 from app.schemas.pedido_material import CriarPedidoMaterial
 from app.utils.funcoes import gerar_codigo_numerico
-<<<<<<< HEAD
 from app.services.doacao_service import sincronizar_status_doacao
-=======
-from doacao_service import sincronizar_status_doacao
->>>>>>> 1174146182355109564f03a351498919be33d8e7
 
 
 PRAZO_MAXIMO_RETIRADA_DIAS = 7

@@ -321,7 +321,7 @@ def listar_analises_quarentena_rota(
 @router.put("/analises/{analise_id}", response_model=s.RespostaRevisarAvaliacaoTriagem)
 def verificar_analise_do_voluntario(
     analise_id: int, 
-    dados: s.RevisarAvaliacaoTriagem, 
+    dados: s.RespostaRevisarAvaliacaoTriagem, 
     db: SessionDep, 
     usuario_atual: Usuario = Depends(get_current_user),
     permissao = Depends(VerificarPermissao("avaliacao-triagem-doacao:verificar-analise"))
