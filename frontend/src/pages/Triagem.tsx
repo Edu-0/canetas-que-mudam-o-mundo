@@ -8,7 +8,7 @@ import Toast from "../components/Toast";
 import ModalConfirmacao from "../components/ModalConfirmacao";
 import icon_check from "../assets/icon_check.png";
 import Botao from "../components/Botao";
-import { obterDoacao, criarTriagem, ResultadoTriagem, StatusDoacao, obterAvaliacoes  } from "../services/triagemService";
+import { obterDoacao, criarTriagem, ResultadoTriagem, StatusDoacao, obterAvaliacoes, AvaliacaoTriagem  } from "../services/triagemService";
 import ModalImagem from "../components/ModalImagem";
 
 function Triagem() {
@@ -33,7 +33,7 @@ function Triagem() {
   const [historicoAberto, setHistoricoAberto] = useState<Record<number, boolean>>({});
   const [observacaoTriagem, setObservacaoTriagem] = useState("");
   const [comentarioOpcional, setComentarioOpcional] = useState("");
-  const [avaliacoes, setAvaliacoes] = useState<Record<number, any[]>>({});
+  const [avaliacoes, setAvaliacoes] = useState<Record<number, AvaliacaoTriagem[]>>({});
   const jaFoiTriada = Object.values(avaliacoes).some(arr => arr.length > 0); // verifica se algum item já tem avaliação de triagem
 
   const itensChecklist = [
@@ -159,20 +159,33 @@ function Triagem() {
 
         setDoacao(dadosDoacao);
 
-        const avaliacoesMap: Record<number, any[]> = {};
+        const avaliacoesArray = await Promise.all(
+          dadosDoacao.itens.map(async (item) => {
+            try {
+              const resp = await obterAvaliacoes(item.id);
 
-        // obter a avaliação de triagem para a doação
-        for (const item of dadosDoacao.itens) {
-          try {
-            const respAval = await obterAvaliacoes(item.id);
-            avaliacoesMap[item.id] = respAval.data;
-          } catch {
-            avaliacoesMap[item.id] = [];
-          }
-        }
+              const ordenado = resp.data.sort(
+                (a: AvaliacaoTriagem, b: AvaliacaoTriagem) =>
+                  new Date(b.created_at).getTime() -
+                  new Date(a.created_at).getTime()
+              );
+
+              return {
+                itemId: item.id,
+                data: ordenado,
+              };
+            } catch {
+              return { itemId: item.id, data: [] };
+            }
+          })
+        );
+
+        const avaliacoesMap: Record<number, AvaliacaoTriagem[]> = {};
+        avaliacoesArray.forEach(({ itemId, data }) => {
+          avaliacoesMap[itemId] = data;
+        });
 
         setAvaliacoes(avaliacoesMap);
-
       } catch (erro) {
         console.error("Erro ao carregar doação:", erro);
       } finally {
@@ -286,7 +299,7 @@ function Triagem() {
 
                       <div className="flex flex-col gap-4">
                         {doacao.itens.map((item) => (
-                          <div key={item.id} className="border rounded-lg p-3 bg-[var(--base-10)] flex flex-col gap-2" >
+                          <div key={item.id} className="relative border rounded-lg p-3 bg-[var(--base-10)] flex flex-col gap-2" >
                             <p className="body-muito-pequeno sm:body-pequeno">
                               <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Tipo:</strong> {item.tipo_material}
                             </p>
@@ -333,11 +346,7 @@ function Triagem() {
 
                                 {/* ultima triagem */}
                                 {(() => {
-                                  const ordenadas = [...avaliacoes[item.id]].sort(
-                                    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-                                  );
-
-                                  const ultima = ordenadas[0];
+                                  const ultima = avaliacoes[item.id][0];
 
                                   return (
                                     <div className="bg-white border rounded p-2 mb-2">
@@ -350,7 +359,7 @@ function Triagem() {
                                       </p>
 
                                       <p className="body-muito-pequeno sm:body-pequeno">
-                                        <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Triado por:</strong> {ultima.voluntario_triagem_id}
+                                        <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Triado por: </strong>{" "} {ultima.voluntario_triagem?.nome_completo} (ID: {ultima.voluntario_triagem_id})
                                       </p>
                                     </div>
                                   );
@@ -363,10 +372,8 @@ function Triagem() {
                                 {/* histórico */}
                                 {historicoAberto[item.id] && (
                                   <div className="mt-2">
-                                    {avaliacoes[item.id]
-                                      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                                    {avaliacoes[item.id].map((av) => (                                      
                                       
-                                      .map((av) => (
                                         <div key={av.id} className="bg-gray-50 border rounded p-2 mb-2">
 
                                           <p className="body-muito-pequeno sm:body-pequeno">
@@ -413,7 +420,7 @@ function Triagem() {
                       <div className="flex flex-col gap-3">
                         {itensChecklist.map((item, index) => (
                           <label key={index} className="flex items-center gap-2 cursor-pointer focus-within:ring-2 focus-within:ring-[var(--base-50)] rounded px-1" >
-                            <input type="checkbox" checked={!!checklist[index]} onChange={() => toggleChecklist(index)} className="sr-only"/>
+                            <input type="checkbox" checked={!!checklist[index]} onChange={() => toggleChecklist(index)} tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleChecklist(index);}}} className="sr-only"/>
                               <div className={`w-5 h-5 flex items-center justify-center rounded border-2 transition hover:scale-110 ${checklist[index]  ? "bg-[var(--base-40)] border-black"  : "bg-white border-gray-400"} `}>
                                   {checklist[index] && (
                                       <img src={icon_check} alt="Check" className="w-4 h-4" />

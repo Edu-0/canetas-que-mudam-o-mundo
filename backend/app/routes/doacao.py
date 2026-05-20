@@ -18,7 +18,7 @@ from pydantic import ValidationError
 
 from app.core.config_email import conf
 from app.core.deps_auth import VerificarPermissao, get_current_user
-from app.core.enums import StatusDoacao, ResultadoTriagemDoacao
+from app.core.enums import StatusDoacao, ResultadoTriagemDoacao, TipoUsuario
 from app.database.connection import SessionDep
 from app.models import doacao as m
 from app.models.user import Usuario
@@ -233,8 +233,12 @@ def listar_historico_avaliacoes(
     usuario_atual: Usuario = Depends(get_current_user),
     permissao=Depends(VerificarPermissao("avaliacao-triagem-doacao:listar-historico-item"))
 ):
-    ong_do_usuario = service.obter_ong(db, usuario_atual)
-    
+    ong_do_usuario = None
+    if usuario_atual.funcao == TipoUsuario.COORDENADOR_PROCESSOS:
+        ong_do_usuario = service.obter_ong(db, usuario_atual)
+    elif usuario_atual.funcao == TipoUsuario.TRIAGEM:
+        ong_do_usuario = service.obter_vinculo_voluntario(db, usuario_atual.id )
+
     if not ong_do_usuario:
         raise HTTPException(status_code=403, detail="Você não está vinculado a uma ONG.")
 
