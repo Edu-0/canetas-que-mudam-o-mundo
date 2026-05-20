@@ -1,4 +1,5 @@
 import api from "./api";
+import { Doacao } from "../context/DoacaoContext";
 
 // ENUMS (simplificado)
 export type StatusDoacao =
@@ -22,6 +23,18 @@ export type CriarTriagemEnvio = {
   em_quarentena: boolean;
 };
 
+export type AvaliacaoTriagem = {
+  id: number;
+  resultado: string;
+  created_at: string;
+  comentario?: string;
+  motivo_inaptidao?: string;
+  voluntario_triagem_id: number;
+  voluntario_triagem?: {
+    nome_completo: string;
+  };
+};
+
 
 // listar todas as doações da ONG
 export async function obterDoacoes(params: {data_inicio?: string; data_final?: string; status?: string; ordem: "asc" | "desc";}) {
@@ -38,10 +51,10 @@ export async function obterDoacoes(params: {data_inicio?: string; data_final?: s
 }
 
 // obter uma doação específica
-export async function obterDoacao(id: number) {
-  return api.get(`/doacoes/${id}`);
+export async function obterDoacao(id: number): Promise<{ data: Doacao }> {
+  const resposta = await api.get(`/doacoes/${id}`);
+  return resposta;
 }
-
 // atualizar status do material
 export async function atualizarStatusDoacao(itemId: number, dados: { status: StatusDoacao; motivo_inaptidao?: string }) {
   return api.patch(`/doacoes/itens/${itemId}/status`, dados);
@@ -52,7 +65,7 @@ export async function criarTriagem(itemId: number, dados: CriarTriagemEnvio) {
   return api.post(`/doacoes/itens/${itemId}/avaliacoes`, dados);
 }
 
-// obter avaliações de triagem de um item [Não tem no backend, mas pode ser útil para mostrar histórico de avaliações na página da triagem da doação]
+// obter avaliações de triagem de um item 
 export async function obterAvaliacoes(itemId: number) {
   return api.get(`/doacoes/itens/${itemId}/avaliacoes`); 
 }
