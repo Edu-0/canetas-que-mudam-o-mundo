@@ -278,43 +278,55 @@ def notificar_pre_aprovacao(
         hora_fechamento=str(doacao.ong.hora_fechamento),
     )
 
-@router.get("/analises/{ong_id}/em-quarentena", response_model=list[s.RespostaListagemQuarentena]) # <-- Envolvido em list[]
+@router.get("/analises/em-quarentena", response_model=list[s.RespostaListagemQuarentena]) 
 def listar_analises_quarentena_rota( 
-    ong_id: int,
     db: SessionDep,
     usuario_atual: Usuario = Depends(get_current_user),
-    permissao = Depends(VerificarPermissao("analise-triagem:listar-analises"))
+    permissao = Depends(VerificarPermissao("avaliacao-triagem-doacao:listar-analises"))
 ):
     ong_do_usuario = service.obter_ong(db, usuario_atual)
     
-    if not ong_do_usuario or ong_do_usuario.id != ong_id:
-        raise HTTPException(status_code=403, detail="Você não tem permissão para visualizar a quarentena desta ONG.")
+    if not ong_do_usuario:
+        raise HTTPException(
+            status_code=403, 
+            detail="Você não está vinculado a nenhuma ONG para visualizar análises."
+        )
 
     return service.listar_analises_quarentena(
         db=db,
-        ong_id=ong_id
+        ong_id=ong_do_usuario.id
     )
 
 
-
-@router.put("/analises/{analise_id}", response_model = s.RespostaRevisarAvaliacaoTriagem)
+@router.put("/analises/{analise_id}", response_model=s.RespostaRevisarAvaliacaoTriagem)
 def verificar_analise_do_voluntario(
-    analise_id:int, 
-    dados:s.RespostaRevisarAvaliacaoTriagem,
-    db:SessionDep, 
-    usuario_atual:Usuario = Depends(get_current_user),
-    permissao = Depends(VerificarPermissao("analise-triagem:verificar-analise"))):
+    analise_id: int, 
+    dados: s.RevisarAvaliacaoTriagem, 
+    db: SessionDep, 
+    usuario_atual: Usuario = Depends(get_current_user),
+    permissao = Depends(VerificarPermissao("avaliacao-triagem-doacao:verificar-analise"))
+):
+    ong_do_usuario = service.obter_ong(db, usuario_atual)
+    
+    if not ong_do_usuario:
+        raise HTTPException(status_code=403, detail="Você não está vinculado a uma ONG.")
 
     analise = service.obter_analise_material(db, analise_id) 
-    ong = service.obter_ong(db,usuario)
-
-    if ong.usuario_id != usuario.id:
-        raise HTTPException(status_code=403, detail="Você não tem permissão para analisar essa triagem.")
     
-    return avaliar_analise_de_doacao(
-        db = db,
-        coordenador = usuario_atual,
-        analise_id = analise.id,
-        dados = dados
-    ) 
+    if not analise:
+        raise HTTPException(status_code=404, detail="Análise não encontrada.")
+
+
+    if analise.item_doacao.doacao.ong_id != ong_do_usuario.id:
+        raise HTTPException(
+            status_code=403, 
+            detail="Você não tem permissão para analisar uma triagem de outra ONG."
+        )
+    
+    return service.avaliar_analise_de_doacao(
+        db=db,
+        coordenador=usuario_atual,
+        analise_id=analise.id,
+        dados=dados
+    )
 
