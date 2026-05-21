@@ -233,23 +233,16 @@ def listar_historico_avaliacoes(
     db: SessionDep,
     usuario_atual: Usuario = Depends(get_current_user),
     permissao=Depends(VerificarPermissao("avaliacao-triagem-doacao:listar-historico-item"))
-):
-    tipos_atuais_objs = db.query(UsuarioFuncao).filter(UsuarioFuncao.usuario_id == usuario_atual.id).all()
-    tipos_atuais = [f.tipo_usuario for f in tipos_atuais_objs]
+):  
+    ong = service.obter_ong_vinculada(db,usuario_atual)
     
-    if TipoUsuario.COORDENADOR_PROCESSOS in tipos_atuais:
-        ong_do_usuario = service.obter_ong(db, usuario_atual)
-    elif TipoUsuario.TRIAGEM in tipos_atuais:
-        vinculo = service.obter_vinculo_voluntario(db, usuario_atual.id )
-        ong_do_usuario = db.query(Ong).filter(Ong.id == vinculo.ong_id).first()
-
-    if not ong_do_usuario:
+    if not ong:
         raise HTTPException(status_code=403, detail="Você não está vinculado a uma ONG.")
 
     return service.listar_historico_avaliacoes_item(
         db=db,
         item_doacao_id=item_doacao_id,
-        ong_id=ong_do_usuario.id 
+        ong_id=ong.id 
     )
 
 
@@ -312,7 +305,7 @@ def listar_analises_quarentena_rota(
     usuario_atual: Usuario = Depends(get_current_user),
     permissao = Depends(VerificarPermissao("avaliacao-triagem-doacao:listar-analises"))
 ):
-    ong_do_usuario = service.obter_ong(db, usuario_atual)
+    ong_do_usuario = service.obter_ong_coordenador(db, usuario_atual)
     
     if not ong_do_usuario:
         raise HTTPException(
@@ -334,7 +327,7 @@ def verificar_analise_do_voluntario(
     usuario_atual: Usuario = Depends(get_current_user),
     permissao = Depends(VerificarPermissao("avaliacao-triagem-doacao:verificar-analise"))
 ):
-    ong_do_usuario = service.obter_ong(db, usuario_atual)
+    ong_do_usuario = service.obter_ong_coordenador(db, usuario_atual)
     
     if not ong_do_usuario:
         raise HTTPException(status_code=403, detail="Você não está vinculado a uma ONG.")
