@@ -343,7 +343,14 @@ def get_familiares(
     db:SessionDep,
     usuario_atual: m.Usuario = Depends(get_current_user),
     permissao = Depends(VerificarPermissao("familia_responsavel:listar"))):
-    familiares = db.query(m.FamiliaResponsavel).filter(m.FamiliaResponsavel.responsavel_id == usuario_atual.id).all()
+    responsavel = usuario_atual.perfil_responsavel
+
+    if not responsavel:
+        raise HTTPException(status_code=404, detail="Perfil de responsável não encontrado.")
+
+    familiares = db.query(m.FamiliaResponsavel).filter(
+        m.FamiliaResponsavel.responsavel_id == responsavel.id
+    ).all()
     if not familiares:
         raise HTTPException(status_code=404, detail="Não há familiares cadastrados.") 
     return familiares

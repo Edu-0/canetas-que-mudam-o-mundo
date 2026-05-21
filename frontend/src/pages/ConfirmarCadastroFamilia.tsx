@@ -3,10 +3,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Botao from "../components/Botao";
 import Toast from "../components/Toast";
-import { useEffect, useState } from "react";
-import { criarFamiliar, obterPerfil } from "../services/usuarioService";
-import { useUsuario } from "../context/UserContext";
-import api from "../services/api";
+import { useState } from "react";
 import { Familiar } from "../types/Familiar";
 
 function ConfirmarFamiliares() {
@@ -18,9 +15,7 @@ function ConfirmarFamiliares() {
   const [mensagem, setMensagem] = useState("");
   const [carregando, setCarregando] = useState(false);
 
-  const { usuario } = useUsuario();
   const dadosResponsavel = location.state?.dadosResponsavel;
-  const [responsavelId, setResponsavelId] = useState<string | null>(null);
 
   function voltar() {
     //retorna para a página anterior.
@@ -31,76 +26,10 @@ function ConfirmarFamiliares() {
     });
   }
 
-  useEffect(() => {
-    async function carregarPerfil() {
-      try {
-        const perfil = await obterPerfil();
-        setResponsavelId(perfil.perfil_responsavel?.id);
-      } catch (e) {
-        console.error(e);
-        setMensagem("Erro ao carregar perfil.");
-      }
-    }
-
-    carregarPerfil();
-  }, []);
-
-  function formatarData(data: string) {
-    const [dia, mes, ano] = data.split("/");
-    return `${ano}-${mes}-${dia}`;
-  }
-
-  async function confirmarCadastro() {
+  function confirmarCadastro() {
     setCarregando(true);
-
-    try {
-      if (!usuario) {
-        throw new Error("Usuário não logado");
-      }
-
-      const perfil = await obterPerfil();
-      const responsavelIdAtual = perfil.perfil_responsavel?.id;
-
-      if (!responsavelIdAtual) {
-        throw new Error("Usuário não é responsável");
-      }
-
-      const formData = new FormData();
-
-      const familiaresFormatados = familiares.map((f: Familiar) => ({
-        nome: f.nome,
-        cpf: f.cpf.replace(/\D/g, ""),
-        parentesco: f.parentesco,
-        data_nascimento: formatarData(f.dataNascimento),
-        renda: Number(f.renda),
-        beneficiario: f.beneficiario
-      }));
-
-      formData.append("dados_familiares", JSON.stringify(familiaresFormatados));
-
-      familiares.forEach((f) => {
-        if (f.documentos && f.documentos.length > 0) {
-          formData.append("arquivos", f.documentos[0]); 
-        } else {
-          formData.append("arquivos", new Blob([""], { type: "application/octet-stream" }));
-        }
-      });
-
-      await api.post(`usuario/${responsavelIdAtual}/familia-responsavel`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data"
-        }
-      });
-
-      setMensagem("Cadastro confirmado com sucesso!");
-      setTimeout(() => navigate("/conta"), 2000);
-
-    } catch (error) {
-      console.error(error);
-      setMensagem("Erro ao confirmar cadastro. Verifique os dados e tente novamente.");
-    } finally {
-      setCarregando(false);
-    }
+    setMensagem("Cadastro confirmado com sucesso!");
+    setTimeout(() => navigate("/conta"), 1200);
   }
 
   return (

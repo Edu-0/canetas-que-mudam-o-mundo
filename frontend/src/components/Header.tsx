@@ -34,12 +34,12 @@ function Header(){
       ],
 
       "Doador": [
-        { id: "doar", texto: "Doar", rota: "/doar" }
+        { id: "doacoes", texto: "Doações", rota: "/doacoes" }
       ],
 
       "Voluntário da triagem": [
-        { id: "triagem", texto: "Triagem", rota: "/triagem" },
-        { id: "montar_kits", texto: "Kits", rota: "/montar_kits" }
+        { id: "lista-triagem", texto: "Triagem", rota: "/lista-triagem" },
+        { id: "status-materiais", texto: "Materiais", rota: "/status-materiais" }
       ],
 
       "Responsável pelo beneficiário": [
@@ -56,9 +56,7 @@ function Header(){
     const adicionados = new Set();
 
     tipos.forEach((tipo) => {
-      console.log("Tipo individual:", tipo);
-
-      if (tipo === "Genérico") return;
+      // console.log("Tipo individual:", tipo);
 
       const botoes = mapaTipos[tipo];
 

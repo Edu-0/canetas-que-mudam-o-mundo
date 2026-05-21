@@ -10,12 +10,13 @@ import logo from "../assets/logo.svg";
 import { atualizarTiposUsuario, DadosUsuario, obterPerfil, criarFamiliar, obterFamiliares, atualizarFamiliar, deletarFamiliar } from "../services/usuarioService";
 import { mapearTipo, TipoUsuario, useUsuario } from "../context/UserContext";
 import { Familiar } from "../types/Familiar";
-import { validarCampoFamiliar } from "../utils/validacoesResponsavel";
+import { validarCampoFamiliar, validarFamiliarCompleto } from "../utils/validacoesResponsavel";
 
 function CadastroBeneficiario() {
   const navigate = useNavigate();
 
   const [mensagem, setMensagem] = useState("");
+  const [tipoMensagem, setTipoMensagem] = useState<"sucesso" | "erro">("sucesso");
   const [carregando, setCarregando] = useState(false);
   const location = useLocation();
   const dadosResponsavel = location.state?.dadosResponsavel;
@@ -107,6 +108,7 @@ function CadastroBeneficiario() {
         const tamanhoMB = file.size / (1024 * 1024);
 
         if (tamanhoMB > LIMITE_MB) {
+          setTipoMensagem("erro");
           setMensagem(`Arquivo "${file.name}" excede 10MB`);
           continue;
         }
@@ -114,10 +116,7 @@ function CadastroBeneficiario() {
         arquivosValidos.push(file);
       }
 
-      novos[index].documentos = [
-        ...novos[index].documentos,
-        ...arquivosValidos,
-      ];
+      novos[index].documentos = arquivosValidos.slice(0, 1);
 
     } else {
       const campo = name as keyof Omit<Familiar, "documentos">;
@@ -178,15 +177,73 @@ function CadastroBeneficiario() {
     return data;
   }
 
+  function familiarEstaVazio(familiar: Familiar): boolean {
+    return (
+      !familiar.nome.trim() &&
+      !familiar.cpf.trim() &&
+      !familiar.dataNascimento.trim() &&
+      !familiar.parentesco.trim() &&
+      (Number(familiar.renda) || 0) === 0 &&
+      (!familiar.documentos || familiar.documentos.length === 0) &&
+      !familiar.beneficiario
+    );
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    if (carregando) return;
+
+    const errosValidacao: Record<number, Record<string, string>> = {};
+    const tocadosAtualizados: Record<number, Record<string, boolean>> = {};
+
+    familiares.forEach((familiar, index) => {
+      if (familiarEstaVazio(familiar)) return;
+
+      const errosFamiliar = validarFamiliarCompleto({
+        nome: familiar.nome,
+        cpf: familiar.cpf,
+        dataNascimento: familiar.dataNascimento,
+        parentesco: familiar.parentesco,
+        renda: familiar.renda,
+        beneficiario: familiar.beneficiario,
+      });
+
+      if (Object.keys(errosFamiliar).length > 0) {
+        errosValidacao[index] = errosFamiliar;
+        tocadosAtualizados[index] = {
+          nome: true,
+          cpf: true,
+          dataNascimento: true,
+          parentesco: true,
+          renda: true,
+          beneficiario: true,
+        };
+      }
+    });
+
+    if (Object.keys(errosValidacao).length > 0) {
+      setErros(errosValidacao);
+      setTocados((prev) => ({ ...prev, ...tocadosAtualizados }));
+      setTipoMensagem("erro");
+      setMensagem("Revise os campos obrigatorios dos familiares.");
+      return;
+    }
+
+    const familiaresValidos = familiares.filter((familiar) => !familiarEstaVazio(familiar));
+
+    if (familiaresValidos.length === 0) {
+      setTipoMensagem("erro");
+      setMensagem("Adicione pelo menos um familiar valido.");
+      return;
+    }
 
     try {
       setCarregando(true);
 
       // Separar familiares novos (sem id) dos existentes (com id)
-      const familiaresNovos = familiares.filter(f => !f.id);
-      const familiaresExistentes = familiares.filter(f => f.id);
+      const familiaresNovos = familiaresValidos.filter(f => !f.id);
+      const familiaresExistentes = familiaresValidos.filter(f => f.id);
 
       // Identificar familiares deletados (que estavam em familiaresOriginais mas não estão mais)
       const idsExistentesAgora = new Set(familiaresExistentes.map(f => f.id));
@@ -202,6 +259,7 @@ function CadastroBeneficiario() {
         data_nascimento: converterDataParaISO(f.dataNascimento),
         renda: f.renda,
         beneficiario: f.beneficiario,
+        documentos: f.documentos,
       }));
 
       let perfilUsuario: any = null;
@@ -213,6 +271,7 @@ function CadastroBeneficiario() {
         responsavelId = perfilUsuario.perfil_responsavel?.id;
 
         if (!responsavelId) {
+          setTipoMensagem("erro");
           setMensagem("Erro: Não foi possível obter o ID do responsável.");
           return;
         }
@@ -242,7 +301,7 @@ function CadastroBeneficiario() {
               renda: familiar.renda,
               beneficiario: familiar.beneficiario,
               documentos: [],
-              cpf: familiar.cpf,
+              cpf: familiar.cpf.replace(/\D/g, ''),
             });
           }
         }
@@ -253,6 +312,7 @@ function CadastroBeneficiario() {
         await deletarFamiliar(familiar.id!);
       }
 
+      setTipoMensagem("sucesso");
       setMensagem("Familiares atualizados com sucesso!");
 
       // Navegar para confirmar
@@ -265,7 +325,13 @@ function CadastroBeneficiario() {
 
     } catch (error: any) {
       console.error("Erro ao salvar familiares:", error);
-      setMensagem(error?.response?.data?.detail || "Erro ao salvar familiares.");
+      const detalhe = error?.response?.data?.detail;
+      const mensagemErro =
+        typeof detalhe === "string"
+          ? detalhe
+          : detalhe?.mensagem || "Erro ao salvar familiares.";
+      setTipoMensagem("erro");
+      setMensagem(mensagemErro);
     } finally {
       setCarregando(false);
     }
@@ -278,7 +344,7 @@ function CadastroBeneficiario() {
       <main className="flex-1 pt-24 pb-12">
         <div className="w-full px-6 md:px-20 flex flex-col gap-12">
 
-          <Toast mensagem={mensagem} tipo="sucesso" />
+          <Toast mensagem={mensagem} tipo={tipoMensagem} />
 
           {/* Topo */}
           <div className="flex flex-col items-center text-center gap-3">
@@ -457,7 +523,7 @@ function CadastroBeneficiario() {
                     {/* Upload */}
                     <div className="mt-6">
                       <label className="block text-sm font-medium">
-                        Arquivos *
+                        Arquivo (opcional)
                       </label>
 
                       <div className="flex justify-between items-center border rounded-lg px-4 py-3 mt-1">
@@ -469,11 +535,9 @@ function CadastroBeneficiario() {
                           Selecionar
                           <input
                             type="file"
-                            multiple
                             name="documentos"
                             onChange={(e) => handleChange(index, e)}
                             className="hidden"
-                            required
                           />
                         </label>
                       </div>
@@ -516,7 +580,7 @@ function CadastroBeneficiario() {
                     Cancelar
                   </Botao>
 
-                  <Botao tipo="submit" variante="confirmar">
+                  <Botao tipo="submit" variante="confirmar" desabilitado={carregando}>
                     Confirmar cadastro
                   </Botao>
                 </div>

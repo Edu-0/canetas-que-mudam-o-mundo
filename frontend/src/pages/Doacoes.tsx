@@ -51,8 +51,7 @@ function useFiltroDoacao(doacoes: Doacao[], status: StatusDoacao | "todos", peri
   return filtradas;
 }
 
-//  configuração visual de cada status 
-
+// configuração visual de cada status 
 const STATUS_CONFIG: Record<
   StatusDoacao,
   { label: string; className: string }
@@ -103,8 +102,7 @@ function formatarData(data?: string) {
   });
 }
 
-//  componente principal 
-
+// componente principal
 function Doacoes() {
   const navigate = useNavigate();
 

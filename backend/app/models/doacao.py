@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from sqlalchemy import (
     Boolean,
     CheckConstraint,
@@ -49,6 +51,34 @@ class Doacao(Base):
         cascade="all, delete-orphan",
     )
 
+    @property
+    def tempo_cadastrada_dias(self) -> int:
+        if not self.created_at:
+            return 0
+
+        if self.created_at.tzinfo:
+            agora = datetime.now(tz=self.created_at.tzinfo)
+        else:
+            agora = datetime.now()
+        return max((agora.date() - self.created_at.date()).days, 0)
+
+    @property
+    def tempo_cadastrada_tag(self) -> str:
+        dias = self.tempo_cadastrada_dias
+        if dias == 0:
+            return "Cadastrada hoje"
+        if dias == 1:
+            return "Cadastrada há 1 dia"
+        return f"Cadastrada há {dias} dias"
+
+    @property
+    def status_tag(self) -> str:
+        return self.status.value.replace("_", " ").capitalize()
+
+    @property
+    def codigo_coleta(self) -> str:
+        return f"D-{self.id:08d}" if self.id is not None else ""
+
 
 class ItemDoacao(Base):
     __tablename__ = "item_doacao"
@@ -85,6 +115,12 @@ class ItemDoacao(Base):
     )
 
     doacao = relationship("Doacao", back_populates="itens")
+    estoque = relationship(
+        "ItemEstoque",
+        back_populates="item_doacao",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
     fotos = relationship(
         "FotoItemDoacao",
         back_populates="item_doacao",
