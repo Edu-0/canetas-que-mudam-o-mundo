@@ -13,7 +13,7 @@ from app.models.doacao import (
 from app.models.ong import Ong, VoluntarioOng
 from app.models.estoque import ItemEstoque
 from app.models.ong import Ong
-from app.models.user import Usuario
+from app.models.user import Usuario, UsuarioFuncao
 from app.schemas.doacao import (
     AtualizarStatusItemDoacao,
     CriarAvaliacaoTriagemDoacao,
@@ -82,22 +82,33 @@ def obter_analise_material(db: Session, analise_id: int) -> AvaliacaoTriagemDoac
         raise HTTPException(status_code=404, detail="Análise de doação não encontrado.")
     return analise
  
-def obter_vinculo_voluntario(db:Session, voluntario_id:int) -> VoluntarioOng:
+def obter_vinculo_voluntario(db:Session, voluntario_id:int, ong_id:int) -> VoluntarioOng:
     vinculo_voluntario = db.query(VoluntarioOng).filter(
-        VoluntarioOng.usuario_id == voluntario_id
+        VoluntarioOng.usuario_id == voluntario_id,
+        VoluntarioOng.ong_id == ong_id
     ).first()
     if not vinculo_voluntario:
         raise HTTPException(status_code=404, detail="Vínculo de voluntário não encontrado.")
-    return vinculo_voluntario
 
-def obter_ong(db:Session, usuario):
-    print('Usuario top:', usuario)
+def obter_ong_coordenador(db:Session, usuario):
     ong = db.query(Ong).filter(Ong.id == usuario.ong.id).first()
     if not ong:
         raise HTTPException(status_code=404, detail="ONG não encontrada.")
     return ong
 
-
+def obter_ong_vinculada(db: Session, usuario_atual: Usuario):
+    tipos_atuais_objs = db.query(UsuarioFuncao).filter(UsuarioFuncao.usuario_id == usuario_atual.id).all()
+    tipos_atuais = [f.tipo_usuario for f in tipos_atuais_objs]
+    
+    if TipoUsuario.COORDENADOR_PROCESSOS in tipos_atuais:
+        return obter_ong(db, usuario_atual)
+        
+    elif TipoUsuario.TRIAGEM in tipos_atuais:
+        vinculo = obter_vinculo_voluntario(db, usuario_atual.id)
+        if vinculo: 
+            return db.query(Ong).filter(Ong.id == vinculo.ong_id).first()
+            
+    return None
    
 
 def sincronizar_status_doacao(doacao: Doacao) -> None:
@@ -330,7 +341,7 @@ def avaliar_item_doacao(
         motivo_inaptidao=dados.motivo_inaptidao
     )
 
-    vinculo = obter_vinculo_voluntario(db,voluntario)
+    vinculo = obter_vinculo_voluntario(db,voluntario,item.doacao.ong_id)
 
     if vinculo.nivel_confianca < 10:
         avaliacao.em_quarentena = True
@@ -379,7 +390,7 @@ def avaliar_analise_de_doacao(
     agora = datetime.now()
     analise.validado_em = agora
 
-    vinculo_voluntario = obter_vinculo_voluntario(db, analise.voluntario_triagem_id)
+    vinculo_voluntario = obter_vinculo_voluntario(db, analise.voluntario_triagem_id,item.doacao.ong_id)
 
     if dados.resultado_validado:
         vinculo_voluntario.nivel_confianca += 1

@@ -12,4 +12,6 @@ ENV/
 *.sqlite3
 .DS_Store
 *.log
-app/credentials/firebase/canetas-que-mudam-o-mundo-firebase-adminsdk-fbsvc-1d76d6070e.json
+app/credentials/firebase/canetas-que-mudam-o-mundo-firebase-adminsdk-fbsvc-1d76d6070e.jsonapp/credentials/
+app/seed.py
+app/credentials
