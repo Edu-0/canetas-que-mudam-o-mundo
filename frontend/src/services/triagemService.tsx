@@ -74,3 +74,20 @@ export async function obterAvaliacoes(itemId: number) {
 export async function obterStatusDoacao(itemId: number) {
   return api.get(`/doacoes/itens/${itemId}/status`);
 }
+
+// listar análises por voluntário (pega todas as avaliações de triagem feitas por um voluntário e as informações da doação e item relacionados para cada avaliação) 
+// ([obterAvalicaçoes + ObterDoacao] com filtro por voluntário e depois juntar as informações)
+export async function obterAnalisesPorVoluntario(voluntarioId: number) {
+  return api.get(`/doacoes/voluntarios/${voluntarioId}/analises`);
+}
+
+// listar análises em quarentena (Isso seria utilizado, somente se a auditoria fosse feita somente voluntários em quarentena. 
+// Se a auditoria for feita para todas as triagens, independente do tempo, então não precisa dessa rota específica)
+export async function obterAnalisesQuarentena() {
+  return api.get(`/doacoes/analises/em-quarentena`);
+}
+
+// fazer a auditoria de uma triagem de um voluntário em quarentena
+export async function respostaAuditoriaTriagem(analiseId: number, dados: {resultado_validado: boolean; comentario_coordenador?: string;}) {
+  return api.put(`/doacoes/analises/${analiseId}`, dados);
+}

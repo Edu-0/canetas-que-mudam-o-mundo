@@ -40,6 +40,7 @@ function App() {
         <Route path="/pedido" element={<Pedido />} />
         <Route path="/relatorio" element={<Relatorio />} />
         <Route path="/auditoria" element={<Auditoria />} />
+        <Route path="/auditoria/:id" element={<Auditoria />} /> {/* usando ID do voluntário, aí pega todas as triagens que ele já fez */} 
         <Route path="/analise-voluntarios" element={<AnaliseVoluntarios />} />
         <Route path="/conta/editar-renda-e-familiares" element={<EditarRendaFamiliares />} />
         <Route path="/trocar-senha" element={<TrocarSenha/>} />
