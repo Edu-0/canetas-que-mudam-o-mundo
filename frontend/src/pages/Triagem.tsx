@@ -385,7 +385,7 @@ function Triagem() {
                                           </p>
 
                                           <p className="body-muito-pequeno sm:body-pequeno">
-                                            <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Triado por:</strong> {av.voluntario_triagem_id}
+                                            <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Triado por:</strong> {av.voluntario_triagem?.nome_completo} (ID: {av.voluntario_triagem_id})
                                           </p>
 
                                           {av.comentario && (

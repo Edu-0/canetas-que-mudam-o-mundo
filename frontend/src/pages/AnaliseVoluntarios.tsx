@@ -89,17 +89,22 @@ function AnaliseVoluntarios() {
 
     const { meses, dias } = calcularTempo(data);
 
-    // se tiver menos de 24h
-    if (dias <= 1) {
-      return { texto: "Últimas 24h", tipo: "novo" };
+    const inicio = new Date(data);
+    const hoje = new Date();
+    const diffMs = hoje.getTime() - inicio.getTime();
+    const diffHoras = diffMs / (1000 * 60 * 60);
+
+    // menos de 24h
+    if (diffHoras < 24) {
+      return { texto: "Últimas 24h (quarentena)", tipo: "novo" };
     }
 
-    // se tiver menos de 1 mês
+    // menos de 1 mês
     if (meses < 1) {
-      return { texto: `${dias} dia${dias === 1 ? "" : "s"}`, tipo: "recente" };
+      return { texto: `${dias} dia${dias === 1 ? "" : "s"} (quarentena)`, tipo: "recente" };
     }
 
-     // se tiver mais de 1 mês
+    // mais de 1 mês
     return { texto: `${meses} mês${meses === 1 ? "" : "es"}`, tipo: "antigo" };
   }
 
@@ -180,21 +185,23 @@ function AnaliseVoluntarios() {
 
               <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch gap-3 mb-6 border rounded-lg bg-[var(--base-20)] border-[var(--base-70)] p-2">
    
-                <div className="text-black text-2xl font-extrabold font-['Nunito']">Filtros:</div>
+                <div className="text-black text-2xl font-extrabold font-['Nunito'] flex items-center self-stretch">Filtros:</div>
 
-                <div className="flex-1 min-w-0">
+                <div className="flex flex-col flex-1 min-w-0 w-full">
+                  <label className="body-muito-pequeno" htmlFor="busca-nome">Busca por nome</label>
                   {/* busca por nome */}
                   <input id="busca-nome" type="text" maxLength={100} placeholder="Pesquisar por nome..." value={buscaNome} onChange={(e) => { const valor = e.target.value; setBuscaNome(valor); setPaginaAtual(1); const erro = validarBusca(valor); setErroBusca(erro);}}
-                    onBlur={() => setTocadoBusca(true)} className={`input-padrao w-full ${ tocadoBusca && erroBusca ? "border-[var(--cor-resposta-errada)] focus:ring-[var(--cor-resposta-errada)]" : "hover:border-2 border-[var(--base-70)] focus-acessivel"}`} aria-invalid={!!erroBusca} aria-label="Pesquisar por nome"/>
+                    onBlur={() => setTocadoBusca(true)} className={`input-padrao h-9 w-full ${ tocadoBusca && erroBusca ? "border-[var(--cor-resposta-errada)] focus:ring-[var(--cor-resposta-errada)]" : "hover:border-2 border-[var(--base-70)] focus-acessivel"}`} aria-invalid={!!erroBusca} aria-label="Pesquisar por nome"/>
                   
                   {tocadoBusca && erroBusca && <div className="text-[var(--cor-resposta-errada)] mt-1 text-sm">{erroBusca}</div>}
                 </div>
 
-                <div>
+                <div className="justify-start w-full sm:w-48 flex flex-col">
+                  <label className="body-muito-pequeno" htmlFor="busca-periodo">Tempo de cadastro</label>
                   {/* período */}
-                  <select id="busca-periodo" value={periodo} onChange={(e) => { setPeriodo(e.target.value as PeriodoFiltro); setPaginaAtual(1); }} className="input-padrao w-full sm:w-48 hover:border-2 hover:border-[var(--base-70)] focus-acessivel" aria-label="Filtrar por período de cadastro">
-                    <option value="todos">Período</option>
-                    <option value="0-1">Até 1 mês</option>
+                  <select id="busca-periodo" value={periodo} onChange={(e) => { setPeriodo(e.target.value as PeriodoFiltro); setPaginaAtual(1); }} className="input-padrao h-9 w-full sm:w-48 hover:border-2 hover:border-[var(--base-70)] focus-acessivel" aria-label="Filtrar por período de cadastro">
+                    <option value="todos">Todos</option>
+                    <option value="0-1">Até 1 mês (quarentena)</option>
                     <option value="2-3">2 a 3 meses</option>
                     <option value="4-5">4 a 5 meses</option>
                     <option value="6-7">6 a 7 meses</option>
@@ -206,9 +213,10 @@ function AnaliseVoluntarios() {
                   </select>
                 </div>
 
-                <div>
+                <div className="justify-start w-full sm:w-48 flex flex-col">
                   {/* ordem */}
-                  <select id="busca-ordem" value={ordem} onChange={(e) => { setOrdem(e.target.value as any); setPaginaAtual(1);}} className="input-padrao w-full sm:w-48 hover:border-2 border-[var(--base-70)] focus-acessivel" aria-label="Selcionar a ordem de exibição dos voluntários">
+                  <label className="body-muito-pequeno" htmlFor="busca-ordem">Ordem de exibição</label>
+                  <select id="busca-ordem" value={ordem} onChange={(e) => { setOrdem(e.target.value as any); setPaginaAtual(1);}} className="input-padrao h-9 w-full sm:w-48 hover:border-2 border-[var(--base-70)] focus-acessivel" aria-label="Selcionar a ordem de exibição dos voluntários">
                     <option value="nome-asc">Nome [A → Z]</option>
                     <option value="nome-desc">Nome [Z → A]</option>
                     <option value="data-desc">Voluntários mais novos</option>
@@ -263,7 +271,7 @@ function AnaliseVoluntarios() {
                         {/* Direita */}
                         <div className="flex flex-row items-center justify-between gap-2 mt-2 sm:mt-0 w-full sm:w-auto">
 
-                          <Botao variante="botao-pequeno-editar" aoClicar={() => navigate("/auditoria")}>Analisar</Botao>
+                          <Botao variante="botao-pequeno-editar" aoClicar={() => navigate(`/auditoria/${v.id}`)}>Analisar</Botao>
 
                           <Botao variante="botao-pequeno-desativar" desabilitado={carregandoExclusao} aoClicar={() => {setVoluntarioSelecionado(v.id); setMostrarModal(true)}}>Desativar</Botao>
 

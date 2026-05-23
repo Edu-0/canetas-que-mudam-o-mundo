@@ -67,7 +67,7 @@ function ListaTriagem() {
   return `${dataFormatada} às ${horaFormatada}`;
 }
 
-  function calcularTempo(data?: string) {
+    function calcularTempo(data?: string) {
     if (!data) return { meses: 0, dias: 0 };
 
     const inicio = new Date(data);
@@ -97,17 +97,22 @@ function ListaTriagem() {
 
     const { meses, dias } = calcularTempo(data);
 
-    // se tiver menos de 24h
-    if (dias <= 1) {
+    const inicio = new Date(data);
+    const hoje = new Date();
+    const diffMs = hoje.getTime() - inicio.getTime();
+    const diffHoras = diffMs / (1000 * 60 * 60);
+
+    // menos de 24h
+    if (diffHoras < 24) {
       return { texto: "Últimas 24h", tipo: "novo" };
     }
 
-    // se tiver menos de 1 mês
+    // menos de 1 mês
     if (meses < 1) {
       return { texto: `${dias} dia${dias === 1 ? "" : "s"}`, tipo: "recente" };
     }
 
-     // se tiver mais de 1 mês
+    // mais de 1 mês
     return { texto: `${meses} mês${meses === 1 ? "" : "es"}`, tipo: "antigo" };
   }
 
