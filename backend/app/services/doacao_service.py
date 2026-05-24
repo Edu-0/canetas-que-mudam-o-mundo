@@ -133,6 +133,8 @@ def sincronizar_status_doacao(doacao: Doacao) -> None:
         doacao.status = StatusDoacao.MATERIAL_COLETADO
     elif StatusDoacao.INAPTO in statuses:
         doacao.status = StatusDoacao.INAPTO
+    elif StatusDoacao.INCOMPLETO in statuses:
+        doacao.status = StatusDoacao.INCOMPLETO
     else:
         doacao.status = StatusDoacao.CANCELADO
 
@@ -293,6 +295,38 @@ def listar_historico_avaliacoes_voluntario(
             AvaliacaoTriagemDoacao.voluntario_triagem_id == voluntario_id 
         ).all()
     return analises
+
+
+def listar_avaliacoes_item_doacao(
+    db: Session,
+    usuario_atual: Usuario,
+    item_doacao_id: int,
+):
+    item = obter_item_doacao(db, item_doacao_id)
+
+    if usuario_tem_funcao(usuario_atual, TipoUsuario.TRIAGEM):
+        validar_voluntario_triagem(usuario_atual, item.doacao.ong_id)
+    elif usuario_tem_funcao(usuario_atual, TipoUsuario.COORDENADOR_PROCESSOS):
+        ong = obter_ong_coordenador(db, usuario_atual)
+        if ong.id != item.doacao.ong_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Você não tem permissão para listar avaliações de triagem desta ONG.",
+            )
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Apenas Voluntários da Triagem ou Coordenadores de Processos podem listar avaliações de triagem.",
+        )
+
+    return (
+        db.query(AvaliacaoTriagemDoacao)
+        .options(joinedload(AvaliacaoTriagemDoacao.voluntario_triagem))
+        .filter(AvaliacaoTriagemDoacao.item_doacao_id == item_doacao_id)
+        .order_by(AvaliacaoTriagemDoacao.created_at.desc(), AvaliacaoTriagemDoacao.id.desc())
+        .all()
+    )
+
 
 def listar_analises_quarentena(db: Session, ong_id: int):
     
@@ -495,7 +529,9 @@ def alterar_status_item_doacao(
                 detail="Material coletado não pode ser cancelado.",
             )
         item.status = StatusDoacao.CANCELADO
-
+    elif novo_status == StatusDoacao.INCOMPLETO:
+        validar_voluntario_triagem(usuario_atual, item.doacao.ong_id)
+        item.status = StatusDoacao.INCOMPLETO
     else:
         raise HTTPException(
             status_code=400,
