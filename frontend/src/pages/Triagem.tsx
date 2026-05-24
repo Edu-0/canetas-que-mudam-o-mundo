@@ -309,6 +309,10 @@ function Triagem() {
                             </p>
 
                             <p className="body-muito-pequeno sm:body-pequeno">
+                              <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Possíveis defeitos:</strong> {item.possiveis_defeitos || "Nenhum informado"}
+                            </p>
+
+                            <p className="body-muito-pequeno sm:body-pequeno">
                               <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Quantidade:</strong> {item.quantidade}
                             </p>
 

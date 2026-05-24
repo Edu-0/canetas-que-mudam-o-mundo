@@ -8,7 +8,7 @@ import Botao from "../components/Botao";
 import Toast from "../components/Toast";
 import ModalConfirmacao from "../components/ModalConfirmacao";
 import { useFiltroAuditoria } from "../hooks/useFiltroAuditoria";
-import { obterDoacao, CriarTriagemEnvio, obterAnalisesPorVoluntario, ResultadoTriagem, StatusDoacao, obterAvaliacoes, AvaliacaoTriagem, respostaAuditoriaTriagem } from "../services/triagemService";
+import { obterDoacao, CriarTriagemEnvio, TriagemDoVoluntario, obterAnalisesPorVoluntario, ResultadoTriagem, StatusDoacao, obterAvaliacoes, AvaliacaoTriagem, respostaAuditoriaTriagem } from "../services/triagemService";
 import ModalImagem from "../components/ModalImagem";
 import { Doacao } from "../context/DoacaoContext";
 import { dataNaoFutura, dataValida, intervaloDataValido } from "../utils/validacoesTriagem";
@@ -17,7 +17,7 @@ function AuditoriaVoluntario() {
   const { id } = useParams();
   const [voluntario, setVoluntario] = useState<any>(null);
   const [doacoes, setDoacoes] = useState<Doacao[]>([]);
-  const [analises, setAnalises] = useState<AvaliacaoTriagem[]>([]);
+  const [analises, setAnalises] = useState<TriagemDoVoluntario[]>([]);
   const [avaliacoes, setAvaliacoes] = useState<Record<number, AvaliacaoTriagem[]>>({});
   const [expandido, setExpandido] = useState<number | null>(null);
 
@@ -137,9 +137,9 @@ function AuditoriaVoluntario() {
       const mapaDoacoes: Record<number, Doacao> = {};
       const mapaAvaliacoes: Record<number, AvaliacaoTriagem[]> = {};
 
-      dados.forEach((a) => {
-        const doacao = a.item_doacao.doacao;
-        const item = a.item_doacao;
+      dados.forEach((a: TriagemDoVoluntario) => {
+        const doacao = a.item.doacao;
+        const item = a.item;
 
         // montar doação completa com itens
         if (!mapaDoacoes[doacao.id]) {
@@ -318,7 +318,6 @@ function AuditoriaVoluntario() {
 
                   <div className="border rounded p-4 mb-6 bg-white">
                     <p><strong>Nome:</strong> {voluntario.nome_completo}</p>
-                    <p><strong>ID:</strong> {voluntario.id}</p>
 
                     <p>
                       <strong>Status:</strong>{" "}
@@ -454,6 +453,7 @@ function AuditoriaVoluntario() {
 
                                 <p><strong>Tipo:</strong> {item.tipo_material}</p>
                                 <p><strong>Descrição:</strong> {item.descricao}</p>
+                                <p><strong>Possíveis defeitos:</strong> {item.possiveis_defeitos || "Nenhum informado"}</p>
                                 <p><strong>Quantidade:</strong> {item.quantidade}</p>
 
                                 {/* Fotos */}
@@ -475,7 +475,7 @@ function AuditoriaVoluntario() {
 
                                 {/* parte da triagem */}
                                 {avaliacoes[item.id]?.length > 0 && (() => {
-                                  const ultima = avaliacoes[item.id][0];
+                                  const ultima = [...avaliacoes[item.id]] .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
 
                                   return (
                                     <div className="mt-3 border-t pt-2">
@@ -556,9 +556,9 @@ function AuditoriaVoluntario() {
                               <textarea placeholder="Feedback do coordenador (opcional)" maxLength={5000} className="input-padrao" onChange={(e) => setValidacao(prev => ({ ...prev, [doacao.id]: { ...prev[doacao.id], comentario_coordenador: e.target.value}}))}/>
 
                               <div className="flex gap-2">
-                                <button className="botao-sucesso" disabled={!ultimaAvaliacaoDoacao} onClick={() => ultimaAvaliacaoDoacao && revisar(doacao.id, true)}>Concordar</button>
+                                <button className="botao-sucesso" disabled={!ultimaAvaliacaoDoacao} onClick={() => ultimaAvaliacaoDoacao && revisar(ultimaAvaliacaoDoacao.id, true)}>Concordar</button>
 
-                                <button className="botao-perigo" disabled={!ultimaAvaliacaoDoacao} onClick={() => ultimaAvaliacaoDoacao && revisar(doacao.id, false)}>Discordar</button>
+                                <button className="botao-perigo" disabled={!ultimaAvaliacaoDoacao} onClick={() => ultimaAvaliacaoDoacao && revisar(ultimaAvaliacaoDoacao.id, false)}>Discordar</button>
                               </div>
 
                             </div>

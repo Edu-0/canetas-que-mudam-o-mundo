@@ -10,6 +10,7 @@ export type ItemDoacao = {
   id: number;
   tipo_material: string;
   descricao: string;
+  possiveis_defeitos?: string;
   quantidade: number;
   status: string;
   motivo_inaptidao?: string;

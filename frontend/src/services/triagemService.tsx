@@ -33,8 +33,43 @@ export type AvaliacaoTriagem = {
   voluntario_triagem?: {
     nome_completo: string;
   };
-};
 
+  em_quarentena?: boolean; // se o voluntário estava em quarentena no momento da triagem
+}
+
+// Padrão da requisição para triagens feitas por um voluntário específico
+export type TriagemDoVoluntario = {
+  id: number;
+  resultado: string;
+  created_at: string;
+  comentario?: string;
+  motivo_inaptidao?: string;
+  em_quarentena?: boolean;
+
+  voluntario_triagem: {
+    id: number;
+    nome_completo: string;
+  };
+
+  item: {
+    id: number;
+    tipo_material: string;
+    descricao: string;
+    quantidade: number;
+
+    fotos: {
+      url: string;
+    }[];
+
+    doacao: {
+      id: number;
+      status: string;
+      observacao_doador?: string;
+      created_at: string;
+      updated_at?: string;
+    };
+  };
+};
 
 // listar todas as doações da ONG
 export async function obterDoacoes(params: {data_inicio?: string; data_final?: string; status?: string; ordem: "asc" | "desc";}) {
@@ -75,19 +110,21 @@ export async function obterStatusDoacao(itemId: number) {
   return api.get(`/doacoes/itens/${itemId}/status`);
 }
 
+
+// Auditoria das triagens dos voluntários
+
 // listar análises por voluntário (pega todas as avaliações de triagem feitas por um voluntário e as informações da doação e item relacionados para cada avaliação) 
 // ([obterAvalicaçoes + ObterDoacao] com filtro por voluntário e depois juntar as informações)
 export async function obterAnalisesPorVoluntario(voluntarioId: number) {
-  return api.get(`/doacoes/voluntarios/${voluntarioId}/analises`);
+  return api.get(`/doacoes/analises/${voluntarioId}`);
 }
 
-// listar análises em quarentena (Isso seria utilizado, somente se a auditoria fosse feita somente voluntários em quarentena. 
-// Se a auditoria for feita para todas as triagens, independente do tempo, então não precisa dessa rota específica)
+// listar análises em quarentena (pega todas as avaliações de triagem que estão em quarentena, ou seja, que o resultado do voluntário foi "PRE_APROVADO" mas o coordenador ainda não validou, ou seja, ainda não concordou nem discordou do resultado do voluntário)
 export async function obterAnalisesQuarentena() {
   return api.get(`/doacoes/analises/em-quarentena`);
 }
 
-// fazer a auditoria de uma triagem de um voluntário em quarentena
+// Para concordar ou discordar da avaliação de triagem feita por um voluntário
 export async function respostaAuditoriaTriagem(analiseId: number, dados: {resultado_validado: boolean; comentario_coordenador?: string;}) {
   return api.put(`/doacoes/analises/${analiseId}`, dados);
 }
