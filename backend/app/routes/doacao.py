@@ -245,6 +245,19 @@ def avaliar_item_doacao(
     return avaliacao
 
 
+@router.get("/itens/{item_doacao_id}/avaliacoes", response_model=list[s.RespostaAvaliacaoTriagemDoacao])
+def listar_avaliacoes_item_doacao(
+    item_doacao_id: int,
+    db: SessionDep,
+    usuario_atual: Usuario = Depends(get_current_user),
+    permissao=Depends(VerificarPermissao("avaliacao-triagem-doacao:listar-historico-item")),
+):
+    return service.listar_avaliacoes_item_doacao(
+        db=db,
+        usuario_atual=usuario_atual,
+        item_doacao_id=item_doacao_id,
+    )
+
 
 @router.get("/analises/{voluntario_id}", response_model=list[s.RespostaAvaliacaoTriagemDoacao])
 def listar_historico_avaliacoes(

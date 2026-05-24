@@ -118,6 +118,7 @@ Abaixo uma lista consolidada dos endpoints expostos pelo backend (método — ca
 	- `GET /doacoes/` — listar doações (filtros por data/status disponíveis).
 	- `GET /doacoes/{doacao_id}` — obter doação por id.
 	- `POST /doacoes/itens/{item_doacao_id}/avaliacoes` — avaliar item na triagem.
+	- `GET /doacoes/itens/{item_doacao_id}/avaliacoes` — listar avaliações de triagem de um item.
 	- `PATCH /doacoes/itens/{item_doacao_id}/status` — alterar status de item doação.
 	- `POST /doacoes/{doacao_id}/notificar-pre-aprovacao` — notificar doador sobre pré-aprovação (envia email).
 
