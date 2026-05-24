@@ -70,6 +70,11 @@ def alterar_status_item_pedido(
     if dados.status == StatusPedidoMaterial.CANCELADO:
         return service.cancelar_item_pedido_material(db=db, usuario=usuario_atual, item_id=item_id)
 
+    raise HTTPException(
+        status_code=400,
+        detail="Apenas os status AGUARDANDO_RETIRADA, MATERIAL_COLETADO e CANCELADO podem ser aplicados em pedidos.",
+    )
+
 
 @router.get("/{pedido_id}/historico", response_model=list[ms.MovimentoEstoqueResposta])
 def historico_pedido(
@@ -79,10 +84,3 @@ def historico_pedido(
     permissao=Depends(VerificarPermissao("pedido:listar")),
 ):
     return service.listar_movimentos_pedido(db=db, usuario=usuario_atual, pedido_id=pedido_id)
-
-    from fastapi import HTTPException
-
-    raise HTTPException(
-        status_code=400,
-        detail="Apenas os status AGUARDANDO_RETIRADA e MATERIAL_COLETADO podem ser aplicados em pedidos.",
-    )

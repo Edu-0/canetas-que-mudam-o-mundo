@@ -531,6 +531,17 @@ def coletar_item_pedido_material(
             if item_doacao:
                 sincronizar_status_doacao(item_doacao.doacao)
 
+    try:
+        db.commit()
+        db.refresh(item)
+        return item
+    except Exception as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=400,
+            detail=f"Erro ao registrar coleta do pedido: {str(exc)}",
+        ) from exc
+
 
 def cancelar_item_pedido_material(
     db: Session,

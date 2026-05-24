@@ -18,3 +18,10 @@ from .pedido_material import (
     AtualizarStatusPedidoMaterial,
     RespostaNotificacaoPedidoMaterial,
 )
+from .ong import (
+    CriarOng,
+    RespostaOng,
+    AtualizarOng,
+    TokenOngResponse,
+    RespostaPendenciasONG,
+)

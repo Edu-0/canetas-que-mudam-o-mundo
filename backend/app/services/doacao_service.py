@@ -91,6 +91,18 @@ def obter_vinculo_voluntario(db:Session, voluntario_id:int, ong_id:int) -> Volun
     return vinculo_voluntario
 
 def obter_ong_coordenador(db:Session, usuario):
+    if not usuario_tem_funcao(usuario, TipoUsuario.COORDENADOR_PROCESSOS):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Apenas usuários com perfil Coordenador de Processos podem acessar esta ONG.",
+        )
+
+    if not usuario.ong:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Coordenador não possui ONG vinculada.",
+        )
+
     ong = db.query(Ong).filter(Ong.id == usuario.ong.id).first()
     if not ong:
         raise HTTPException(status_code=404, detail="ONG não encontrada.")

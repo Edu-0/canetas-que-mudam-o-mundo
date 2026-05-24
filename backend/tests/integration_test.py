@@ -62,7 +62,7 @@ def run():
     # 2) criar ONG
     ong_payload = {
         "nome": "ONG Test",
-        "cnpj": "12345678000199",
+        "cnpj": str(random.randint(10**13, 10**14 - 1)),
         "rua": "Rua A",
         "numero": "100",
         "bairro": "Centro",
@@ -158,6 +158,19 @@ def run():
             func = UsuarioFuncao(usuario_id=triagem["id"], tipo_usuario=TipoUsuario.TRIAGEM)
             session.add(vinc)
             session.add(func)
+            session.commit()
+
+    from app.database.connection import Session, engine
+    from app.models.ong import VoluntarioOng
+
+    with Session(engine) as session:
+        vinculo = (
+            session.query(VoluntarioOng)
+            .filter(VoluntarioOng.usuario_id == triagem["id"], VoluntarioOng.ong_id == ong["id"])
+            .first()
+        )
+        if vinculo:
+            vinculo.nivel_confianca = 10
             session.commit()
 
     # 5) criar doação via JSON (sem upload)
@@ -310,6 +323,111 @@ def run():
     assert item_coletado["status"] == "MATERIAL_COLETADO"
 
     print("UC07 fluxo de pedido executado com sucesso.")
+
+    # ------ Painel do coordenador: pendências ------
+    itens_painel_doacao = [
+        {
+            "tipo_material": "Cobertor",
+            "descricao": "Cobertores em bom estado",
+            "possiveis_defeitos": None,
+            "quantidade": 2,
+            "fotos": [
+                {
+                    "url": "https://example.test/foto-painel-doacao.jpg",
+                    "nome_original": "foto-painel-doacao.jpg",
+                    "content_type": "image/jpeg",
+                    "tamanho_bytes": 1024,
+                }
+            ],
+        }
+    ]
+    r = client.post(
+        "/doacoes",
+        json={"ong_id": ong["id"], "observacao_doador": "Painel", "itens": itens_painel_doacao},
+        headers=headers_doador,
+    )
+    assert r.status_code == 201, r.text
+    doacao_painel = r.json()
+    painel_item_doacao = doacao_painel["itens"][0]
+
+    r = client.post(
+        f"/doacoes/itens/{painel_item_doacao['id']}/avaliacoes",
+        json={"resultado": "PRE_APROVADO", "checklist": {}, "comentario": "ok"},
+        headers=headers_triagem,
+    )
+    assert r.status_code == 200, r.text
+
+    itens_painel_disponivel = [
+        {
+            "tipo_material": "Manta",
+            "descricao": "Mantas em bom estado",
+            "possiveis_defeitos": None,
+            "quantidade": 3,
+            "fotos": [
+                {
+                    "url": "https://example.test/foto-painel-disponivel.jpg",
+                    "nome_original": "foto-painel-disponivel.jpg",
+                    "content_type": "image/jpeg",
+                    "tamanho_bytes": 1024,
+                }
+            ],
+        }
+    ]
+    r = client.post(
+        "/doacoes",
+        json={"ong_id": ong["id"], "observacao_doador": "Painel disponível", "itens": itens_painel_disponivel},
+        headers=headers_doador,
+    )
+    assert r.status_code == 201, r.text
+    doacao_disponivel = r.json()
+    item_disponivel = doacao_disponivel["itens"][0]
+
+    r = client.post(
+        f"/doacoes/itens/{item_disponivel['id']}/avaliacoes",
+        json={"resultado": "PRE_APROVADO", "checklist": {}, "comentario": "ok"},
+        headers=headers_triagem,
+    )
+    assert r.status_code == 200, r.text
+
+    r = client.patch(
+        f"/doacoes/itens/{item_disponivel['id']}/status",
+        json={"status": "DISPONIVEL"},
+        headers=headers_triagem,
+    )
+    assert r.status_code == 200, r.text
+
+    pedido_painel_payload = {
+        "ong_id": ong["id"],
+        "familiar_id": familiar_id,
+        "itens": [{"tipo_material": "Manta", "quantidade": 1}],
+    }
+    r = client.post("/pedidos/", json=pedido_painel_payload, headers=headers_responsavel)
+    assert r.status_code == 201, r.text
+    pedido_painel = r.json()
+
+    pedido_painel_item = pedido_painel["itens"][0]
+    r = client.patch(
+        f"/pedidos/itens/{pedido_painel_item['id']}/status",
+        json={"status": "AGUARDANDO_RETIRADA"},
+        headers=headers_triagem,
+    )
+    assert r.status_code == 200, r.text
+
+    r = client.get("/ong/minha-ong/pendencias", headers=headers_admin)
+    assert r.status_code == 200, r.text
+    painel = r.json()
+
+    assert painel["ong_id"] == ong["id"]
+    assert any(doacao["id"] == doacao_painel["id"] for doacao in painel["doacoes_pre_aprovadas"])
+    assert any(pedido["id"] == pedido_painel["id"] for pedido in painel["pedidos_aguardando_retirada"])
+
+    r = client.get("/ong/minha-ong/pendencias", headers=headers_triagem)
+    assert r.status_code == 200, r.text
+    painel_triagem = r.json()
+
+    assert painel_triagem["ong_id"] == ong["id"]
+    assert any(doacao["id"] == doacao_painel["id"] for doacao in painel_triagem["doacoes_pre_aprovadas"])
+    assert any(pedido["id"] == pedido_painel["id"] for pedido in painel_triagem["pedidos_aguardando_retirada"])
 
 if __name__ == "__main__":
     run()
