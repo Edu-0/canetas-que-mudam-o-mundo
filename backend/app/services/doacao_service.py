@@ -85,10 +85,10 @@ def obter_analise_material(db: Session, analise_id: int) -> AvaliacaoTriagemDoac
 def obter_vinculo_voluntario(db:Session, voluntario_id:int, ong_id:int) -> VoluntarioOng:
     vinculo_voluntario = db.query(VoluntarioOng).filter(
         VoluntarioOng.usuario_id == voluntario_id,
-        VoluntarioOng.ong_id == ong_id
-    ).first()
+        VoluntarioOng.ong_id == ong_id).first()
     if not vinculo_voluntario:
         raise HTTPException(status_code=404, detail="Vínculo de voluntário não encontrado.")
+    return vinculo_voluntario
 
 def obter_ong_coordenador(db:Session, usuario):
     ong = db.query(Ong).filter(Ong.id == usuario.ong.id).first()
@@ -284,17 +284,14 @@ def listar_doacoes(
     return query.order_by(*ordenacao).all()
 
 
-def listar_historico_avaliacoes_item(db: Session, item_doacao_id: int, ong_id: int):
-    
+def listar_historico_avaliacoes_voluntario(
+    db: Session, 
+    voluntario_id: int 
+):
     analises = db.query(AvaliacaoTriagemDoacao)\
-        .join(ItemDoacao, AvaliacaoTriagemDoacao.item_doacao_id == ItemDoacao.id)\
-        .join(Doacao, ItemDoacao.doacao_id == Doacao.id)\
-        .options(joinedload(AvaliacaoTriagemDoacao.voluntario_triagem))\
-        .filter(
-            AvaliacaoTriagemDoacao.item_doacao_id == item_doacao_id,
-            Doacao.ong_id == ong_id                     
+            .filter(
+            AvaliacaoTriagemDoacao.voluntario_triagem_id == voluntario_id 
         ).all()
-        
     return analises
 
 def listar_analises_quarentena(db: Session, ong_id: int):
@@ -341,23 +338,23 @@ def avaliar_item_doacao(
         motivo_inaptidao=dados.motivo_inaptidao
     )
 
-    vinculo = obter_vinculo_voluntario(db,voluntario,item.doacao.ong_id)
-
-    if vinculo.nivel_confianca < 10:
-        avaliacao.em_quarentena = True
-    
     item.triado_por_id = voluntario.id
     item.triado_em = agora
 
-    if dados.resultado == ResultadoTriagemDoacao.PRE_APROVADO:
-        item.status = StatusDoacao.PRE_APROVADO
-        item.pre_aprovado_em = agora
-        item.motivo_inaptidao = None
-    else:
-        item.status = StatusDoacao.INAPTO
-        item.motivo_inaptidao = dados.motivo_inaptidao
+    vinculo = obter_vinculo_voluntario(db,voluntario.id,item.doacao.ong_id)
 
-    sincronizar_status_doacao(item.doacao)
+    if vinculo.nivel_confianca < 10:
+        avaliacao.em_quarentena = True
+    else:    
+        if dados.resultado == ResultadoTriagemDoacao.PRE_APROVADO:
+            item.status = StatusDoacao.PRE_APROVADO
+            item.pre_aprovado_em = agora
+            item.motivo_inaptidao = None
+        else:
+            item.status = StatusDoacao.INAPTO
+            item.motivo_inaptidao = dados.motivo_inaptidao
+
+        sincronizar_status_doacao(item.doacao)
 
     try:
         db.add(avaliacao)
@@ -385,22 +382,30 @@ def avaliar_analise_de_doacao(
     validar_usuario_coordenador(coordenador, item.doacao.ong_id)
 
     analise.coordenador_revisor_id = coordenador.id
-    analise.em_quarentena = False
-    analise.resultado_validado = dados.resultado_validado
-    agora = datetime.now()
-    analise.validado_em = agora
-
     vinculo_voluntario = obter_vinculo_voluntario(db, analise.voluntario_triagem_id,item.doacao.ong_id)
-
+    
     if dados.resultado_validado:
-        vinculo_voluntario.nivel_confianca += 1
+        analise.resultado_validado = dados.resultado_validado
+        analise.em_quarentena = False
+        agora = datetime.now()
+        analise.validado_em = agora
 
-    else:
-        analise.resultado = ResultadoTriagemDoacao.AGUARDANDO_TRIAGEM
+        if vinculo_voluntario.nivel_confianca < 10:
+            vinculo_voluntario.nivel_confianca += 1
+        
+        if analise.resultado == ResultadoTriagemDoacao.PRE_APROVADO:
+            analise.item_doacao.status = StatusDoacao.PRE_APROVADO
+            analise.item_doacao.pre_aprovado_em = agora
+        else:
+            analise.item_doacao.status = StatusDoacao.INAPTO        
+
         sincronizar_status_doacao(item.doacao)
+    else:
         if hasattr(dados, 'comentario_coordenador') and dados.comentario_coordenador:
             analise.comentario = f"[Revisão da Coordenação]: {dados.comentario_coordenador}"
-        vinculo_voluntario.nivel_confianca -= 1
+        
+        if vinculo_voluntario.nivel_confianca > 0:
+            vinculo_voluntario.nivel_confianca -= 1
 
     try:
         db.commit() 
@@ -408,7 +413,7 @@ def avaliar_analise_de_doacao(
         return analise
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail="Erro ao atualizar a revisão.")
+        raise HTTPException(status_code=500, detail="Erro ao analisar a triagem.")
 
 
 def alterar_status_item_doacao(

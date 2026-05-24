@@ -183,6 +183,25 @@ def listar_doacoes(
         ordem=ordem,
     )
 
+@router.get("/analises/em-quarentena", response_model=list[s.RespostaListagemQuarentena]) 
+def listar_analises_quarentena_rota( 
+    db: SessionDep,
+    usuario_atual: Usuario = Depends(get_current_user),
+    permissao = Depends(VerificarPermissao("avaliacao-triagem-doacao:listar-analises"))
+):
+    ong_do_usuario = service.obter_ong_coordenador(db, usuario_atual)
+    
+    if not ong_do_usuario:
+        raise HTTPException(
+            status_code=403, 
+            detail="Você não está vinculado a nenhuma ONG para visualizar análises."
+        )
+
+    return service.listar_analises_quarentena(
+        db=db,
+        ong_id=ong_do_usuario.id
+    )
+
 
 @router.get("/{doacao_id}", response_model=s.RespostaDoacao)
 def obter_doacao(
@@ -217,7 +236,7 @@ def avaliar_item_doacao(
     )
 
     # Envia e-mail automático ao doador quando item for pré-aprovado
-    if avaliacao.resultado == ResultadoTriagemDoacao.PRE_APROVADO:
+    if avaliacao.resultado == ResultadoTriagemDoacao.PRE_APROVADO and not avaliacao.em_quarentena:
         item = db.get(m.ItemDoacao, item_doacao_id)
         if item and item.doacao:
             fm = FastMail(conf)
@@ -227,22 +246,28 @@ def avaliar_item_doacao(
 
 
 
-@router.get("/itens/{item_doacao_id}/avaliacoes", response_model=list[s.RespostaAvaliacaoTriagemDoacao])
+@router.get("/analises/{voluntario_id}", response_model=list[s.RespostaAvaliacaoTriagemDoacao])
 def listar_historico_avaliacoes(
-    item_doacao_id: int, 
     db: SessionDep,
+    voluntario_id: int,
     usuario_atual: Usuario = Depends(get_current_user),
     permissao=Depends(VerificarPermissao("avaliacao-triagem-doacao:listar-historico-item"))
 ):  
-    ong = service.obter_ong_vinculada(db,usuario_atual)
-    
-    if not ong:
-        raise HTTPException(status_code=403, detail="Você não está vinculado a uma ONG.")
+    # Verifica se o usuario_atual é o proprio voluntario que está buscando suas triagens
+    if usuario_atual.id is voluntario_id:
+        return service.listar_historico_avaliacoes_voluntario(
+            db=db,  
+            voluntario_id = voluntario_id 
+        )
 
-    return service.listar_historico_avaliacoes_item(
-        db=db,
-        item_doacao_id=item_doacao_id,
-        ong_id=ong.id 
+    # Verifica se o usuario é um Coordenador
+    ong = service.obter_ong_coordenador(db, usuario_atual)
+    # Verifica se o coordenador é responsável pela ONG que o voluntario participa
+    vinculo = obter_vinculo_voluntario(db, voluntario_id, ong.id)
+
+    return service.listar_historico_avaliacoes_voluntario(
+        db=db,  
+        voluntario_id = voluntario_id 
     )
 
 
@@ -297,25 +322,6 @@ def notificar_pre_aprovacao(
         dias_funcionamento=doacao.ong.dias_funcionamento,
         hora_abertura=str(doacao.ong.hora_abertura),
         hora_fechamento=str(doacao.ong.hora_fechamento),
-    )
-
-@router.get("/analises/em-quarentena", response_model=list[s.RespostaListagemQuarentena]) 
-def listar_analises_quarentena_rota( 
-    db: SessionDep,
-    usuario_atual: Usuario = Depends(get_current_user),
-    permissao = Depends(VerificarPermissao("avaliacao-triagem-doacao:listar-analises"))
-):
-    ong_do_usuario = service.obter_ong_coordenador(db, usuario_atual)
-    
-    if not ong_do_usuario:
-        raise HTTPException(
-            status_code=403, 
-            detail="Você não está vinculado a nenhuma ONG para visualizar análises."
-        )
-
-    return service.listar_analises_quarentena(
-        db=db,
-        ong_id=ong_do_usuario.id
     )
 
 

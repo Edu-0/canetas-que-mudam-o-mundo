@@ -9,14 +9,22 @@ from app.core.enums import BeneficiosUsuario, TipoUsuario
 from app.core.firebase import get_bucket
 from app.core.security import gerar_hash_senha
 from app.database.connection import SessionDep
+from sqlalchemy.orm import Session
 from app.models import user as m
 from app.models import ong as o
+from app.models.doacao import AvaliacaoTriagemDoacao, Doacao
+from app.models.pedido_material import PedidoMaterial
 from app.services.firebase_storage import FirebaseStorageService
 from app.utils.funcoes import gerar_codigo_numerico, gerar_email_anonimo
 
 
 # As conversões para hash e aleatoriedade servem para manter a privacidades dos dados e conformidade com a LGPD, garantindo que as informações originais não possam ser recuperadas.
 
+def obter_usuario(db:Session, usuario_id):
+    suario = db.get(m.Usuario, usuario_id)
+    if not usuario:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado.")
+    return usuario
 
 def obter_caminho_storage(file_url: str) -> str: # Extrai o caminho do arquivo a partir da URL completa, considerando o nome do bucket para garantir compatibilidade com diferentes configurações de Firebase Storage.
     bucket = get_bucket()
@@ -238,6 +246,22 @@ def remover_dados_familiares(usuario_id: int, db: SessionDep) -> None:
             detail=f"Erro ao remover dados dependentes: {str(e)}"
         )
 
+def aplicar_hard_delete_voluntario(db:Session, voluntario_id):
+    tem_historico = db.query(AvaliacaoTriagemDoacao).filter(AvaliacaoTriagemDoacao.voluntario_id == voluntario_id).fisrt()
+
+    return tem_historico is None
+
+def aplicar_hard_delete_doador(db:Session, doador_id):
+    tem_historico = db.query(Doacao).filter(Doacao.doador_id == doacao_id).first()
+    return tem_historico is None
+
+def aplicar_hard_delete_responsavel(db:Session, responsavel_id):
+    tem_historico = db.query(PedidoMaterial).filter(PedidoMaterial.responsavel_id == responsavel_id)
+    return tem_historico is None
+
+#def processar_historico_transacional(usuario):
+
+
 def processar_exclusao_conta(usuario_id: int, db: SessionDep):
     usuario = db.query(m.Usuario).filter(m.Usuario.id == usuario_id).first()
     
@@ -270,11 +294,18 @@ def criar_voluntario(usuario_id,token, db):
     if info_token.data_expiracao <= datetime.now():
         raise HTTPException(status_code=401, detail="Token expirado. Peça um novo link para o responsável.")
 
-    funcao = m.UsuarioFuncao(
+
+    funcao_generico = m.UsuarioFuncao(
+        usuario_id = usuario_id,
+        tipo_usuario = TipoUsuario.GENERICO
+    )
+    db.add(funcao_generico)
+
+    funcao_triagem = m.UsuarioFuncao(
         usuario_id = usuario_id,
         tipo_usuario = TipoUsuario.TRIAGEM
-    )    
-    db.add(funcao) 
+    )
+    db.add(funcao_triagem) 
 
     vinculo_ong = o.VoluntarioOng(
         usuario_id = usuario_id,
