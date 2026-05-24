@@ -1,12 +1,36 @@
 import api from "./api";
 
-// pedidos (igual estrutura de doações)
-export async function obterPedidos(params: {ordem: "asc" | "desc"; status?: string;}) {
-  return api.get("/pedidos/", {params: {ordem: params.ordem, status: params.status,},
-  });
+export type TipoItem = "DOACAO" | "PEDIDO";
+
+export type StatusMaterial =
+    | "PRE_APROVADO"
+    | "AGUARDANDO_RETIRADA"
+    | "DISPONIVEL"
+    | "MATERIAL_COLETADO"
+    | "CANCELADO";
+
+export type ItemUnificado = {
+  id: number;
+  origem: TipoItem;
+  codigo_coleta?: string;
+  status: StatusMaterial;
+  created_at: string;
+  updated_at: string;
+  prazo_retirada_limite?: string; // o prazo de retirada
+  itens: any[];
+};
+
+// Para listar os itens de doações e pedidos que estão com status "PRE_APROVADO" ou "AGUARDANDO_RETIRADA" (ou seja, que estão pendentes de coleta ou retirada)
+export async function obterPendencias(ordem: "asc" | "desc") {
+  return api.get("/minha-ong/pendencias", {params: { ordem },});
 }
 
-// atualizar status do pedido
-export async function atualizarStatusPedido(itemId: number, dados: { status: string }) {
-  return api.patch(`/pedidos/itens/${itemId}/status`, dados);
+// Atualiza o status do material
+export async function atualizarStatusPedido(itemId: number, status: StatusMaterial) {
+  return api.patch(`/pedidos/itens/${itemId}/status`, { status });
+}
+
+// Atualiza o status do material de uma doação
+export async function atualizarStatusDoacao(itemId: number, status: StatusMaterial, motivo_inaptidao?: string) {
+  return api.patch(`/doacoes/itens/${itemId}/status`, { status, motivo_inaptidao });
 }

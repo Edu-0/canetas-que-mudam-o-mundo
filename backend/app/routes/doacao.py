@@ -276,7 +276,7 @@ def listar_historico_avaliacoes(
     # Verifica se o usuario é um Coordenador
     ong = service.obter_ong_coordenador(db, usuario_atual)
     # Verifica se o coordenador é responsável pela ONG que o voluntario participa
-    vinculo = obter_vinculo_voluntario(db, voluntario_id, ong.id)
+    vinculo = service.obter_vinculo_voluntario(db, voluntario_id, ong.id)
 
     return service.listar_historico_avaliacoes_voluntario(
         db=db,  

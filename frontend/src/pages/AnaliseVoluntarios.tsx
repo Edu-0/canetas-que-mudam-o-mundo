@@ -271,7 +271,7 @@ function AnaliseVoluntarios() {
                         {/* Direita */}
                         <div className="flex flex-row items-center justify-between gap-2 mt-2 sm:mt-0 w-full sm:w-auto">
 
-                          <Botao variante="botao-pequeno-editar" aoClicar={() => navigate(`/auditoria/${v.id}`)}>Analisar</Botao>
+                          <Botao variante="botao-pequeno-editar" aoClicar={() => navigate(`/analise-voluntarios/auditoria/${v.id}`)}>Analisar</Botao>
 
                           <Botao variante="botao-pequeno-desativar" desabilitado={carregandoExclusao} aoClicar={() => {setVoluntarioSelecionado(v.id); setMostrarModal(true)}}>Desativar</Botao>
 
