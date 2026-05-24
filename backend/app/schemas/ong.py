@@ -2,6 +2,9 @@ from pydantic import BaseModel, EmailStr,Field, field_validator, ConfigDict
 from datetime import date, datetime, time
 from typing import Optional
 
+from app.schemas.doacao import RespostaListagemDoacao
+from app.schemas.pedido_material import RespostaPedidoMaterial
+
 class CriarOng(BaseModel):
     nome:str = Field(max_length = 255)
     cnpj: str = Field (pattern=r"^\d{14}$")
@@ -61,3 +64,12 @@ class TokenOngResponse(BaseModel):
     ong_id: int
     data_expiracao: datetime 
     model_config = ConfigDict(from_attributes = True)   
+
+
+class RespostaPendenciasONG(BaseModel):
+    ong_id: int
+    ong_nome: str
+    doacoes_pre_aprovadas: list[RespostaListagemDoacao] = []
+    pedidos_aguardando_retirada: list[RespostaPedidoMaterial] = []
+
+    model_config = ConfigDict(from_attributes=True)

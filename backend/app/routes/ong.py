@@ -2,13 +2,15 @@ from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, B
 from sqlalchemy import func
 from app.database.connection import SessionDep
 from app.core.deps_auth import VerificarPermissao, get_current_user
-from app.core.enums import TipoUsuario
+from app.core.enums import StatusDoacao, StatusPedidoMaterial, TipoUsuario
 from app.schemas import ong as s
 from app.schemas.user import respostaUsuario
 from app.models import ong as m
 from app.models import user as u
 from typing import List
 from app.services import ong_service as service
+from app.services import doacao_service as doacao_service
+from app.services import pedido_material_service as pedido_service
 import uuid
 from datetime import datetime
 from app.services.ong_service import apagar_ong_e_vinculos
@@ -31,6 +33,42 @@ def get_ong(
     if not usuario_atual.ong:
         raise HTTPException(status_code=404, detail="Você ainda não possui uma ONG cadastrada.")
     return usuario_atual.ong
+
+@router.get("/minha-ong/pendencias", response_model=s.RespostaPendenciasONG)
+def listar_pendencias_ong(
+    db: SessionDep,
+    ordem: str = "desc",
+    usuario_atual: u.Usuario = Depends(get_current_user),
+):
+    ong = usuario_atual.ong
+    if not ong and usuario_atual.vinculo_voluntario:
+        ong = usuario_atual.vinculo_voluntario.ong
+
+    if not ong:
+        raise HTTPException(
+            status_code=403,
+            detail="Apenas coordenadores de processos e voluntários da triagem vinculados a uma ONG podem acessar esta rota.",
+        )
+
+    doacoes_pre_aprovadas = doacao_service.listar_doacoes(
+        db=db,
+        usuario_atual=usuario_atual,
+        status_doacao=StatusDoacao.PRE_APROVADO,
+        ordem=ordem,
+    )
+    pedidos_aguardando_retirada = pedido_service.listar_pedidos(
+        db=db,
+        usuario=usuario_atual,
+        status_pedido=StatusPedidoMaterial.AGUARDANDO_RETIRADA,
+        ordem=ordem,
+    )
+
+    return s.RespostaPendenciasONG(
+        ong_id=ong.id,
+        ong_nome=ong.nome,
+        doacoes_pre_aprovadas=doacoes_pre_aprovadas,
+        pedidos_aguardando_retirada=pedidos_aguardando_retirada,
+    )
 
 @router.get("/{ong_id}/voluntarios", response_model=list[respostaUsuario])
 def listar_voluntarios_da_ong(
