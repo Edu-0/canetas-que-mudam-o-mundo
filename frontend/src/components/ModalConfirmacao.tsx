@@ -1,9 +1,9 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, ReactNode } from "react";
 
 type Props = {
   aberto: boolean;
   titulo: string;
-  descricao: string;
+  descricao: ReactNode;
   botaoConfirmar?: string;
   botaoCancelar?: string;
   onConfirmar: () => void;
@@ -68,7 +68,7 @@ function ModalConfirmacao({aberto, titulo, descricao, botaoConfirmar, botaoCance
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div ref={modalRef} tabIndex={-1} role="dialog" aria-label="Janela de confirmação" aria-modal="true" aria-labelledby="modal-titulo" aria-describedby="modal-descricao" className="bg-[var(--secundario-10)] rounded-lg border border-[var(--secundario-20)] p-6 w-full max-w-md shadow-lg">
         <h2 id="modal-titulo" className="text-lg font-semibold mb-2">{titulo}</h2>
-        <p id="modal-descricao" className="text-sm mb-6 whitespace-pre-line">{descricao}</p>
+        <div id="modal-descricao" className="text-sm mb-6 whitespace-pre-line">{descricao}</div>
 
         <div className="flex justify-between gap-3">
           {botaoCancelar && (

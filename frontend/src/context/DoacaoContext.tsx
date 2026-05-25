@@ -1,32 +1,5 @@
 import { createContext, useContext, useState, ReactNode } from "react";
-
-// Tipos baseados no backend
-export type FotoItem = {
-  id: number;
-  url: string;
-};
-
-export type ItemDoacao = {
-  id: number;
-  tipo_material: string;
-  descricao: string;
-  possiveis_defeitos?: string;
-  quantidade: number;
-  status: string;
-  motivo_inaptidao?: string;
-  fotos: FotoItem[];
-};
-
-export type Doacao = {
-  id: number;
-  ong_id: number;
-  status: string;
-  observacao_doador?: string;
-  itens: ItemDoacao[];
-
-  created_at: string;
-  updated_at?: string;
-};
+import type { Doacao } from "../services/doacaoService";
 
 // contexto
 type ContextoDoacao = {
@@ -50,7 +23,9 @@ export function ProvedorDoacao({ children }: { children: ReactNode }) {
   }
 
   return (
-    <ContextoDoacao.Provider value={{doacoes, setDoacoes, selecionarDoacao, doacaoSelecionada, }}>
+    <ContextoDoacao.Provider
+      value={{ doacoes, setDoacoes, selecionarDoacao, doacaoSelecionada }}
+    >
       {children}
     </ContextoDoacao.Provider>
   );

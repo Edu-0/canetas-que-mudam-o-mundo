@@ -10,6 +10,8 @@ import {
   registrarDoacao,
   atualizarDoacao,
   obterDoacao,
+  type Doacao,
+  type ImagemDoacao,
 } from "../services/doacaoService";
 import { useAvisoAlteracoesNaoSalvas } from "../hooks/useAvisoAlteracoesNaoSalvas";
 
@@ -47,7 +49,7 @@ function Doar() {
 
     async function carregar() {
       try {
-        const dados = await obterDoacao(idEdicao!);
+        const dados: Doacao = await obterDoacao(idEdicao!);
         setTipoMaterial(dados.tipo_material);
         setDescricao(dados.descricao);
         setPossiveisDefeitos(dados.possiveis_defeitos || "");
