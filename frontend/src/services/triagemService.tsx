@@ -97,7 +97,12 @@ export async function atualizarStatusDoacao(itemId: number, dados: { status: Sta
 
 // criar avaliação de triagem
 export async function criarTriagem(itemId: number, dados: CriarTriagemEnvio) {
-  return api.post(`/doacoes/itens/${itemId}/avaliacoes`, dados);
+  try {
+    return api.post(`/doacoes/itens/${itemId}/avaliacoes`, dados);
+    console.log("Triagem criada com sucesso!" + JSON.stringify(dados));
+  } catch (error) {
+    console.error("Erro ao criar triagem:", error);
+  }
 }
 
 // obter avaliações de triagem de um item 

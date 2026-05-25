@@ -396,12 +396,12 @@ function AuditoriaVoluntario() {
 
               {analises.length === 0 ? (
                 <div className="text-center body-semibold-pequeno py-6">
-                  Nenhuma doação vinculada a esta ONG.
+                  Nenhuma voluntariado vinculada a esta ONG.
                 </div>
 
               ) : analisesFiltradas.length === 0 ? (
                 <div className="text-center body-semibold-pequeno py-6">
-                  Nenhuma doação encontrada com esses filtros.
+                  Nenhuma voluntariado encontrada com esses filtros.
                 </div>
 
               ) : (

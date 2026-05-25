@@ -253,6 +253,12 @@ function Triagem() {
         const checklistItem = checklistPorItem[item.id] || {};
         const observacaoItem = observacaoPorItem[item.id];
 
+        // se já tiver avaliação de triagem para esse item, não cria outra, 
+        if (avaliacoes[item.id]?.length > 0) {
+
+           continue; // pula só esse item que já foi triado
+        }
+
         try {   
           await criarTriagem(item.id, {
             resultado: status === "PRE_APROVADO" ? "PRE_APROVADO" : "INAPTO", // se o status do item for "INCOMPLETO" a triagem geral é "INAPTO"
@@ -262,6 +268,12 @@ function Triagem() {
           });       
           
           console.log(`Triagem criada para item ${item.id} com status ${status}`);
+          
+          const atualizado = await obterDoacao(Number(id));
+          console.log(atualizado.data.itens.map(i => ({
+            id: i.id,
+            status: i.status,
+          })));
         } catch (e) {
           console.error(`Erro ao criar triagem para item ${item.id}:`, e);
         }
@@ -282,7 +294,7 @@ function Triagem() {
 
       }
 
-      setMensagem("Triagem finalizada com sucesso!");
+      setMensagem("Triagem finalizada com sucesso!"); 
       setTipoMensagem("sucesso");
 
       navigate("/lista-triagem");
