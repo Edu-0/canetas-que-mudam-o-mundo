@@ -22,7 +22,7 @@ export type ItemUnificado = {
 
 // Para listar os itens de doações e pedidos que estão com status "PRE_APROVADO" ou "AGUARDANDO_RETIRADA" (ou seja, que estão pendentes de coleta ou retirada)
 export async function obterPendencias(ordem: "asc" | "desc") {
-  return api.get("/minha-ong/pendencias", {params: { ordem },});
+  return api.get("/ong/minha-ong/pendencias", {params: { ordem },});
 }
 
 // Atualiza o status do material

@@ -7,12 +7,10 @@ import Paginacao from "../components/Paginacao";
 import Botao from "../components/Botao";
 import Toast from "../components/Toast";
 import ModalConfirmacao from "../components/ModalConfirmacao";
-import { useONG } from "../context/OngContext";
-import { Doacao } from "../context/DoacaoContext";
 import {atualizarStatusDoacao, atualizarStatusPedido, ItemUnificado, obterPendencias, StatusMaterial, TipoItem } from "../services/statusMateriaisService";
 import ModalImagem from "../components/ModalImagem";
 import { dataNaoFutura, dataValida, intervaloDataValido } from "../utils/validacoesTriagem";
-
+import { AvaliacaoTriagem } from "../services/triagemService";
 
 function StatusMateriais() {
   const navigate = useNavigate();
@@ -31,14 +29,33 @@ function StatusMateriais() {
   const [tipoFiltro, setTipoFiltro] = useState<"TODOS" | TipoItem>("TODOS");
   const [statusFiltro, setStatusFiltro] = useState<"TODOS" | StatusMaterial>("TODOS");
 
-  const [dataInicio, setDataInicio] = useState("");
-  const [dataFim, setDataFim] = useState("");
-
   const ITENS_POR_PAGINA = 5;
   const [paginaAtual, setPaginaAtual] = useState(1);
 
   const [erroBusca, setErroBusca] = useState("");
   const [tocadoBusca, setTocadoBusca] = useState(false);
+  
+  const [historicoAberto, setHistoricoAberto] = useState<Record<number, boolean>>({});
+  const [avaliacoes, setAvaliacoes] = useState<Record<number, AvaliacaoTriagem[]>>({});
+  const jaFoiTriada = Object.values(avaliacoes).some(arr => arr.length > 0); // verifica se algum item já tem avaliação de triagem
+
+  const [checklistPorItem, setChecklistPorItem] = useState<Record<number, Record<number, boolean>>>({});
+  const [observacaoPorItem, setObservacaoPorItem] = useState<Record<number, string>>({});
+  const [comentarioOpcionalPorItem, setComentarioOpcionalPorItem] = useState<Record<number, string>>({});
+
+  const itensChecklist = [
+    "Material em boas condições",
+    "Sem danos estruturais",
+    "Quantidade compatível",
+    "Fotos suficientes",
+  ];
+
+  function toggleHistorico(itemId: number) {
+    setHistoricoAberto(prev => ({
+      ...prev,
+      [itemId]: !prev[itemId]
+    }));
+  }
 
   function abrirCancelar(item: ItemUnificado) {
     setItemSelecionado(item);
@@ -93,18 +110,13 @@ function StatusMateriais() {
   function aplicarFiltros(lista: ItemUnificado[]) {
     return lista.filter((i) => {
       const tipoOk = tipoFiltro === "TODOS" || i.origem === tipoFiltro;
-      const statusOk =
-        statusFiltro === "TODOS" || i.status === statusFiltro;
 
-      const codigoOk =
-        !codigoFiltro ||
-        i.codigo_coleta?.toLowerCase().includes(codigoFiltro.toLowerCase());
+      const statusOk = statusFiltro === "TODOS" || i.status === statusFiltro;
 
-      const dataOk =
-        (!dataInicio || new Date(i.created_at) >= new Date(dataInicio)) &&
-        (!dataFim || new Date(i.created_at) <= new Date(dataFim));
-
-      return tipoOk && statusOk && codigoOk && dataOk;
+      const codigoValido = !erroBusca;
+      const codigoOk = !codigoFiltro || (codigoValido && i.codigo_coleta?.toLowerCase().includes(codigoFiltro.toLowerCase()));
+      
+      return tipoOk && statusOk && codigoOk;
     });
   }
 
@@ -137,9 +149,13 @@ function StatusMateriais() {
     if (item.origem === "DOACAO") {
       await atualizarStatusDoacao(item.id, "DISPONIVEL");
       console.log(`Atualizado status da doação ${item.id} para DISPONIVEL`);
+      setMensagem("Doação marcada como disponível para retirada!");
+      setTipoMensagem("sucesso");
     } else {
       await atualizarStatusPedido(item.id, "MATERIAL_COLETADO");
       console.log(`Atualizado status do pedido ${item.id} para MATERIAL_COLETADO`);
+      setMensagem("Pedido marcado como coletado!");
+      setTipoMensagem("sucesso");
     } 
 
     // quando termina, remove o item da lista
@@ -152,9 +168,13 @@ function StatusMateriais() {
     if (item.origem === "DOACAO") {
       await atualizarStatusDoacao(item.id, "CANCELADO");
       console.log(`Atualizado status da doação ${item.id} para CANCELADO`);
+      setMensagem("Doação cancelada!");
+      setTipoMensagem("sucesso");
     } else {   
       await atualizarStatusPedido(item.id, "CANCELADO");
       console.log(`Atualizado status do pedido ${item.id} para CANCELADO`);
+      setMensagem("Pedido cancelado!");
+      setTipoMensagem("sucesso");
     }
 
     setItens((prev) =>
@@ -176,30 +196,6 @@ function StatusMateriais() {
 
     return `${dataFormatada} às ${horaFormatada}`;
   }
-  
-  const validarDatas = () => {
-    if (dataInicio && !dataValida(dataInicio)) {
-      return "Data inicial inválida";
-    }
-
-    if (dataFim && !dataValida(dataFim)) {
-      return "Data final inválida";
-    }
-
-    if (dataInicio && !dataNaoFutura(dataInicio)) {
-      return "Data inicial não pode ser futura";
-    }
-
-    if (dataFim && !dataNaoFutura(dataFim)) {
-      return "Data final não pode ser futura";
-    }
-
-    if (!intervaloDataValido(dataInicio, dataFim)) {
-      return "A data inicial deve ser antes da final";
-    }
-
-    return "";
-  };
   
   const validarDatasComValores = (inicio: string, fim: string) => {
     if (inicio && !dataValida(inicio)) {
@@ -331,12 +327,12 @@ function StatusMateriais() {
               
               <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch gap-3 mb-6 border rounded-lg bg-[var(--base-20)] border-[var(--base-70)] p-2">
 
-                  <div className="text-black text-2xl font-extrabold font-['Nunito'] flex items-center self-stretch">Filtros:</div>
+                <div className="text-black text-2xl font-extrabold font-['Nunito'] flex items-center self-stretch">Filtros:</div>
   
                   <div className="justify-start w-full sm:w-56 flex flex-col">
                     <label className="body-muito-pequeno" htmlFor="busca-tipo">Buscar por código de coleta</label>
                     {/* busca por codigo de coleta */}
-                    <input id="busca" type="text" maxLength={100} placeholder="Buscar por código de coleta..." value={codigoFiltro} onChange={(e) => { const valor = e.target.value; setCodigoFiltro(valor); setPaginaAtual(1); const erro = validarBusca(valor); setErroBusca(erro);}}
+                    <input id="busca" type="text" maxLength={50} placeholder="Buscar por código de coleta..." value={codigoFiltro} onChange={(e) => { const valor = e.target.value; setCodigoFiltro(valor); setPaginaAtual(1); const erro = validarBusca(valor); setErroBusca(erro);}}
                       onBlur={() => setTocadoBusca(true)} className={`input-padrao h-9 w-full ${ tocadoBusca && erroBusca ? "border-[var(--cor-resposta-errada)] focus:ring-[var(--cor-resposta-errada)]" : "hover:border-2 border-[var(--base-70)] focus-acessivel"}`} aria-invalid={!!erroBusca} aria-label="Pesquisar por código de coleta"/>
                     
                     {tocadoBusca && erroBusca && <div className="text-[var(--cor-resposta-errada)] mt-1 text-sm">{erroBusca}</div>}
@@ -352,11 +348,11 @@ function StatusMateriais() {
                     </select>
                   </div>
 
-                  <div className="justify-start w-full sm:w-56 flex flex-col">
+                  <div className="justify-start w-full sm:w-48 flex flex-col">
                     <label className="body-muito-pequeno" htmlFor="busca-status">Status</label>
                     {/* status */}
-                    <select id="busca-status" value={statusFiltro} onChange={(e) => { setStatusFiltro(e.target.value as any); setPaginaAtual(1);}} className="input-padrao h-9 w-full sm:w-56 hover:border-2 border-[var(--base-70)] focus-acessivel" aria-label="Selcionar por status">
-                      <option value="TODOS">Todos status</option>
+                    <select id="busca-status" value={statusFiltro} onChange={(e) => { setStatusFiltro(e.target.value as any); setPaginaAtual(1);}} className="input-padrao h-9 w-full sm:w-48 hover:border-2 border-[var(--base-70)] focus-acessivel" aria-label="Selcionar por status">
+                      <option value="TODOS">Todos os status</option>
                       <option value="PRE_APROVADO">Pré aprovado</option>
                       <option value="AGUARDANDO_RETIRADA">Aguardando retirada</option>
                     </select>
@@ -372,105 +368,186 @@ function StatusMateriais() {
   
                 </div>
   
-                {/* LISTA */}
-                <div className="flex flex-col gap-4">
+                {itens.length === 0 ? (
+                  <div className="text-center body-semibold-pequeno py-6">
+                    Nenhuma entrega/coleta vinculada a esta ONG.
+                  </div>
 
-                  {pagina.map((i, index) => (
-                    <div key={i.id} className="p-4 bg-white rounded-lg border">
+                ) : filtrados.length === 0 ? (
+                  <div className="text-center body-semibold-pequeno py-6">
+                    Nenhuma entrega/coleta encontrada com esses filtros.
+                  </div>
 
-                      <span className="font-['Nunito'] font-semibold text-sm sm:text-base md:text-lg truncate">
-                        {String((paginaAtual - 1) * ITENS_POR_PAGINA + index + 1).padStart(3, "0")} - {i.origem} #{i.id} {/* número sequencial considerando a paginação */}
-                      </span>
-                      {/* TAGS */}
-                      <div className="flex gap-2">
-                        <span className="px-2 py-1 bg-gray-200 text-xs rounded">{i.status}</span>
-                      </div>
-                      {i.codigo_coleta && <div className="text-sm mt-1">Código: {i.codigo_coleta}</div>}
+                ) : (
+                  <>
 
-                      <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                        <div className="mt-1">
-                          <span className="body-muito-pequeno">
-                            <strong className="body-semibold-muito-pequeno">Registrado em: </strong>{formatarDataHora(i.created_at)}
+                    {/* LISTA */}
+                    <div className="flex flex-col gap-4">
+
+                      {pagina.map((i, index) => (
+                        <div key={i.id} className="p-4 bg-white rounded-lg border">
+
+                          <span className="font-['Nunito'] font-semibold text-sm sm:text-base md:text-lg truncate">
+                            {String((paginaAtual - 1) * ITENS_POR_PAGINA + index + 1).padStart(3, "0")} - {i.origem} #{i.id} {/* número sequencial considerando a paginação */}
                           </span>
-                        </div>
-
-                        <div className="mt-1">
-                          <span className="body-muito-pequeno">
-                            {i.prazo_retirada_limite && (
-                              <>
-                                <strong className="body-semibold-muito-pequeno">Prazo para retirada: </strong>
-                                {formatarDataHora(i.prazo_retirada_limite)}
-                              </>
-                            )}
-                          </span>
-                        </div>
-                      </div>
-                      {i.updated_at && (
-                        <>
-                        <div className="text-sm mt-1">Última atualização: {formatarDataHora(i.updated_at)}</div>
-                        </>
-                      )}
-
-                      {/* BOTÕES */}
-                      <div className="flex gap-2 mt-3">
-
-                        <Botao aoClicar={() => setExpandido(expandido === i.id ? null : i.id) }> {expandido === i.id ? "Fechar" : "Expandir"}</Botao>
-
-                        <div className="flex gap-2 mt-4">
-                          <div>
-                            <Botao  aoClicar={() => abrirCancelar(i)}>Cancelar</Botao>
+                          {/* TAGS */}
+                          <div className="flex gap-2">
+                            <span className="px-2 py-1 bg-gray-200 text-xs rounded">{i.status}</span>
                           </div>
+                          {i.codigo_coleta && <div className="text-sm mt-1">Código: {i.codigo_coleta}</div>}
 
-                          <div>
-                          <Botao aoClicar={() => abrirConcluir(i)}> {i.origem === "DOACAO" ? "Doação entregue" : "Pedido coletado"}</Botao>
+                          <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                            <div className="mt-1">
+                              <span className="body-muito-pequeno">
+                                <strong className="body-semibold-muito-pequeno">Registrado em: </strong>{formatarDataHora(i.created_at)}
+                              </span>
+                            </div>
+
+                            <div className="mt-1">
+                              <span className="body-muito-pequeno">
+                                {i.prazo_retirada_limite && (
+                                  <>
+                                    <strong className="body-semibold-muito-pequeno">Prazo para retirada: </strong>
+                                    {formatarDataHora(i.prazo_retirada_limite)}
+                                  </>
+                                )}
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                      </div>
+                          {i.updated_at && (
+                            <>
+                            <div className="text-sm mt-1">Última atualização: {formatarDataHora(i.updated_at)}</div>
+                            </>
+                          )}
 
-                      {/* EXPANDIR */}
-                      {expandido === i.id && (
-                        <div className="mt-3 bg-gray-50 p-2 rounded text-sm">
-                          {i.itens?.map((it: any) => (
+                          {/* EXPANDIR */}
+                          {expandido === i.id && (
+                            <div className="mt-3 bg-gray-50 p-2 rounded text-sm">
+                              
+                              {i.origem === "DOACAO" && (
+                                <>
 
-                            <div key={it.id} className="border rounded p-3 bg-[var(--base-10)]">
-                              • {it.tipo_material} - {it.quantidade}
+                                  <div className="w-full max-w-4xl bg-white rounded-2xl shadow-md p-4 sm:p-6 border border-[var(--base-40)] flex flex-col gap-4">
+              
+                                    {/* Itens da doação */}
+                                    <div className="border-t pt-3">
+                                      <h4 className="body-bold-muito-pequeno sm:body-bold-pequeno mb-3 text-center">
+                                        Itens da Doação #{i.id}
+                                      </h4>
+                
+                                      <div className="flex flex-col gap-4">
+                                      
+                                        {i.itens?.map((item: any, idx: number) => (
+                                          <div key={item.id} className="relative border rounded-lg p-3 bg-[var(--base-10)] flex flex-col gap-2" >
+                
+                                            <p className="body-muito-pequeno sm:body-pequeno mt-8 sm:mt-4 text-center">
+                                              <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Item {idx + 1} - Tipo:</strong> {item.tipo_material}
+                                            </p>
+                
+                                            <p className="body-muito-pequeno sm:body-pequeno">
+                                              <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Descrição:</strong> {item.descricao}
+                                            </p>
+                
+                                            <p className="body-muito-pequeno sm:body-pequeno">
+                                              <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Quantidade:</strong> {item.quantidade}
+                                            </p>
+                
+                                            {/* Fotos */}
+                                            {item.fotos?.length > 0 && (
+                                              <div>
+                                                <p className="body-muito-pequeno sm:body-pequeno mb-1">
+                                                  <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Fotos:</strong>
+                                                </p>
+                
+                                                <div className="flex flex-wrap gap-2">
+                                                  {item.fotos.map((foto: any, index: number) => (
+                                                    <img key={foto.id} src={foto.url} alt={`Foto ${index + 1} do item`} tabIndex={0} role="button" onClick={() => abrirImagem(item.fotos.map((f: any) => f.url), index)} 
+                                                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); abrirImagem(item.fotos.map((f: any) => f.url), index);}}}
+                                                    className=" w-24 h-24 object-cover rounded-md border cursor-pointer hover:scale-110 hover:shadow-md transition focus:outline-none focus:ring-2 focus:ring-[var(--base-50)]"/>
+                                                  ))}
+                                                </div>
+                                              </div>
+                                            )}
+                
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </>
+                              )}
 
-                                <p><strong>Tipo:</strong> {it.tipo_material}</p>
-                                <p><strong>Descrição:</strong> {it.descricao}</p>
-                                <p><strong>Possíveis defeitos:</strong> {it.possiveis_defeitos || "Nenhum informado"}</p>
-                                <p><strong>Quantidade:</strong> {it.quantidade}</p>
+                              {i.origem === "PEDIDO" && (
+                                <>
+                                  <div className="w-full max-w-4xl bg-white rounded-2xl shadow-md p-4 sm:p-6 border border-[var(--base-40)] flex flex-col gap-4">
+                                    {/* Itens do Pedido */}
+                                    <div className="border-t pt-3">
+                                      <h4 className="body-bold-muito-pequeno sm:body-bold-pequeno mb-3 text-center">
+                                        Itens do Pedido #{i.id}
+                                      </h4>
+                                    
+                                      {i.itens?.map((item: any, idx: number) => (
+                                              
+                                        <div key={item.id} className="relative border rounded-lg p-3 bg-[var(--base-10)] flex flex-col gap-2" >
+                  
+                                          <p className="body-muito-pequeno sm:body-pequeno mt-8 sm:mt-4 text-center">
+                                            <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Item {idx + 1} - Tipo:</strong> {item.tipo_material}
+                                          </p>
 
-                                {/* Fotos */}
-                                {it.fotos?.length > 0 && (
-                                  <div>
-                                    <p className="body-muito-pequeno sm:body-pequeno mb-1">
-                                      <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Fotos:</strong>
-                                    </p>
+                                          <p className="body-muito-pequeno sm:body-pequeno">
+                                            <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Descrição:</strong> {item.descricao}
+                                          </p>
+              
+                                          <p className="body-muito-pequeno sm:body-pequeno">
+                                            <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Quantidade:</strong> {item.quantidade}
+                                          </p>
 
-                                    <div className="flex flex-wrap gap-2">
-                                      {it.fotos.map((foto: any, index: number) => (
-                                        <img key={foto.id} src={foto.url} alt={`Foto ${index + 1} do item`} tabIndex={0} role="button" onClick={() => abrirImagem(it.fotos.map((f: any) => f.url), index)} 
-                                        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); abrirImagem(it.fotos.map((f: any) => f.url), index);}}}
-                                        className=" w-24 h-24 object-cover rounded-md border cursor-pointer hover:scale-110 hover:shadow-md transition focus:outline-none focus:ring-2 focus:ring-[var(--base-50)]"/>
+                                        </div>
+                                      
                                       ))}
                                     </div>
                                   </div>
-                                )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                                </>
+                              )}
 
-                </div>
+                
+                            </div>
+                          )}
+
+                          {/* BOTÕES */}
+                          <div className="flex gap-2 mt-3">
+
+                            <div>
+                              <button onClick={() => setExpandido(expandido === i.id ? null : i.id) } aria-label="Botão para expandir ou recolher informações" className="absolute top-2 right-2 text-xs sm:text-sm text-black body-semibold-muito-pequeno sm:body-semibold-pequeno px-2 py-1 rounded-full bg-[var(--base-30)] hover:bg-[var(--base-40)] transition">
+                                {expandido === i.id ? "Fechar" : "Expandir"}
+                              </button>
+
+                            </div>
+
+                            <div className="flex gap-2 mt-4">
+                              <div>
+                                <Botao  aoClicar={() => abrirCancelar(i)}>Cancelar</Botao>
+                              </div>
+
+                              <div>
+                              <Botao aoClicar={() => abrirConcluir(i)}> {i.origem === "DOACAO" ? "Doação entregue" : "Pedido coletado"}</Botao>
+                              </div>
+                            </div>
+                          </div>
+
+                        </div>
+                      ))}
+                    </div>
+
+                  </>
+                )}
 
                 <Paginacao
                   paginaAtual={paginaAtual}
                   totalPaginas={totalPaginas}
                   setPagina={setPaginaAtual}
                 />
-
+                
                 <ModalConfirmacao
                   aberto={modalTipo === "cancelar"}
                   titulo="Cancelar processo"
@@ -500,7 +577,7 @@ function StatusMateriais() {
                     setModalTipo(null);
                   }}
                 />
-
+                
             </div>
           </div>
         </div>
