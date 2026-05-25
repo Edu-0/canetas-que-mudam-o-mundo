@@ -43,7 +43,18 @@ function ListaTriagem() {
 
   const temPermissao = Boolean(usuario?.tipos?.includes("Voluntário da triagem"));
 
-  const doacoesFiltradas = doacoes;
+  // const doacoesFiltradas = doacoes;
+
+  const doacoesFiltradas = doacoes.filter((d: any) => {
+  // remove itens em quarentena
+  if (d.itens?.some((item: any) =>
+    item.avaliacoes?.some((a: any) => a.em_quarentena === true)
+  )) {
+    return false;
+  }
+
+  return true;
+});
 
   const totalPaginas = Math.max(1, Math.ceil(doacoesFiltradas.length / ITENS_POR_PAGINA)); // garente pelo menos 1 página
 
