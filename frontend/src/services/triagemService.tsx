@@ -20,7 +20,6 @@ export type CriarTriagemEnvio = {
   checklist?: Record<string, any>;
   comentario?: string;
   motivo_inaptidao?: string;
-  em_quarentena: boolean;
 };
 
 export type AvaliacaoTriagem = {
@@ -33,6 +32,7 @@ export type AvaliacaoTriagem = {
   voluntario_triagem?: {
     nome_completo: string;
   };
+  checklist?: Record<string, any>;
 
   em_quarentena?: boolean; // se o voluntário estava em quarentena no momento da triagem
 }
