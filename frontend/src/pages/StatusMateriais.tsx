@@ -490,6 +490,18 @@ function StatusMateriais() {
                             </span>
                           )}
 
+                          {i.doador_nome && (
+                            <span className="body-muito-pequeno">
+                              <strong className="body-semibold-muito-pequeno">Nome do Doador: </strong>{i.doador_nome}
+                            </span>
+                          )}
+
+                          {i.responsavel_nome && (
+                            <span className="body-muito-pequeno">
+                              <strong className="body-semibold-muito-pequeno">Nome do Responsável: </strong>{i.responsavel_nome}
+                            </span>
+                          )}
+
                           <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
                             <div className="mt-1">
                               <span className="body-muito-pequeno">
