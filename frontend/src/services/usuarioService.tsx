@@ -16,7 +16,8 @@ export type DadosUsuario = { // (GET retorno)
   data_cadastro?: string; // não é criado no backend, criamos aqui no frontend para facilitar a manipulação, mas é opcional porque pode não vir do backend
   data_edicao_conta?: string;
   ativo?: boolean; 
-};
+  nivel_confianca?: number; // só utilizado para os voluntários da triagem
+}
 
 export type CriarUsuarioEnvio = { // (POST envio) 
   nome_completo: string;
@@ -161,6 +162,12 @@ export async function atualizarUsuario(id: number, dados: AtualizarUsuarioEnvio)
 // Obter listar voluntários vinculados à ONG
 export async function listarVoluntariosONG(ong_id: number): Promise<DadosUsuario[]> {
   const response = await api.get(`/ong/${ong_id}/voluntarios`);
+  return response.data;
+}
+
+// Obter detalhes de um voluntário específico vinculado à ONG
+export async function obterVoluntarioONG(ong_id: number, voluntario_id: number): Promise<DadosUsuario> {
+  const response = await api.get(`/ong/${ong_id}/voluntarios/${voluntario_id}`);
   return response.data;
 }
 

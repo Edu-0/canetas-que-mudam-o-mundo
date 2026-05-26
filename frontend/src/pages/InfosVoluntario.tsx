@@ -8,7 +8,7 @@ import Toast from "../components/Toast";
 import ModalConfirmacao from "../components/ModalConfirmacao";
 import { AnaliseQuarentena } from "../services/triagemService";
 import { DadosUsuario, deletarVoluntarioONG } from "../services/usuarioService";
-import { listarVoluntariosONG } from "../services/usuarioService";
+import { obterVoluntarioONG } from "../services/usuarioService";
 import { useONG } from "../context/OngContext";
 
 function AuditoriaVoluntario() {
@@ -54,12 +54,8 @@ function AuditoriaVoluntario() {
       if (!ong?.id || !voluntarioId) return;
 
       try {
-        const lista = await listarVoluntariosONG(ong.id);
-
-        const encontrado = lista.find(v => v.id === voluntarioId);
-
-        setVoluntario(encontrado || null);
-
+        const voluntario = await obterVoluntarioONG(ong.id, voluntarioId);
+        setVoluntario(voluntario);
       } catch (err) {
         console.error("Erro ao carregar voluntário:", err);
       }
@@ -111,20 +107,22 @@ function AuditoriaVoluntario() {
 
                     <p><strong>Email:</strong> {voluntario.email}</p>
 
-
                     <p><strong>Registrado em:</strong> {formatarDataHora(voluntario.data_cadastro)}</p>
 
-                    <p>
-                      <strong>Nível de confiança:</strong>{" "}
-                      {/* {voluntario.nivel_confianca < 10 ? "Voluntário novato (Em quarentena)" : "Voluntário experiente"}
-                      {emQuarentena ? "Novato (em quarentena)" : "Voluntário experiente"} */}
+                    <p><strong>Nível de confiança:</strong>{" "}
+                      {voluntario.nivel_confianca < 10 ? "Voluntário novato (Em quarentena)" : "Voluntário experiente"}
                     </p>
                   </div>
 
-                  <div className="flex gap-2">
-                    <Botao variante="confirmar" aoClicar={() => navigate(`/analise-voluntarios`)}>Voltar</Botao>
+                  <div className="flex flex-col md:flex-row gap-2 w-full">
+                    <div className="w-full">
+                      <Botao variante="confirmar" className="w-full" aoClicar={() => navigate(`/analise-voluntarios`)}>Voltar</Botao>
+                    </div>
 
-                    <Botao variante="cancelar" desabilitado={carregandoExclusao} aoClicar={() => {setVoluntarioSelecionado(voluntario.id); setMostrarModal(true)}}>Desativar</Botao>
+                    <div className="w-full">
+                      <Botao variante="cancelar" className="w-full" desabilitado={carregandoExclusao} aoClicar={() => {setVoluntarioSelecionado(voluntario.id); setMostrarModal(true)}}>Desativar</Botao>
+                    </div>
+                    
                   </div>
                 </>
               )}
@@ -147,6 +145,11 @@ function AuditoriaVoluntario() {
                     await deletarVoluntarioONG(voluntarioSelecionado);
                     setMensagem("Voluntário desativado com sucesso!");
                     setTipoMensagem("sucesso");
+
+                    // volta para a lista
+                    setTimeout(() => {
+                      navigate("/analise-voluntarios");
+                    }, 800);
 
                   } catch (erro) {
                     console.error("Erro ao desativar conta:", erro);
