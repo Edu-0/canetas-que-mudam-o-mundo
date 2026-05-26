@@ -43,6 +43,8 @@ function AuditoriaTriagensQuarentena() {
   const [checklistPorItem, setChecklistPorItem] = useState<Record<number, Record<number, boolean>>>({});
   const [observacaoPorItem, setObservacaoPorItem] = useState<Record<number, string>>({});
   const [comentarioOpcionalPorItem, setComentarioOpcionalPorItem] = useState<Record<number, string>>({});
+
+  const [bloqueioAuditoria, setBloqueioAuditoria] = useState<Record<number, boolean>>({});
   
   const [statusPorItem, setStatusPorItem] = useState<Record<number, StatusDoacao | null>>({});
   const [statusTriagem, setStatusTriagem] = useState<ResultadoTriagem | null>(null);
@@ -129,17 +131,25 @@ function AuditoriaTriagensQuarentena() {
   }, [modalImagemAberto]);
 
   async function revisar(id: number, aprovado: boolean) {
-     try {
-    const dados = validacao[id] || {};
+    try {
+      const dados = validacao[id] || {};
 
-    await respostaAuditoriaTriagem(id, {
-      resultado_validado: aprovado,
-      comentario_coordenador: dados.comentario_coordenador || undefined
-    });
+      await respostaAuditoriaTriagem(id, {
+        resultado_validado: aprovado,
+        comentario_coordenador: dados.comentario_coordenador || undefined
+      });
 
-     setMensagem("Auditoria realizada com sucesso!");
+      setMensagem("Auditoria realizada com sucesso!");
       setTipoMensagem("sucesso");
 
+      // bloqueia para não permitir múltiplas auditorias no mesmo item enquanto a página não for recarregada
+      setBloqueioAuditoria(prev => ({
+        ...prev,
+        [id]: true
+      }));
+
+      // remove da lista para não precisar recarregar a página para tirar os itens auditados da quarentena 
+      setAnalises(prev => prev.filter(a => a.id !== id) );
     } catch (err) {
       setMensagem("Erro ao realizar auditoria");
       setTipoMensagem("erro");
@@ -291,9 +301,18 @@ function AuditoriaTriagensQuarentena() {
       return "";
     };
   
-
   function formatarStatus(status?: string) {
     if (!status) return "Sem avaliação";
+
+    const mapaStatus: Record<string, string> = {
+      PRE_APROVADO: "Pré aprovado",
+      AGUARDANDO_RETIRADA: "Aguardando retirada",
+    };
+
+    if (mapaStatus[status]) {
+      return mapaStatus[status];
+    }
+
     return status.toLowerCase().replaceAll("_", " ");
   }
 
@@ -660,11 +679,11 @@ function AuditoriaTriagensQuarentena() {
 
                                           <div className="flex gap-3 justify-center flex-wrap mt-4">
                                             <div className="flex-1">
-                                              <Botao variante="apto_selecionado" className="h-8 w-full" desabilitado={!analise.id} aoClicar={() => {if (!analise.id) return; setAnaliseId(analise.id); setMostrarModalConfirmar(true);}}>Concordar</Botao>
+                                              <Botao variante="apto_selecionado" className="h-8 w-full" desabilitado={!analise.id || bloqueioAuditoria[analise.id]} aoClicar={() => {if (!analise.id) return; setAnaliseId(analise.id); setMostrarModalConfirmar(true);}}>Concordar</Botao>
                                             </div>
 
                                             <div className="flex-1">
-                                              <Botao variante="inapto_selecionado" className="h-8 w-full" desabilitado={!analise.id} aoClicar={() => {if (!analise.id) return; setAnaliseId(analise.id); setMostrarModalDiscordar(true);}}>Discordar</Botao>
+                                              <Botao variante="inapto_selecionado" className="h-8 w-full" desabilitado={!analise.id || bloqueioAuditoria[analise.id]} aoClicar={() => {if (!analise.id) return; setAnaliseId(analise.id); setMostrarModalDiscordar(true);}}>Discordar</Botao>
                                             </div>
                                           </div>
                                         </div>
