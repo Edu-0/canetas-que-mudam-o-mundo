@@ -410,7 +410,8 @@ def avaliar_item_doacao(
             item.status = StatusDoacao.INAPTO
             item.motivo_inaptidao = dados.motivo_inaptidao
 
-        sincronizar_status_doacao(item.doacao)
+    
+    sincronizar_status_doacao(item.doacao)
 
     try:
         db.add(avaliacao)
