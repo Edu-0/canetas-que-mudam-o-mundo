@@ -30,6 +30,11 @@ class Usuario(Base):
         back_populates="voluntario_triagem",
         foreign_keys="AvaliacaoTriagemDoacao.voluntario_triagem_id"
     )
+    @property
+    def nivel_confianca(self) -> int:
+        if self.vinculo_voluntario: 
+            return self.vinculo_voluntario.nivel_confianca
+        return 0
     
 class UsuarioResponsavel(Base):
     __tablename__ = 'usuario_responsavel'
