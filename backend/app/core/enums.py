@@ -38,3 +38,4 @@ class StatusPedidoMaterial(enum.Enum):
 class ResultadoTriagemDoacao(enum.Enum):
     PRE_APROVADO = "PRE_APROVADO"
     INAPTO = "INAPTO"
+    EM_QUARENTENA = "EM_QUARENTENA"
