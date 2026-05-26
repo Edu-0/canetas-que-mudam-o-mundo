@@ -93,6 +93,7 @@ class respostaUsuario(usuarioBase):
     data_cadastro:datetime
     data_edicao_conta:datetime
     ativo:bool
+    nivel_confianca: int
     funcao: List[respostaFuncao] = []
     perfil_responsavel: Optional[respostaUsuarioResponsavel] = None
     
