@@ -210,11 +210,22 @@ function AuditoriaTriagensQuarentena() {
     }));
   }
 
-  function toggleTriagem(itemId: number) {
+  function toggleTriagem(id: number) {
     setTriagemAberta(prev => ({
       ...prev,
-      [itemId]: !prev[itemId]
+      [id]: !prev[id]
     }));
+  }
+
+  function formatarData(data?: string) {  
+    if (!data) return "N/A";
+
+    const iso = data.replace(" ", "T");
+    const d = new Date(iso);
+
+    const dataFormatada = d.toLocaleDateString("pt-BR");
+
+    return `${dataFormatada}`;
   }
 
   function formatarDataHora(data?: string) {
@@ -437,7 +448,7 @@ function AuditoriaTriagensQuarentena() {
 
                       return (
                         
-                        <div key={`${analise.id}-${item.id}`} className="border rounded-lg p-4 bg-white flex flex-col gap-3">
+                        <div key={`${analise.id}-${item.id}`} className="relative border rounded-lg p-4 bg-white flex flex-col gap-3">
 
                           <div className="flex justify-between items-start">
 
@@ -446,223 +457,227 @@ function AuditoriaTriagensQuarentena() {
                               <span className="font-bold mt-2">Doação #{doacao.id}</span>
 
                               {/* tags */}
-                              <div className="flex flex-col gap-1">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-2 mt-2 w-full">
                                 
-                                <div className="flex gap-2">
-                                  <div>
-                                  <p className="body-muito-pequeno text-center">
-                                    <strong className="body-semibold-muito-pequeno">Doação registrada em: </strong> <span>{formatarDataHora(doacao.created_at)}</span>
-                                  </p>
-                                  </div>
+                                {/* datas */}
+                                <p className="body-muito-pequeno w-full">
+                                  <strong className="body-semibold-muito-pequeno">Doação registrada em: </strong>
+                                  <span>{formatarData(doacao.created_at)}</span>
+                                </p>
 
-                                  <div>
-                                  <p className="body-muito-pequeno text-center">
-                                    <strong className="body-semibold-muito-pequeno">Triado em: </strong> <span>{formatarDataHora(doacao.created_at)}</span>
-                                  </p>
-                                  </div>
-                                </div>
+                              
+                                <p className="body-muito-pequeno w-full text-left sm:text-right">
+                                  <strong className="body-semibold-muito-pequeno">Triado em: </strong>
+                                  <span>{formatarData(doacao.created_at)}</span>
+                                </p>
 
-                                <div className="flex flex-wrap"> 
-                                  <div>
-                                    <p className="body-muito-pequeno text-center">
-                                      <strong className="body-semibold-muito-pequeno">Status da triagem: </strong> <span className={`tag ${corStatus(analise.resultado || "")}`}>{formatarStatus(analise.resultado || "Sem Avaliação")}</span>
-                                    </p>
-                                  </div>
-
-                                  <div>
-                                    <p className="body-muito-pequeno text-center">
-                                      <strong className="body-semibold-muito-pequeno">Status da doação: </strong> <span className={`tag ${corStatus(doacao.status)}`}>{formatarStatus(doacao.status)}</span>
-                                    </p>
-                                  </div>
-                                </div>
+                                {/* status */}
+                                <p className="body-muito-pequeno w-full">
+                                  <strong className="body-semibold-muito-pequeno">Status da triagem: </strong>
+                                  <span className={`tag ${corStatus(analise.resultado || "")}`}>
+                                    {formatarStatus(analise.resultado || "Sem Avaliação")}
+                                  </span>
+                                </p>
+                            
+                                <p className="body-muito-pequeno w-full text-left sm:text-right">
+                                  <strong className="body-semibold-muito-pequeno">Status da doação: </strong>
+                                  <span className={`tag ${corStatus(doacao.status)}`}>
+                                    {formatarStatus(doacao.status)}
+                                  </span>
+                                </p>
+                                
                               </div>
                             </div>
 
-                            <div>
+                          </div>
+                          <div>
 
-                              <button onClick={() => toggleTriagem(item.id)} aria-label="Botão para expandir ou recolher informações da triagem" className="absolute top-2 right-2 text-xs sm:text-sm text-black body-semibold-muito-pequeno sm:body-semibold-pequeno px-2 py-1 rounded-full bg-[var(--base-30)] hover:bg-[var(--base-40)] transition">
-                                  {triagemAberta[item.id] ? "Recolher ▲" : "Expandir ▼"}
-                              </button>
+                            <button onClick={() => toggleTriagem(analise.id)} aria-label="Botão para expandir ou recolher informações da triagem" className="absolute top-2 right-2 text-xs sm:text-sm text-black body-semibold-muito-pequeno sm:body-semibold-pequeno px-2 py-1 rounded-full bg-[var(--base-30)] hover:bg-[var(--base-40)] transition">
+                                {triagemAberta[analise.id] ? "Recolher ▲" : "Expandir ▼"}
+                            </button>
 
-                              {/* itens da doação */}
-                              {triagemAberta[item.id] && (
-                                <div className="w-full max-w-4xl bg-white rounded-2xl shadow-md p-4 sm:p-6 border border-[var(--base-40)] flex flex-col gap-4">
-              
-                                  <h2 className="body-bold-medio text-center">
-                                    Informações da Doação #{doacao.id}
-                                  </h2>
-              
-                                  {/* Observação do doador */}
-                                  {doacao.observacao_doador && (
-                                    <div className="border-t pt-3">
-                                      <h4 className="body-bold-muito-pequeno sm:body-bold-pequeno mb-2 text-center">
-                                        Observação do doador
-                                      </h4>
-                                      <p className="body-muito-pequeno sm:body-pequeno text-center">
-                                        {doacao.observacao_doador}
-                                      </p>
-                                    </div>
-                                  )}
-              
-                                  {/* Itens da doação */}
+                            {/* itens da doação */}
+                            {triagemAberta[analise.id] && (
+                              <div className="w-full max-w-4xl bg-white rounded-2xl shadow-md p-2 sm:p-4 border border-[var(--base-40)] flex flex-col gap-4">
+            
+                                <h2 className="body-bold-medio text-center">
+                                  Informações da Doação #{doacao.id}
+                                </h2>
+            
+                                {/* Observação do doador */}
+                                {doacao.observacao_doador && (
                                   <div className="border-t pt-3">
                                     <h4 className="body-bold-muito-pequeno sm:body-bold-pequeno mb-2 text-center">
-                                      Itens doados
+                                      Observação do doador
                                     </h4>
-                          
-                                    <div className="flex flex-col gap-4">
+                                    <p className="body-muito-pequeno sm:body-pequeno text-center">
+                                      {doacao.observacao_doador}
+                                    </p>
+                                  </div>
+                                )}
+            
+                                {/* Itens da doação */}
+                                <div className="border-t pt-3">
+                                  <h4 className="body-bold-muito-pequeno sm:body-bold-pequeno mb-2 text-center">
+                                    Itens doados
+                                  </h4>
+                        
+                                  <div className="flex flex-col gap-4">
 
-                                      {doacao.itens.map((item: { id: number; tipo_material: string; descricao: string; possiveis_defeitos?: string; quantidade: number; fotos: { id: number; url: string }[] }, idx: number) => (
-                                        
-                                        <div key={`${doacao.id}-${item.id}`} className="relative border rounded-lg p-3 bg-[var(--base-10)] flex flex-col gap-2" >
-              
-                                          <p className="body-muito-pequeno sm:body-pequeno mt-8 sm:mt-4 text-center">
-                                            <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Item {idx + 1} - Tipo:</strong> {item.tipo_material}
-                                          </p>
-              
-                                          <p className="body-muito-pequeno sm:body-pequeno">
-                                            <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Descrição:</strong> {item.descricao}
-                                          </p>
-              
-                                          <p className="body-muito-pequeno sm:body-pequeno">
-                                            <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Possíveis defeitos:</strong> {item.possiveis_defeitos || "Nenhum informado"}
-                                          </p>
-              
-                                          <p className="body-muito-pequeno sm:body-pequeno">
-                                            <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Quantidade:</strong> {item.quantidade}
-                                          </p>
-              
-                                          {/* Fotos */}
-                                          {item.fotos.length > 0 && (
-                                            <div>
-                                              <p className="body-muito-pequeno sm:body-pequeno mb-1">
-                                                <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Fotos:</strong>
-                                              </p>
-              
-                                              <div className="flex flex-wrap gap-2">
-                                                {item.fotos.map((foto: { id: number; url: string }, index: number) => (
-                                                  <img key={`${item.id}-${foto.id}`} src={foto.url} alt={`Foto ${index + 1} do item`} tabIndex={0} role="button" onClick={() => abrirImagem(item.fotos.map(f => f.url), index)} 
-                                                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); abrirImagem(item.fotos.map(f => f.url), index);}}}
-                                                  className=" w-24 h-24 object-cover rounded-md border cursor-pointer hover:scale-110 hover:shadow-md transition focus:outline-none focus:ring-2 focus:ring-[var(--base-50)]"/>
-                                                ))}
-                                              </div>
-                                            </div>
-                                          )}
-                          
-                                          <p className="body-muito-pequeno sm:body-pequeno">
-                                            <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Registrado em:</strong> {formatarDataHora(doacao.created_at)}
-                                          </p>
-              
-                                          {/* Só mostrar data de atualização se a doação já foi triada */}
-                                          {avaliacoes[item.id]?.length > 0 && (
-                                            <p className="body-muito-pequeno sm:body-pequeno">
-                                              <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Atualizado em:</strong> {formatarDataHora(doacao.updated_at)}
+                                    {[item].map((item, idx) => (
+                                      
+                                      <div key={`${doacao.id}-${item.id}`} className="relative border rounded-lg p-3 bg-[var(--base-10)] flex flex-col gap-2" >
+            
+                                        <p className="body-muito-pequeno sm:body-pequeno mt-8 sm:mt-4 text-center">
+                                          <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Item {idx + 1} - Tipo:</strong> {item.tipo_material}
+                                        </p>
+            
+                                        <p className="body-muito-pequeno sm:body-pequeno">
+                                          <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Descrição:</strong> {item.descricao}
+                                        </p>
+            
+                                        <p className="body-muito-pequeno sm:body-pequeno">
+                                          <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Possíveis defeitos:</strong> {item.possiveis_defeitos || "Nenhum informado"}
+                                        </p>
+            
+                                        <p className="body-muito-pequeno sm:body-pequeno">
+                                          <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Quantidade:</strong> {item.quantidade}
+                                        </p>
+            
+                                        {/* Fotos */}
+                                        {item.fotos.length > 0 && (
+                                          <div>
+                                            <p className="body-muito-pequeno sm:body-pequeno mb-1">
+                                              <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Fotos:</strong>
                                             </p>
-                                          )}
-                                                      
-                                          {avaliacoes[item.id]?.length > 0 && (
-              
-                                            <div>
-              
-                                              <button onClick={() => toggleHistorico(item.id)} aria-label="Botão para expandir ou recolher histórico da doação" className="absolute top-2 right-2 text-xs sm:text-sm text-black body-semibold-muito-pequeno sm:body-semibold-pequeno px-2 py-1 rounded-full bg-[var(--base-30)] hover:bg-[var(--base-40)] transition">
-                                                {historicoAberto[item.id] ? "Ocultar histórico" : "Ver histórico"}
-                                              </button>
-              
-                                              {/* histórico */}
-                                              {historicoAberto[item.id] && (
-                                                <>
-                                                  <div className="border-t pt-3"></div>
-              
-                                                  <div>
-                                                    <h4 className="body-bold-muito-pequeno sm:body-bold-pequeno mb-3 text-center"> Histórico de Triagem desse Item </h4>
-                                                  </div>
-                          
-                                                  <div className="mt-2">
-                                                    {avaliacoes[item.id].map((av) => (      
-                              
-                                                      <div key={av.id} className="bg-gray-50 border rounded p-2 mb-2">
             
-                                                        <p className="body-muito-pequeno sm:body-pequeno">
-                                                          <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Triado em:</strong> {formatarDataHora(av.created_at)}
-                                                        </p>
-            
-                                                        <p className="body-muito-pequeno sm:body-pequeno">
-                                                          <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Triado por:</strong> {av.voluntario_triagem?.nome_completo}
-                                                        </p>
-            
-                                                        <p className="body-muito-pequeno sm:body-pequeno">
-                                                          <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Voluntário estava em quarentena:</strong> {av.em_quarentena ? "Sim" : "Não"}
-                                                        </p>
-            
-                                                        <p className="body-muito-pequeno sm:body-pequeno">
-                                                          <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Resultado da Triagem:</strong> {av.resultado}
-                                                        </p>
-            
-                                                        <div className="mt-2 mb-2">
-                                                          <p className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Checklist:</p>
-            
-                                                          <ul className="mt-1 flex flex-col gap-1">
-                                                            {itensChecklist.map((texto, index) => {
-                                                              const valor = av.checklist?.[index] === true;
-            
-                                                              return (
-                                                                <li key={index} className="body-muito-pequeno sm:body-pequeno flex items-center gap-2">
-                                                                  <span className={valor ? "text-[var(--cor-resposta-correta)]" : "text-[var(--cor-resposta-errada)]"}>
-                                                                    {valor ? "✔" : "✖"}
-                                                                  </span>
-                                                                  <span>{texto}</span>
-                                                                </li>
-                                                              );
-                                                            })}
-                                                          </ul>
-                                                        </div>
-            
-                                                        {av.comentario && (
-                                                          <p className="body-muito-pequeno sm:body-pequeno">
-                                                            <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Comentário:</strong> {av.comentario}
-                                                          </p>
-                                                        )}
-            
-                                                        {av.motivo_inaptidao && (
-                                                          <p className="body-muito-pequeno sm:body-pequeno">
-                                                            <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Motivo de ser inapto:</strong> {av.motivo_inaptidao}
-                                                          </p>
-                                                        )}
-            
-                                                      </div>
-                                                    ))}
-                                                  </div>
-                                                </>
-                                              )}
-          
-                                            </div>
-                                          )}
-
-                                          <div className="border-t pt-3 mt-3 flex flex-col gap-2">
-
-                                            <div>
-                                              <h4 className="body-bold-muito-pequeno sm:body-bold-pequeno mb-3 text-center">Validar decisão do voluntário </h4>
-                                            </div>
-
-                                            <textarea placeholder="Feedback do coordenador (opcional)" maxLength={5000} className="input-padrao" onChange={(e) => setValidacao(prev => ({ ...prev, [analise.id]: { ...prev[analise.id], comentario_coordenador: e.target.value}}))}/>
-
-                                            <div className="flex gap-2">
-                                              <Botao variante="confirmar" desabilitado={!analise.id} aoClicar={() => {if (!analise.id) return; setAnaliseId(analise.id); setMostrarModalConfirmar(true);}}>Concordar</Botao>
-
-                                              <Botao variante="cancelar" desabilitado={!analise.id} aoClicar={() => {if (!analise.id) return; setAnaliseId(analise.id); setMostrarModalDiscordar(true);}}>Discordar</Botao>
+                                            <div className="flex flex-wrap gap-2">
+                                              {item.fotos.map((foto: { id: number; url: string }, index: number) => (
+                                                <img key={`${item.id}-${foto.id}`} src={foto.url} alt={`Foto ${index + 1} do item`} tabIndex={0} role="button" onClick={() => abrirImagem(item.fotos.map((f: { url: string }) => f.url), index)} 
+                                                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); abrirImagem(item.fotos.map((f: { url: string }) => f.url), index);}}}
+                                                className=" w-24 h-24 object-cover rounded-md border cursor-pointer hover:scale-110 hover:shadow-md transition focus:outline-none focus:ring-2 focus:ring-[var(--base-50)]"/>
+                                              ))}
                                             </div>
                                           </div>
+                                        )}
+                        
+                                        <p className="body-muito-pequeno sm:body-pequeno">
+                                          <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Registrado em:</strong> {formatarDataHora(doacao.created_at)}
+                                        </p>
             
+                                        {/* Só mostrar data de atualização se a doação já foi triada */}
+                                        {avaliacoes[item.id]?.length > 0 && (
+                                          <p className="body-muito-pequeno sm:body-pequeno">
+                                            <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Atualizado em:</strong> {formatarDataHora(doacao.updated_at)}
+                                          </p>
+                                        )}
+                                                    
+                                        {avaliacoes[item.id]?.length > 0 && (
+            
+                                          <div>
+            
+                                            <button onClick={() => toggleHistorico(item.id)} aria-label="Botão para expandir ou recolher histórico da doação" className="absolute top-2 right-2 text-xs sm:text-sm text-black body-semibold-muito-pequeno sm:body-semibold-pequeno px-2 py-1 rounded-full bg-[var(--base-30)] hover:bg-[var(--base-40)] transition">
+                                              {historicoAberto[item.id] ? "Ocultar histórico" : "Ver histórico"}
+                                            </button>
+            
+                                            {/* histórico */}
+                                            {historicoAberto[item.id] && (
+                                              <>
+                                                <div className="border-t pt-3"></div>
+            
+                                                <div>
+                                                  <h4 className="body-bold-muito-pequeno sm:body-bold-pequeno mb-3 text-center"> Histórico de Triagem desse Item </h4>
+                                                </div>
+                        
+                                                <div className="mt-2">
+                                                  {avaliacoes[item.id].map((av) => (      
+                            
+                                                    <div key={av.id} className="bg-gray-50 border rounded p-2 mb-2">
+          
+                                                      <p className="body-muito-pequeno sm:body-pequeno">
+                                                        <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Triado em:</strong> {formatarDataHora(av.created_at)}
+                                                      </p>
+          
+                                                      <p className="body-muito-pequeno sm:body-pequeno">
+                                                        <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Triado por:</strong> {av.voluntario_triagem?.nome_completo}
+                                                      </p>
+          
+                                                      <p className="body-muito-pequeno sm:body-pequeno">
+                                                        <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Voluntário estava em quarentena:</strong> {av.em_quarentena ? "Sim" : "Não"}
+                                                      </p>
+          
+                                                      <p className="body-muito-pequeno sm:body-pequeno">
+                                                        <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Resultado da Triagem:</strong> {av.resultado}
+                                                      </p>
+          
+                                                      <div className="mt-2 mb-2">
+                                                        <p className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Checklist:</p>
+          
+                                                        <ul className="mt-1 flex flex-col gap-1">
+                                                          {itensChecklist.map((texto, index) => {
+                                                            const valor = av.checklist?.[index] === true;
+          
+                                                            return (
+                                                              <li key={index} className="body-muito-pequeno sm:body-pequeno flex items-center gap-2">
+                                                                <span className={valor ? "text-[var(--cor-resposta-correta)]" : "text-[var(--cor-resposta-errada)]"}>
+                                                                  {valor ? "✔" : "✖"}
+                                                                </span>
+                                                                <span>{texto}</span>
+                                                              </li>
+                                                            );
+                                                          })}
+                                                        </ul>
+                                                      </div>
+          
+                                                      {av.comentario && (
+                                                        <p className="body-muito-pequeno sm:body-pequeno">
+                                                          <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Comentário:</strong> {av.comentario}
+                                                        </p>
+                                                      )}
+          
+                                                      {av.motivo_inaptidao && (
+                                                        <p className="body-muito-pequeno sm:body-pequeno">
+                                                          <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Motivo de ser inapto:</strong> {av.motivo_inaptidao}
+                                                        </p>
+                                                      )}
+          
+                                                    </div>
+                                                  ))}
+                                                </div>
+                                              </>
+                                            )}
+        
+                                          </div>
+                                        )}
+
+                                        <div className="border-t pt-3 mt-3 flex flex-col gap-2">
+
+                                          <div>
+                                            <h4 className="body-bold-muito-pequeno sm:body-bold-pequeno mb-3 text-center">Validar decisão do voluntário </h4>
+                                          </div>
+
+                                          <textarea placeholder="Feedback do coordenador (opcional)" maxLength={5000} className="input-padrao" onChange={(e) => setValidacao(prev => ({ ...prev, [analise.id]: { ...prev[analise.id], comentario_coordenador: e.target.value}}))}/>
+
+                                          <div className="flex gap-3 justify-center flex-wrap mt-4">
+                                            <div className="flex-1">
+                                              <Botao variante="apto_selecionado" className="h-8 w-full" desabilitado={!analise.id} aoClicar={() => {if (!analise.id) return; setAnaliseId(analise.id); setMostrarModalConfirmar(true);}}>Concordar</Botao>
+                                            </div>
+
+                                            <div className="flex-1">
+                                              <Botao variante="inapto_selecionado" className="h-8 w-full" desabilitado={!analise.id} aoClicar={() => {if (!analise.id) return; setAnaliseId(analise.id); setMostrarModalDiscordar(true);}}>Discordar</Botao>
+                                            </div>
+                                          </div>
                                         </div>
-                                      ))}
-                                    </div> 
+          
+                                      </div>
+                                    ))}
+                                  </div> 
                                   
-                                  </div>
-                                
                                 </div>
+                                
+                              </div>
                           
-                              )}
-                            </div>
+                            )}
                           </div>
                         </div>
                     
