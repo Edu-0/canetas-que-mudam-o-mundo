@@ -22,7 +22,7 @@ function StatusMateriais() {
   const [tipoMensagem, setTipoMensagem] = useState<"sucesso" | "erro">("sucesso");
 
   const [itens, setItens] = useState<ItemUnificado[]>([]);
-  const [expandido, setExpandido] = useState<number | null>(null);
+  const [expandido, setExpandido] = useState<Record<number, boolean>>({});
 
   const [ordem, setOrdem] = useState<"asc" | "desc">("desc");
   const [codigoFiltro, setCodigoFiltro] = useState("");
@@ -34,6 +34,8 @@ function StatusMateriais() {
 
   const [erroBusca, setErroBusca] = useState("");
   const [tocadoBusca, setTocadoBusca] = useState(false);
+
+  const [bloqueioProcessamento, setBloqueioProcessamento] = useState<Record<number, boolean>>({});
   
   const [historicoAberto, setHistoricoAberto] = useState<Record<number, boolean>>({});
   const [avaliacoes, setAvaliacoes] = useState<Record<number, AvaliacaoTriagem[]>>({});
@@ -57,6 +59,27 @@ function StatusMateriais() {
     }));
   }
 
+  function toggleExpandir(id: number) {
+    setExpandido(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
+  }
+
+  function bloquearItem(id: number) {
+    setBloqueioProcessamento(prev => ({
+      ...prev,
+      [id]: true
+    }));
+  }
+
+  function desbloquearItem(id: number) {
+    setBloqueioProcessamento(prev => ({
+      ...prev,
+      [id]: false
+    }));
+  }
+
   function abrirCancelar(item: ItemUnificado) {
     setItemSelecionado(item);
     setModalTipo("cancelar");
@@ -74,6 +97,38 @@ function StatusMateriais() {
       return "Caracteres inválidos";
     return "";
   };
+
+  async function carregarItens() {
+    const res = await obterPendencias(ordem);
+
+    const doacoes: ItemUnificado[] = res.data.doacoes_pre_aprovadas.map((d: any) => ({
+      id: d.id,
+      origem: "DOACAO",
+      codigo_coleta: d.codigo_coleta,
+      status: d.status,
+      created_at: d.created_at,
+      updated_at: d.updated_at,
+      prazo_retirada_limite: d.prazo_retirada_limite,
+      itens: d.itens,
+    }));
+
+    const pedidos: ItemUnificado[] = res.data.pedidos_aguardando_retirada.map((p: any) => ({
+      id: p.id,
+      origem: "PEDIDO",
+      codigo_coleta: p.codigo_coleta,
+      status: p.status,
+      created_at: p.created_at,
+      updated_at: p.updated_at,
+      prazo_retirada_limite: p.prazo_retirada_limite,
+      itens: p.itens,
+    }));
+
+    setItens([...doacoes, ...pedidos]);
+
+    // reseta filtros e paginação ao recarregar itens
+    setExpandido({});
+    setPaginaAtual(1);
+  }
 
   useEffect(() => {
     async function carregar() {
@@ -125,10 +180,19 @@ function StatusMateriais() {
   const totalPaginas = Math.max(1, Math.ceil(filtrados.length / ITENS_POR_PAGINA));
   const pagina = filtrados.slice((paginaAtual - 1) * ITENS_POR_PAGINA, paginaAtual * ITENS_POR_PAGINA);
 
-  function formatarStatus(status: string) {
-    return status
-      .toLowerCase()
-      .replaceAll("_", " ");
+  function formatarStatus(status?: string) {
+    if (!status) return "Sem avaliação";
+
+    const mapaStatus: Record<string, string> = {
+      PRE_APROVADO: "Pré aprovado",
+      AGUARDANDO_RETIRADA: "Aguardando retirada",
+    };
+
+    if (mapaStatus[status]) {
+      return mapaStatus[status];
+    }
+
+    return status.toLowerCase().replaceAll("_", " ");
   }
 
   function corStatus(status: string) {
@@ -145,41 +209,66 @@ function StatusMateriais() {
   }
 
   async function concluir(item: ItemUnificado) {
+    try {
+      bloquearItem(item.id);
+      console.log(`Processando ${item.origem} ${item.id} status ${item.status}...`);
 
-    if (item.origem === "DOACAO") {
-      await atualizarStatusDoacao(item.id, "DISPONIVEL");
-      console.log(`Atualizado status da doação ${item.id} para DISPONIVEL`);
-      setMensagem("Doação marcada como disponível para retirada!");
-      setTipoMensagem("sucesso");
-    } else {
-      await atualizarStatusPedido(item.id, "MATERIAL_COLETADO");
-      console.log(`Atualizado status do pedido ${item.id} para MATERIAL_COLETADO`);
-      setMensagem("Pedido marcado como coletado!");
-      setTipoMensagem("sucesso");
-    } 
+      if (item.origem === "DOACAO") {
+        await atualizarStatusDoacao(item.id, "DISPONIVEL");
+        setMensagem("Doação marcada como disponível para retirada!");
+        setTipoMensagem("sucesso");   
+        console.log(`Atualizado status da doação ${item.id} para DISPONIVEL`);
+      } else {
+        await atualizarStatusPedido(item.id, "MATERIAL_COLETADO");
+        setMensagem("Pedido marcado como coletado!");
+        setTipoMensagem("sucesso");
+        console.log(`Atualizado status do pedido ${item.id} para MATERIAL_COLETADO`);
+      }
 
-    // quando termina, remove o item da lista
-    setItens((prev) =>
-      prev.filter((i) => i.id !== item.id)
-    );
+      // remove da lista 
+      setItens(prev => prev.filter(i => i.id !== item.id));
+
+    } catch (err) {
+      setMensagem("Erro ao finalizar processo");
+      setTipoMensagem("erro");
+
+      desbloquearItem(item.id);
+    }
   }
 
   async function cancelar(item: ItemUnificado) {
-    if (item.origem === "DOACAO") {
-      await atualizarStatusDoacao(item.id, "CANCELADO");
-      console.log(`Atualizado status da doação ${item.id} para CANCELADO`);
-      setMensagem("Doação cancelada!");
-      setTipoMensagem("sucesso");
-    } else {   
-      await atualizarStatusPedido(item.id, "CANCELADO");
-      console.log(`Atualizado status do pedido ${item.id} para CANCELADO`);
-      setMensagem("Pedido cancelado!");
-      setTipoMensagem("sucesso");
-    }
+    try {
+      bloquearItem(item.id);
 
-    setItens((prev) =>
-      prev.filter((i) => i.id !== item.id)
-    );
+      if (item.origem === "DOACAO") {
+        await atualizarStatusDoacao(item.id, "CANCELADO");
+        setMensagem("Doação cancelada!");
+        setTipoMensagem("sucesso");
+      } else {
+        await atualizarStatusPedido(item.id, "CANCELADO");
+        setMensagem("Pedido cancelado!");
+        setTipoMensagem("sucesso");
+      }
+
+      setItens(prev => prev.filter(i => i.id !== item.id));
+
+    } catch (err) {
+      setMensagem("Erro ao cancelar processo");
+      setTipoMensagem("erro");
+
+      desbloquearItem(item.id);
+    }
+  }
+
+  function formatarData(data?: string) {  
+    if (!data) return "N/A";
+
+    const iso = data.replace(" ", "T");
+    const d = new Date(iso);
+
+    const dataFormatada = d.toLocaleDateString("pt-BR");
+
+    return `${dataFormatada}`;
   }
   
   function formatarDataHora(data?: string) {
@@ -385,21 +474,26 @@ function StatusMateriais() {
                     <div className="flex flex-col gap-4">
 
                       {pagina.map((i, index) => (
-                        <div key={i.id} className="p-4 bg-white rounded-lg border">
+                        <div key={i.id} className="relative p-4 pt-8 bg-white rounded-lg border">
 
-                          <span className="font-['Nunito'] font-semibold text-sm sm:text-base md:text-lg truncate">
+                          <span className="font-['Nunito'] font-semibold text-sm sm:text-base md:text-lg truncate mt-4">
                             {String((paginaAtual - 1) * ITENS_POR_PAGINA + index + 1).padStart(3, "0")} - {i.origem} #{i.id} {/* número sequencial considerando a paginação */}
                           </span>
                           {/* TAGS */}
                           <div className="flex gap-2">
-                            <span className="px-2 py-1 bg-gray-200 text-xs rounded">{i.status}</span>
+                            <span className="px-2 py-1 bg-gray-200 text-xs rounded mt-2">{formatarStatus(i.status)}</span>
                           </div>
-                          {i.codigo_coleta && <div className="text-sm mt-1">Código: {i.codigo_coleta}</div>}
+
+                          {i.codigo_coleta && (
+                            <span className="body-muito-pequeno">
+                              <strong className="body-semibold-muito-pequeno">Código: </strong>{i.codigo_coleta}
+                            </span>
+                          )}
 
                           <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
                             <div className="mt-1">
                               <span className="body-muito-pequeno">
-                                <strong className="body-semibold-muito-pequeno">Registrado em: </strong>{formatarDataHora(i.created_at)}
+                                <strong className="body-semibold-muito-pequeno">Registrado em: </strong>{formatarData(i.created_at)}
                               </span>
                             </div>
 
@@ -421,7 +515,7 @@ function StatusMateriais() {
                           )}
 
                           {/* EXPANDIR */}
-                          {expandido === i.id && (
+                          {expandido[i.id] && (
                             <div className="mt-3 bg-gray-50 p-2 rounded text-sm">
                               
                               {i.origem === "DOACAO" && (
@@ -518,19 +612,19 @@ function StatusMateriais() {
                           <div className="flex gap-2 mt-3">
 
                             <div>
-                              <button onClick={() => setExpandido(expandido === i.id ? null : i.id) } aria-label="Botão para expandir ou recolher informações" className="absolute top-2 right-2 text-xs sm:text-sm text-black body-semibold-muito-pequeno sm:body-semibold-pequeno px-2 py-1 rounded-full bg-[var(--base-30)] hover:bg-[var(--base-40)] transition">
-                                {expandido === i.id ? "Fechar" : "Expandir"}
+                              <button onClick={() => toggleExpandir(i.id)} aria-label="Botão para expandir ou recolher informações" className="absolute top-2 right-2 text-xs sm:text-sm text-black body-semibold-muito-pequeno sm:body-semibold-pequeno px-2 py-1 rounded-full bg-[var(--base-30)] hover:bg-[var(--base-40)] transition">
+                                {expandido[i.id] ? "Fechar" : "Expandir"}
                               </button>
 
                             </div>
 
-                            <div className="flex gap-2 mt-4">
-                              <div>
-                                <Botao  aoClicar={() => abrirCancelar(i)}>Cancelar</Botao>
+                            <div className="flex gap-3 justify-center flex-wrap mt-4 w-full">
+                              <div className="flex-1">
+                                <Botao variante="cancelar" desabilitado={bloqueioProcessamento[i.id]} aoClicar={() => abrirCancelar(i)}>Cancelar</Botao>
                               </div>
 
-                              <div>
-                              <Botao aoClicar={() => abrirConcluir(i)}> {i.origem === "DOACAO" ? "Doação entregue" : "Pedido coletado"}</Botao>
+                              <div className="flex-1">
+                              <Botao variante="confirmar" desabilitado={bloqueioProcessamento[i.id]} aoClicar={() => abrirConcluir(i)}> {i.origem === "DOACAO" ? "Doação entregue" : "Pedido coletado"}</Botao>
                               </div>
                             </div>
                           </div>
