@@ -8,17 +8,18 @@ import Botao from "../components/Botao";
 import Toast from "../components/Toast";
 import ModalConfirmacao from "../components/ModalConfirmacao";
 import { useFiltroAuditoria } from "../hooks/useFiltroAuditoria";
-import { obterDoacao, CriarTriagemEnvio, TriagemDoVoluntario, obterAnalisesPorVoluntario, ResultadoTriagem, StatusDoacao, obterAvaliacoes, AvaliacaoTriagem, respostaAuditoriaTriagem } from "../services/triagemService";
+import { obterDoacao, CriarTriagemEnvio, AnaliseQuarentena, obterAnalisesQuarentena, ResultadoTriagem, StatusDoacao, obterAvaliacoes, AvaliacaoTriagem, respostaAuditoriaTriagem } from "../services/triagemService";
 import ModalImagem from "../components/ModalImagem";
-import { Doacao } from "../context/DoacaoContext";
+import { DoacaoContextType } from "../context/DoacaoContext";
 import { dataNaoFutura, dataValida, intervaloDataValido } from "../utils/validacoesTriagem";
 
-function AuditoriaVoluntario() {
+function AuditoriaTriagensQuarentena() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [voluntario, setVoluntario] = useState<any>(null);
-  const [doacoes, setDoacoes] = useState<Doacao[]>([]);
-  const [analises, setAnalises] = useState<TriagemDoVoluntario[]>([]);
+  const [doacoes, setDoacoes] = useState<DoacaoContextType[]>([]);
+  const [doacoesMap, setDoacoesMap] = useState<Record<number, DoacaoContextType>>({});
+  const [analises, setAnalises] = useState<AnaliseQuarentena[]>([]);
   const [avaliacoes, setAvaliacoes] = useState<Record<number, AvaliacaoTriagem[]>>({});
   const [expandido, setExpandido] = useState<number | null>(null);
   const [validacao, setValidacao] = useState<{[key: number]: {resultado_validado?: boolean; comentario_coordenador?: string;}}>({});
@@ -43,7 +44,7 @@ function AuditoriaVoluntario() {
   const [dataFim, setDataFim] = useState("");
   const [erroBusca, setErroBusca] = useState("");
   const [tocadoBusca, setTocadoBusca] = useState(false);
-  const analisesFiltradas = useFiltroAuditoria(doacoes, statusAvaliacao, statusFiltro, { dataInicio, dataFim }, ordem);
+  const analisesFiltradas = useFiltroAuditoria(analises, statusAvaliacao, statusFiltro, { dataInicio, dataFim }, ordem);
   
   const [checklistPorItem, setChecklistPorItem] = useState<Record<number, Record<number, boolean>>>({});
   const [observacaoPorItem, setObservacaoPorItem] = useState<Record<number, string>>({});
@@ -62,7 +63,7 @@ function AuditoriaVoluntario() {
   const jaFoiTriada = Object.values(avaliacoes).some(arr => arr.length > 0); // verifica se algum item já tem avaliação de triagem
 
 
-  const emQuarentena = analises.some(a => a.em_quarentena);
+  const emQuarentena = analises.length > 0; // para ver se tem alguma triagem em quarentena
 
   const ITENS_POR_PAGINA = 5;
   const [paginaAtual, setPaginaAtual] = useState(1);  
@@ -142,6 +143,7 @@ function AuditoriaVoluntario() {
   }, [modalImagemAberto]);
 
   async function revisar(id: number, aprovado: boolean) {
+     try {
     const dados = validacao[id] || {};
 
     await respostaAuditoriaTriagem(id, {
@@ -149,24 +151,7 @@ function AuditoriaVoluntario() {
       comentario_coordenador: dados.comentario_coordenador || undefined
     });
 
-    setMensagem("Revisão salva com sucesso!");
-    setTipoMensagem("sucesso");
-  }
-
-  async function confirmarAuditoria(aprovado: boolean) {
-    try {
-      const ids = Object.keys(validacao);
-
-      for (const id of ids) {
-        const dados = validacao[Number(id)];
-
-        await respostaAuditoriaTriagem(Number(id), {
-          resultado_validado: aprovado,
-          comentario_coordenador: dados?.comentario_coordenador
-        });
-      }
-
-      setMensagem("Auditoria realizada com sucesso!");
+     setMensagem("Auditoria realizada com sucesso!");
       setTipoMensagem("sucesso");
 
     } catch (err) {
@@ -177,59 +162,48 @@ function AuditoriaVoluntario() {
 
   useEffect(() => {
     async function carregar() {
-      const res = await obterAnalisesPorVoluntario(Number(id));
-      const dados = res.data;
+      try {
+        const res = await obterAnalisesQuarentena();
+        const analisesData = res.data;
+        setAnalises(analisesData);
 
-      setAnalises(dados);
-      setVoluntario(dados[0]?.voluntario_triagem || null);
+        const mapa: Record<number, DoacaoContextType> = {};
 
-      const mapaDoacoes: Record<number, Doacao> = {};
-      const mapaAvaliacoes: Record<number, AvaliacaoTriagem[]> = {};
+        for (const analise of analisesData) {
+          const doacaoId = analise.item_doacao.doacao.id;
 
-      dados.forEach((a: TriagemDoVoluntario) => {
-        const doacao = a.item.doacao;
-        const item = a.item;
-
-        // montar doação completa com itens
-        if (!mapaDoacoes[doacao.id]) {
-          mapaDoacoes[doacao.id] = {
-            ...doacao,
-            // garantir propriedade obrigatória do tipo Doacao
-            ong_id: (doacao as any).ong_id ?? (doacao as any).ongId ?? 0,
-            itens: []
-          } as Doacao;
+          try {
+            if (!mapa[doacaoId]) {
+              const resposta = await obterDoacao(doacaoId);
+              mapa[doacaoId] = resposta.data;
+            }
+          } catch (err) {
+            console.warn(`Erro ao carregar doação ${doacaoId}`, err);
+            continue; // não quebra o loop
+          }
         }
 
-        // evitar duplicar item
-        const jaExiste = mapaDoacoes[doacao.id].itens.find(i => i.id === item.id);
-        if (!jaExiste) {
-          mapaDoacoes[doacao.id].itens.push({
-            ...item,
-            status: doacao.status,
-            fotos: item.fotos.map((foto: any, index: number) => ({
-              id: index,
-              url: foto.url,
-            })),
-          });
+        setDoacoesMap(mapa);
+
+        const avaliacoesMap: Record<number, AvaliacaoTriagem[]> = {};
+
+        for (const analise of analisesData) {
+          const itemId = analise.item_doacao.id;
+
+          try {
+            const resAvaliacoes = await obterAvaliacoes(itemId);
+            avaliacoesMap[itemId] = resAvaliacoes.data;
+          } catch {
+            avaliacoesMap[itemId] = [];
+          }
         }
 
-        // avaliações por item
-        const itemId = item.id;
-        if (!mapaAvaliacoes[itemId]) {
-          mapaAvaliacoes[itemId] = [];
-        }
+        setAvaliacoes(avaliacoesMap);
 
-        mapaAvaliacoes[itemId].push({
-          ...a,
-          voluntario_triagem_id:
-            (a as any).voluntario_triagem_id ??
-            (a as any).voluntario_triagem?.id ??
-            0,
-        });
-      });
-
-      setDoacoes(Object.values(mapaDoacoes));
-      setAvaliacoes(mapaAvaliacoes);
+      } catch (err) {
+        console.error("Erro ao carregar análises:", err);
+        setAnalises([]); // garante fallback
+      }
     }
 
     carregar();
@@ -378,38 +352,15 @@ function AuditoriaVoluntario() {
             <div className="w-full max-w-4xl bg-[var(--primario-5)] shadow-[2px_10px_40px_rgba(0,0,0,0.1)] rounded-lg p-6">
 
               <h2 className="header-pequeno text-center mb-6">
-                AUDITORIA DO VOLUNTÁRIO
+                AUDITORIA DE TRIAGENS EM QUARENTENA
               </h2>
-
-              {/* Informação do voluntário selecionado */}
-              {voluntario && (
-                <>
-                  {emQuarentena && (
-                    <div className="mb-4 p-3 bg-yellow-100 rounded">
-                      Este voluntário está em quarentena. Revise suas decisões com atenção.
-                    </div>
-                  )}
-
-                  <div className="border rounded p-4 mb-6 bg-white">
-                    <p><strong>Nome:</strong> {voluntario.nome_completo}</p>
-
-                    <p>
-                      <strong>Status:</strong>{" "}
-                      {emQuarentena ? "Novato (em quarentena)" : "Voluntário experiente"}
-                    </p>
-                  </div>
-                </>
-              )}
 
               {/* se o voluntário estiver em quarentena, monstra as triagens, se não, não mostra nada */}
               {emQuarentena && (
                 <>
                   <div className="mb-6 p-4 bg-[var(--base-20)] border border-[var(--base-70)] rounded">
-                    <p className="body-muito-pequeno mb-2">- Este voluntário está em quarentena, ou seja, é um voluntário novato que ainda não realizou triagens suficientes para sair do período de observação. Por isso, é importante revisar cada uma de suas decisões com atenção redobrada, considerando os detalhes de cada caso. </p>
-                    <p className="body-muito-pequeno mb-2">- Abaixo estão listados os itens triados por este voluntário, junto com as avaliações feitas por ele e o histórico de avaliações anteriores (se houver) para cada item.</p>
-                    <p className="body-muito-pequeno mb-2">Clique em "Concordar" se você concorda com a avaliação feita pelo voluntário para aquele item específico, ou "Discordar" se você discorda da avaliação feita pelo voluntário. Se você discordar, será solicitado que você forneça um comentário explicando o motivo da discordância, para que o voluntário possa entender e a doação possa ir novamente para a triagem.</p>
+                    <p className="body-muito-pequeno mb-2">Clique em <span className="body-bold-muito-pequeno">"Concordar"</span> se você concorda com a triagem feita pelo voluntário para aquele item específico, ou <span className="font-bold">"Discordar"</span> se você discorda da avaliação feita pelo voluntário. Se você discordar, será solicitado que você forneça um comentário explicando o motivo da discordância, para que o voluntário possa entender e a doação possa ir novamente para a triagem.</p>
                   </div>
-
 
                   <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch gap-3 mb-6 border rounded-lg bg-[var(--base-20)] border-[var(--base-70)] p-2">
                     
@@ -478,28 +429,29 @@ function AuditoriaVoluntario() {
 
                   </div>
 
-                  {analises.length === 0 ? (
+                  {!analises.length ? (
                     <div className="text-center body-semibold-pequeno py-6">
-                      Nenhuma voluntariado vinculada a esta ONG.
+                      Nenhuma triagem aguardando auditoria vinculada a esta ONG.
                     </div>
 
                   ) : analisesFiltradas.length === 0 ? (
                     <div className="text-center body-semibold-pequeno py-6">
-                      Nenhuma voluntariado encontrada com esses filtros.
+                      Nenhuma triagem encontrada com esses filtros.
                     </div>
 
                   ) : ( 
                     <>
                     
                       <div className="flex flex-col gap-4">
-                        {paginaDados.map((doacao: Doacao) => {
+                        {paginaDados.map((analise) => {
+                          const doacao = doacoesMap[analise.item_doacao.doacao.id];
+
+                          if (!doacao) return null;
 
                           const criadoEm = formatarDataHora(doacao.created_at);
                           const triadoEm = doacao.updated_at ? formatarDataHora(doacao.updated_at) : null;
                           const isExpandido = expandido === doacao.id;
-                          const ultimaAvaliacaoDoacao = doacao.itens.flatMap(item => avaliacoes[item.id] || [])
-                            .sort((a, b) =>new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
-
+                          
                           return (
                             <>
                               <div key={doacao.id} className="border rounded-lg p-4 bg-white flex flex-col gap-3">
@@ -518,7 +470,7 @@ function AuditoriaVoluntario() {
                                         <span className="tag">Triado em: {triadoEm}</span>
                                       )}
 
-                                      <span className={`tag ${corStatus(ultimaAvaliacaoDoacao?.resultado || "")}`}>Status da triagem: {formatarStatus(ultimaAvaliacaoDoacao?.resultado || "Sem Avaliação")}</span>
+                                      <span className={`tag ${corStatus(analise.resultado || "")}`}>Status da triagem: {formatarStatus(analise.resultado || "Sem Avaliação")}</span>
                                       <span className={`tag ${corStatus(doacao.status)}`}>Status da doação: {formatarStatus(doacao.status)}</span>
                                     </div>
                                   </div>
@@ -698,12 +650,12 @@ function AuditoriaVoluntario() {
                                   <h4 className="body-bold-muito-pequeno sm:body-bold-pequeno mb-3 text-center">Validar decisão do voluntário </h4>
                                 </div>
 
-                                <textarea placeholder="Feedback do coordenador (opcional)" maxLength={5000} className="input-padrao" onChange={(e) => setValidacao(prev => ({ ...prev, [doacao.id]: { ...prev[doacao.id], comentario_coordenador: e.target.value}}))}/>
+                                <textarea placeholder="Feedback do coordenador (opcional)" maxLength={5000} className="input-padrao" onChange={(e) => setValidacao(prev => ({ ...prev, [analise.id]: { ...prev[analise.id], comentario_coordenador: e.target.value}}))}/>
 
                                 <div className="flex gap-2">
-                                  <Botao variante="confirmar" desabilitado={!ultimaAvaliacaoDoacao} aoClicar={() => {if (!ultimaAvaliacaoDoacao) return; setAnaliseId(ultimaAvaliacaoDoacao.id); setMostrarModalConfirmar(true);}}>Concordar</Botao>
+                                  <Botao variante="confirmar" desabilitado={!analise.id} aoClicar={() => {if (!analise.id) return; setAnaliseId(analise.id); setMostrarModalConfirmar(true);}}>Concordar</Botao>
 
-                                  <Botao variante="cancelar" desabilitado={!ultimaAvaliacaoDoacao} aoClicar={() => {if (!ultimaAvaliacaoDoacao) return; setAnaliseId(ultimaAvaliacaoDoacao.id); setMostrarModalDiscordar(true);}}>Discordar</Botao>
+                                  <Botao variante="cancelar" desabilitado={!analise.id} aoClicar={() => {if (!analise.id) return; setAnaliseId(analise.id); setMostrarModalDiscordar(true);}}>Discordar</Botao>
                                 </div>
                               </div>
                             </>
@@ -715,10 +667,6 @@ function AuditoriaVoluntario() {
                 </>
               )}
               
-              <div className="border-t pt-3 mt-3 flex flex-col gap-2">
-                <Botao variante="confirmar" aoClicar={() => navigate(`/analise-voluntarios`)}>Voltar</Botao>
-              </div>
-                      
               <Paginacao
                 paginaAtual={paginaAtual}
                 totalPaginas={totalPaginas}
@@ -728,14 +676,7 @@ function AuditoriaVoluntario() {
               <ModalConfirmacao
                 aberto={mostrarModalConfirmar}
                 titulo="Confirmar finalização da triagem"
-                descricao={
-                  `Resumo:\n` +
-                  Object.entries(statusPorItem)
-                    .map(([id, status], index) => `• Item ${index + 1}: ${status}`)
-                    .join("\n") +
-                  `\n\nResultado geral: ${resultadoGeral}\n` +
-                  `\nGostaria de aprovar a triagem feita?`
-                }
+                descricao={`Deseja confirmar a decisão desta triagem?`}
                 botaoCancelar="Cancelar"
                 botaoConfirmar="Confirmar"
                 varianteConfirmar="confirmar"
@@ -782,4 +723,4 @@ function AuditoriaVoluntario() {
     </div>
   );
 }
-export default AuditoriaVoluntario;
+export default AuditoriaTriagensQuarentena;

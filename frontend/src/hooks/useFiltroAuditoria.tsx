@@ -2,38 +2,38 @@ type StatusAvaliacao = "todos" | "PRE_APROVADO" | "INAPTO";
 type StatusFiltro = "todos" | "PRE_APROVADO" | "INAPTO" | "INCOMPLETO";
 
 export function useFiltroAuditoria(
-  doacoes: any[],
+  analises: any[],
   avaliacao: StatusAvaliacao,
   status: StatusFiltro,
   datas: { dataInicio?: string; dataFim?: string },
   ordem: "asc" | "desc"
 ) {
-  let filtradas = [...doacoes];
+  let filtradas = [...analises];
 
-  // filtro por status da triagem
+  // status da triagem (resultado)
   if (avaliacao !== "todos") {
     filtradas = filtradas.filter(
-      (d) => d.resultado_triagem === avaliacao
+      (a) => a.resultado === avaliacao
     );
   }
 
-  // filtro por status da doação
+  // status da doação
   if (status !== "todos") {
     filtradas = filtradas.filter(
-      (d) => d.status === status
+      (a) => a.item_doacao?.doacao?.status === status
     );
   }
 
-  // filtro por data
+  // data (você precisa decidir qual usar)
   if (datas.dataInicio) {
     filtradas = filtradas.filter(
-      (d) => new Date(d.created_at) >= new Date(datas.dataInicio!)
+      (a) => new Date(a.created_at) >= new Date(datas.dataInicio!)
     );
   }
 
   if (datas.dataFim) {
     filtradas = filtradas.filter(
-      (d) => new Date(d.created_at) <= new Date(datas.dataFim!)
+      (a) => new Date(a.created_at) <= new Date(datas.dataFim!)
     );
   }
 

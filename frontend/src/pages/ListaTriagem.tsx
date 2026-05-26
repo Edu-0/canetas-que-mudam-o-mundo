@@ -8,7 +8,7 @@ import { obterDoacoes } from "../services/triagemService";
 import Botao from "../components/Botao";
 import Toast from "../components/Toast";
 import { useONG } from "../context/OngContext";
-import { Doacao } from "../context/DoacaoContext";
+import { DoacaoContextType } from "../context/DoacaoContext";
 import { dataNaoFutura, dataValida, intervaloDataValido } from "../utils/validacoesTriagem";
 import { useUsuario } from "../context/UserContext";
 
@@ -30,7 +30,7 @@ function ListaTriagem() {
   const ITENS_POR_PAGINA = 5;
   const [paginaAtual, setPaginaAtual] = useState(1);
 
-  const [doacoes, setDoacoes] = useState<Doacao[]>([]);
+  const [doacoes, setDoacoes] = useState<DoacaoContextType[]>([]);
 
   const [ordem, setOrdem] = useState<"asc" | "desc">("desc");
   
@@ -216,7 +216,7 @@ function ListaTriagem() {
           ordem,
         });
 
-        setDoacoes(resposta.data as Doacao[]); // resposta já vem filtrada do backend
+        setDoacoes(resposta.data as DoacaoContextType[]); // resposta já vem filtrada do backend
 
       } catch (erro: any) {
         console.error("Erro ao carregar doações:", erro);

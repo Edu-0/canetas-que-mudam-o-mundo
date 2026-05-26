@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import logo from "../assets/logo.svg";
-import { Doacao } from "../context/DoacaoContext";
+import { DoacaoContextType } from "../context/DoacaoContext";
 import Toast from "../components/Toast";
 import ModalConfirmacao from "../components/ModalConfirmacao";
 import icon_check from "../assets/icon_check.png";
@@ -15,7 +15,7 @@ function Triagem() {
 
   const { id } = useParams();
   const navigate = useNavigate();
-  const [doacao, setDoacao] = useState<Doacao | null>(null);
+  const [doacao, setDoacao] = useState<DoacaoContextType | null>(null);
   const [carregando, setCarregando] = useState(true);
 
   const [mensagem, setMensagem] = useState("");

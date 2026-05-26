@@ -1,5 +1,5 @@
 import api from "./api";
-import { Doacao } from "../context/DoacaoContext";
+import { DoacaoContextType } from "../context/DoacaoContext";
 
 // ENUMS (simplificado)
 export type StatusDoacao =
@@ -17,14 +17,14 @@ export type ResultadoTriagem = "PRE_APROVADO" | "INAPTO";
 // Triagem
 export type CriarTriagemEnvio = {
   resultado: ResultadoTriagem;
-  checklist?: Record<string, any>;
+  checklist?: Record<string, boolean>;
   comentario?: string;
   motivo_inaptidao?: string;
-};
+}; 
 
 export type AvaliacaoTriagem = {
   id: number;
-  resultado: string;
+  resultado: ResultadoTriagem;
   created_at: string;
   comentario?: string;
   motivo_inaptidao?: string;
@@ -32,42 +32,49 @@ export type AvaliacaoTriagem = {
   voluntario_triagem?: {
     nome_completo: string;
   };
-  checklist?: Record<string, any>;
+  checklist?: Record<string, boolean>;
 
   em_quarentena?: boolean; // se o voluntário estava em quarentena no momento da triagem
 }
 
-// Padrão da requisição para triagens feitas por um voluntário específico
-export type TriagemDoVoluntario = {
+// Padrão da auditoria
+export type AnaliseQuarentena = {
   id: number;
-  resultado: string;
-  created_at: string;
+  resultado: ResultadoTriagem; // resultado da triagem feita pelo voluntário
   comentario?: string;
-  motivo_inaptidao?: string;
-  em_quarentena?: boolean;
+  checklist?: Record<string, boolean>; // so para poder visualizar se o voluntário marcou os itens do checklist ou não
+  em_quarentena: boolean;
+  created_at: string;
+  updated_at?: string;
+  motivo_inaptidao?: string; // motivo de inaptidão indicado pelo voluntário, se houver
 
   voluntario_triagem: {
-    id: number;
     nome_completo: string;
+    nivel_confianca: number;
   };
 
-  item: {
+  item_doacao: {
     id: number;
     tipo_material: string;
     descricao: string;
     quantidade: number;
-
-    fotos: {
-      url: string;
-    }[];
+    possiveis_defeitos?: string;
+    status: StatusDoacao; // status do item de doação no momento da triagem
+    motivo_inaptidao?: string; // motivo de inaptidão do item
 
     doacao: {
       id: number;
-      status: string;
-      observacao_doador?: string;
+      observacao_doador?: string; 
+      status: StatusDoacao; // status da doação no momento da triagem
+
       created_at: string;
       updated_at?: string;
     };
+
+    fotos: {
+      id: number; 
+      url: string;
+    }[];
   };
 };
 
@@ -86,7 +93,7 @@ export async function obterDoacoes(params: {data_inicio?: string; data_final?: s
 }
 
 // obter uma doação específica
-export async function obterDoacao(id: number): Promise<{ data: Doacao }> {
+export async function obterDoacao(id: number): Promise<{ data: DoacaoContextType }> {
   const resposta = await api.get(`/doacoes/${id}`);
   return resposta;
 }
@@ -98,10 +105,12 @@ export async function atualizarStatusDoacao(itemId: number, dados: { status: Sta
 // criar avaliação de triagem
 export async function criarTriagem(itemId: number, dados: CriarTriagemEnvio) {
   try {
-    return api.post(`/doacoes/itens/${itemId}/avaliacoes`, dados);
-    console.log("Triagem criada com sucesso!" + JSON.stringify(dados));
+    const res = await api.post(`/doacoes/itens/${itemId}/avaliacoes`, dados);
+    console.log("Triagem criada com sucesso!", dados);
+    return res;
   } catch (error) {
     console.error("Erro ao criar triagem:", error);
+    throw error;
   }
 }
 
@@ -120,9 +129,9 @@ export async function obterStatusDoacao(itemId: number) {
 
 // listar análises por voluntário (pega todas as avaliações de triagem feitas por um voluntário e as informações da doação e item relacionados para cada avaliação) 
 // ([obterAvalicaçoes + ObterDoacao] com filtro por voluntário e depois juntar as informações)
-export async function obterAnalisesPorVoluntario(voluntarioId: number) {
-  return api.get(`/doacoes/analises/${voluntarioId}`);
-}
+// export async function obterAnalisesPorVoluntario(voluntarioId: number) {
+//   return api.get(`/doacoes/analises/${voluntarioId}`);
+// }
 
 // listar análises em quarentena (pega todas as avaliações de triagem que estão em quarentena, ou seja, que o resultado do voluntário foi "PRE_APROVADO" mas o coordenador ainda não validou, ou seja, ainda não concordou nem discordou do resultado do voluntário)
 export async function obterAnalisesQuarentena() {

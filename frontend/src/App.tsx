@@ -10,7 +10,8 @@ import Doacoes from "./pages/Doacoes";
 import Triagem from "./pages/Triagem";
 import Pedido from "./pages/PedidoMaterial";
 import Relatorio from "./pages/Relatorio";
-import Auditoria from "./pages/AuditoriaVoluntario";
+import Auditoria from "./pages/AuditoriaTriagensQuarentena";
+import InfosVoluntario from "./pages/InfosVoluntario";
 import AnaliseVoluntarios from "./pages/AnaliseVoluntarios";
 import EditarRendaFamiliares from "./pages/EditarRendaFamiliares";
 import TrocarSenha from "./pages/TrocarSenha";
@@ -40,8 +41,9 @@ function App() {
         <Route path="/pedido" element={<Pedido />} />
         <Route path="/relatorio" element={<Relatorio />} />
         <Route path="/analise-voluntarios" element={<AnaliseVoluntarios />} />
-        <Route path="/analise-voluntarios/auditoria" element={<Auditoria />} />
-        <Route path="/analise-voluntarios/auditoria/:id" element={<Auditoria />} /> {/* usando ID do voluntário, aí pega todas as triagens que ele já fez */} 
+        <Route path="/analise-voluntarios/voluntario" element={<InfosVoluntario />} />
+        <Route path="/analise-voluntarios/voluntario/:id" element={<InfosVoluntario />} /> {/* usando ID do voluntário, aí pega as informações dele */} 
+        <Route path="/auditoria-triagens" element={<Auditoria />} />
         <Route path="/conta/editar-renda-e-familiares" element={<EditarRendaFamiliares />} />
         <Route path="/trocar-senha" element={<TrocarSenha/>} />
         <Route path="/confirmar-familiares" element={<ConfirmarFamiliares />} />
