@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, BackgroundTasks
 from sqlalchemy import func
+from sqlalchemy.orm import contains_eager
 from app.database.connection import SessionDep
 from app.core.deps_auth import VerificarPermissao, get_current_user
 from app.core.enums import StatusDoacao, StatusPedidoMaterial, TipoUsuario
@@ -82,6 +83,38 @@ def listar_voluntarios_da_ong(
     voluntarios = db.query(u.Usuario).join(m.VoluntarioOng, u.Usuario.id == m.VoluntarioOng.usuario_id).filter(m.VoluntarioOng.ong_id == ong_id).all()
 
     return voluntarios
+
+@router.get("/{ong_id}/voluntarios/{voluntario_id}", response_model=respostaUsuario)
+def buscar_voluntario_por_id(
+    ong_id: int, 
+    voluntario_id: int,
+    db: SessionDep,
+    usuario_atual = Depends(get_current_user)
+):
+    if not usuario_atual.ong or usuario_atual.ong.id != ong_id:
+        raise HTTPException(
+            status_code=403, 
+            detail="Você não tem permissão para acessar os voluntários dessa ONG."
+        )
+    
+    voluntario = db.query(u.Usuario)\
+        .join(m.VoluntarioOng, u.Usuario.id == m.VoluntarioOng.usuario_id)\
+        .options(
+            contains_eager(u.Usuario.vinculo_voluntario) 
+        )\
+        .filter(
+            m.VoluntarioOng.ong_id == ong_id,
+            u.Usuario.id == voluntario_id
+        ).first()
+
+    if not voluntario:
+        raise HTTPException(
+            status_code=404, 
+            detail="Voluntário não encontrado ou não pertence a esta ONG."
+        )
+
+    return voluntario
+
 
 @router.get("/convite/validar")
 def validar_token_convite(token: str, db: SessionDep):

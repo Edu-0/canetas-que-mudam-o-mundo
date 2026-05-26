@@ -129,6 +129,10 @@ def sincronizar_status_doacao(doacao: Doacao) -> None:
     if not statuses:
         return
 
+    if StatusDoacao.INCOMPLETO in statuses:
+        doacao.status = StatusDoacao.INCOMPLETO
+        return
+
     if len(statuses) == 1:
         doacao.status = next(iter(statuses))
         return
@@ -145,8 +149,6 @@ def sincronizar_status_doacao(doacao: Doacao) -> None:
         doacao.status = StatusDoacao.MATERIAL_COLETADO
     elif StatusDoacao.INAPTO in statuses:
         doacao.status = StatusDoacao.INAPTO
-    elif StatusDoacao.INCOMPLETO in statuses:
-        doacao.status = StatusDoacao.INCOMPLETO
     else:
         doacao.status = StatusDoacao.CANCELADO
 

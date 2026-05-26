@@ -138,6 +138,9 @@ class RespostaAvaliacaoTriagemDoacao(BaseModel):
 class DoacaoResumoQuarentena(BaseModel):
     id: int
     observacao_doador: Optional[str] = None
+    status: StatusDoacao 
+    created_at: datetime
+    updated_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -156,6 +159,8 @@ class ItemDoacaoResumoQuarentena(BaseModel):
     possiveis_defeitos: Optional[str] = None
     motivo_inaptidao: Optional[str] = None
 
+    status: StatusDoacao
+
     doacao: DoacaoResumoQuarentena  
     fotos: list[FotoResumoQuarentena] = []
 
@@ -168,6 +173,7 @@ class RespostaListagemQuarentena(BaseModel):
     comentario: Optional[str] = None
     em_quarentena: bool
     created_at: datetime
+    motivo_inaptidao: Optional[str] = None
     
     voluntario_triagem: ResumoVoluntario  
     item_doacao: ItemDoacaoResumoQuarentena  
