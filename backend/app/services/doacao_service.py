@@ -396,8 +396,9 @@ def avaliar_item_doacao(
 
     vinculo = obter_vinculo_voluntario(db,voluntario.id,item.doacao.ong_id)
 
-    if vinculo.nivel_confianca < 10:
+    if vinculo.nivel_confianca < 10 and dados.resultado == ResultadoTriagemDoacao.PRE_APROVADO:
         avaliacao.em_quarentena = True
+        avaliacao.resultado = ResultadoTriagemDoacao.EM_QUARENTENA
     else:    
         if dados.resultado == ResultadoTriagemDoacao.PRE_APROVADO:
             item.status = StatusDoacao.PRE_APROVADO
@@ -446,17 +447,18 @@ def avaliar_analise_de_doacao(
         if vinculo_voluntario.nivel_confianca < 10:
             vinculo_voluntario.nivel_confianca += 1
         
-        if analise.resultado == ResultadoTriagemDoacao.PRE_APROVADO:
-            analise.item_doacao.status = StatusDoacao.PRE_APROVADO
-            analise.item_doacao.pre_aprovado_em = agora
-        else:
-            analise.item_doacao.status = StatusDoacao.INAPTO        
-
+        analise.resultado = ResultadoTriagemDoacao.PRE_APROVADO
+        analise.item_doacao.status = StatusDoacao.PRE_APROVADO
+        analise.item_doacao.pre_aprovado_em = agora
+    
         sincronizar_status_doacao(item.doacao)
     else:
         if hasattr(dados, 'comentario_coordenador') and dados.comentario_coordenador:
             analise.comentario = f"[Revisão da Coordenação]: {dados.comentario_coordenador}"
-        
+
+        analise.em_quarentena = False
+        analise.resultado = ResultadoTriagemDoacao.AGUARDANDO_NOVA_TRIAGEM
+
         if vinculo_voluntario.nivel_confianca > 0:
             vinculo_voluntario.nivel_confianca -= 1
 
