@@ -97,6 +97,7 @@ class RespostaListagemDoacao(RespostaDoacao):
     tempo_cadastrada_dias: int
     tempo_cadastrada_tag: str
     status_tag: str
+    doador_nome: Optional[str] = None
 
 
 class AtualizarStatusItemDoacao(BaseModel):
