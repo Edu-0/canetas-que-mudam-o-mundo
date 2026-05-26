@@ -39,6 +39,10 @@ class PedidoMaterial(Base):
     )
 
     @property
+    def responsavel_nome(self) -> str | None:
+        return self.responsavel.nome_completo if self.responsavel else None
+
+    @property
     def status_tag(self) -> str:
         return self.status.value.replace("_", " ").capitalize()
 

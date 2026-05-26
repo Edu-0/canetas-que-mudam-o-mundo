@@ -26,6 +26,7 @@ class StatusDoacao(enum.Enum):
     CANCELADO = "CANCELADO"
     INCOMPLETO = "INCOMPLETO"
     AGUARDANDO_NOVA_TRIAGEM = "AGUARDANDO_NOVA_TRIAGEM"
+    EM_QUARENTENA = "EM_QUARENTENA"
 
 
 class StatusPedidoMaterial(enum.Enum):
