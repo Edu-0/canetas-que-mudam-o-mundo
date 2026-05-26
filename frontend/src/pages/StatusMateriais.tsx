@@ -110,6 +110,8 @@ function StatusMateriais() {
       updated_at: d.updated_at,
       prazo_retirada_limite: d.prazo_retirada_limite,
       itens: d.itens,
+      doador_nome: d.doador?.nome || d.doador?.usuario?.nome, // tenta pegar o nome do doador diretamente ou via usuário
+      responsavel_nome: d.responsavel?.nome || d.responsavel?.usuario?.nome, // tenta pegar o nome do responsável diretamente ou via usuário
     }));
 
     const pedidos: ItemUnificado[] = res.data.pedidos_aguardando_retirada.map((p: any) => ({
@@ -121,6 +123,8 @@ function StatusMateriais() {
       updated_at: p.updated_at,
       prazo_retirada_limite: p.prazo_retirada_limite,
       itens: p.itens,
+      doador_nome: p.doador?.nome || p.doador?.usuario?.nome, // tenta pegar o nome do doador diretamente ou via usuário
+      responsavel_nome: p.responsavel?.nome || p.responsavel?.usuario?.nome, // tenta pegar o nome do responsável diretamente ou via usuário
     }));
 
     setItens([...doacoes, ...pedidos]);
@@ -130,36 +134,44 @@ function StatusMateriais() {
     setPaginaAtual(1);
   }
 
+  // useEffect(() => {
+  //   async function carregar() {
+  //     const res = await obterPendencias(ordem);
+
+  //     const doacoes: ItemUnificado[] = res.data.doacoes_pre_aprovadas.map(
+  //       (d: any) => ({
+  //         id: d.id,
+  //         origem: "DOACAO",
+  //         codigo_coleta: d.codigo_coleta,
+  //         status: d.status,
+  //         created_at: d.created_at,
+  //         itens: d.itens,
+  //         doador_nome: d.doador?.nome || d.doador?.usuario?.nome, // tenta pegar o nome do doador diretamente ou via usuário
+  //         responsavel_nome: d.responsavel?.nome || d.responsavel?.usuario?.nome, // tenta pegar o nome do responsável diretamente ou via usuário
+  //       })
+  //     );
+
+  //     const pedidos: ItemUnificado[] = res.data.pedidos_aguardando_retirada.map(
+  //       (p: any) => ({
+  //         id: p.id,
+  //         origem: "PEDIDO",
+  //         codigo_coleta: p.codigo_coleta,
+  //         status: p.status,
+  //         created_at: p.created_at,
+  //         itens: p.itens,
+  //         doador_nome: p.doador?.nome || p.doador?.usuario?.nome, // tenta pegar o nome do doador diretamente ou via usuário
+  //         responsavel_nome: p.responsavel?.nome || p.responsavel?.usuario?.nome, // tenta pegar o nome do responsável diretamente ou via usuário
+  //       })
+  //     );
+
+  //     setItens([...doacoes, ...pedidos]);
+  //   }
+
+  //    carregar();
+  // }, [ordem]);
+
   useEffect(() => {
-    async function carregar() {
-      const res = await obterPendencias(ordem);
-
-      const doacoes: ItemUnificado[] = res.data.doacoes_pre_aprovadas.map(
-        (d: any) => ({
-          id: d.id,
-          origem: "DOACAO",
-          codigo_coleta: d.codigo_coleta,
-          status: d.status,
-          created_at: d.created_at,
-          itens: d.itens,
-        })
-      );
-
-      const pedidos: ItemUnificado[] = res.data.pedidos_aguardando_retirada.map(
-        (p: any) => ({
-          id: p.id,
-          origem: "PEDIDO",
-          codigo_coleta: p.codigo_coleta,
-          status: p.status,
-          created_at: p.created_at,
-          itens: p.itens,
-        })
-      );
-
-      setItens([...doacoes, ...pedidos]);
-    }
-
-     carregar();
+    carregarItens();
   }, [ordem]);
 
   function aplicarFiltros(lista: ItemUnificado[]) {
@@ -212,6 +224,8 @@ function StatusMateriais() {
     try {
       bloquearItem(item.id);
       console.log(`Processando ${item.origem} ${item.id} status ${item.status}...`);
+
+      console.log(`Nomes antes da atualização: doador=${item.doador_nome}, responsável=${item.responsavel_nome}`);
 
       if (item.origem === "DOACAO") {
         await atualizarStatusDoacao(item.id, "DISPONIVEL");
@@ -492,13 +506,13 @@ function StatusMateriais() {
 
                           {i.doador_nome && (
                             <span className="body-muito-pequeno">
-                              <strong className="body-semibold-muito-pequeno">Nome do Doador: </strong>{i.doador_nome}
+                              <strong className="body-semibold-muito-pequeno">Nome do Doador: </strong>{i.doador_nome} {/* pega o nome do doador */}
                             </span>
                           )}
 
                           {i.responsavel_nome && (
                             <span className="body-muito-pequeno">
-                              <strong className="body-semibold-muito-pequeno">Nome do Responsável: </strong>{i.responsavel_nome}
+                              <strong className="body-semibold-muito-pequeno">Nome do Responsável: </strong>{i.responsavel_nome} {/* pega o nome do responsável pela triagem */}
                             </span>
                           )}
 
@@ -520,6 +534,7 @@ function StatusMateriais() {
                               </span>
                             </div>
                           </div>
+                          
                           {i.updated_at && (
                             <>
                             <div className="text-sm mt-1">Última atualização: {formatarDataHora(i.updated_at)}</div>
@@ -528,7 +543,7 @@ function StatusMateriais() {
 
                           {/* EXPANDIR */}
                           {expandido[i.id] && (
-                            <div className="mt-3 bg-gray-50 p-2 rounded text-sm">
+                            <div className="mt-3 p-2 rounded text-sm">
                               
                               {i.origem === "DOACAO" && (
                                 <>
@@ -536,7 +551,7 @@ function StatusMateriais() {
                                   <div className="w-full max-w-4xl bg-white rounded-2xl shadow-md p-4 sm:p-6 border border-[var(--base-40)] flex flex-col gap-4">
               
                                     {/* Itens da doação */}
-                                    <div className="border-t pt-3">
+                                    <div>
                                       <h4 className="body-bold-muito-pequeno sm:body-bold-pequeno mb-3 text-center">
                                         Itens da Doação #{i.id}
                                       </h4>
@@ -620,8 +635,14 @@ function StatusMateriais() {
                             </div>
                           )}
 
+                          <div className="border-t pt-3 mt-6"></div>
+
+                          <div>
+                            <h4 className="body-bold-muito-pequeno sm:body-bold-pequeno mb-3 text-center">Gerenciar processo </h4>
+                          </div>
+
                           {/* BOTÕES */}
-                          <div className="flex gap-2 mt-3">
+                          <div className="flex gap-2">
 
                             <div>
                               <button onClick={() => toggleExpandir(i.id)} aria-label="Botão para expandir ou recolher informações" className="absolute top-2 right-2 text-xs sm:text-sm text-black body-semibold-muito-pequeno sm:body-semibold-pequeno px-2 py-1 rounded-full bg-[var(--base-30)] hover:bg-[var(--base-40)] transition">
@@ -630,7 +651,7 @@ function StatusMateriais() {
 
                             </div>
 
-                            <div className="flex gap-3 justify-center flex-wrap mt-4 w-full">
+                            <div className="flex gap-3 justify-center flex-wrap w-full">
                               <div className="flex-1">
                                 <Botao variante="cancelar" desabilitado={bloqueioProcessamento[i.id]} aoClicar={() => abrirCancelar(i)}>Cancelar</Botao>
                               </div>
