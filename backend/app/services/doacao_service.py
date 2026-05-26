@@ -253,6 +253,7 @@ def listar_doacoes(
 
     query = db.query(Doacao).options(
         selectinload(Doacao.itens).selectinload(ItemDoacao.fotos),
+        selectinload(Doacao.doador),
     )
 
     if usuario_tem_funcao(usuario_atual, TipoUsuario.TRIAGEM):
