@@ -50,6 +50,7 @@ class criarUsuario(usuarioBase):
 
 class ResumoVoluntario(BaseModel):
     nome_completo: str
+    nivel_confianca: int
     model_config = ConfigDict(from_attributes=True)
 
 class criarUsuarioResponsavel(BaseModel):

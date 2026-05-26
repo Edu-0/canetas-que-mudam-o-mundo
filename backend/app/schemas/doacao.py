@@ -135,11 +135,42 @@ class RespostaAvaliacaoTriagemDoacao(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+class DoacaoResumoQuarentena(BaseModel):
+    id: int
+    observacao_doador: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+class FotoResumoQuarentena(BaseModel):
+    id: int
+    url: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+class ItemDoacaoResumoQuarentena(BaseModel):
+    id: int
+    tipo_material: str
+    descricao: str
+    quantidade: int
+    
+    possiveis_defeitos: Optional[str] = None
+    motivo_inaptidao: Optional[str] = None
+
+    doacao: DoacaoResumoQuarentena  
+    fotos: list[FotoResumoQuarentena] = []
+
+    model_config = ConfigDict(from_attributes=True)
+
 class RespostaListagemQuarentena(BaseModel):
     id: int
-    resultado: str
+    resultado: ResultadoTriagemDoacao  
+    checklist: Optional[dict[str, Any]] = None  
+    comentario: Optional[str] = None
+    em_quarentena: bool
     created_at: datetime
-    voluntario_triagem: ResumoVoluntario 
+    
+    voluntario_triagem: ResumoVoluntario  
+    item_doacao: ItemDoacaoResumoQuarentena  
 
     model_config = ConfigDict(from_attributes=True)
 
