@@ -50,7 +50,7 @@ def validar_usuario_coordenador(usuario:Usuario, ong_id) -> None:
             detail="Apenas usuários com perfil Coordenador de Processos podem avaliar análises.",
         )
 
-    if not usuario.ong or usuario.ong.ong_id != ong_id:
+    if not usuario.ong or usuario.ong.id != ong_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Coordenador não gerencia a ONG vinculada a esta análise.",
