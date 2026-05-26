@@ -114,10 +114,8 @@ function AuditoriaVoluntario() {
 
                     <p><strong>Registrado em:</strong> {formatarDataHora(voluntario.data_cadastro)}</p>
 
-                    <p>
-                      <strong>Nível de confiança:</strong>{" "}
-                      {/* {voluntario.nivel_confianca < 10 ? "Voluntário novato (Em quarentena)" : "Voluntário experiente"}
-                      {emQuarentena ? "Novato (em quarentena)" : "Voluntário experiente"} */}
+                    <p><strong>Nível de confiança:</strong>{" "}
+                      {/* {voluntario.nivel_confianca < 10 ? "Voluntário novato (Em quarentena)" : "Voluntário experiente"} */}
                     </p>
                   </div>
 
