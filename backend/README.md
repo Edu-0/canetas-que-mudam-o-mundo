@@ -53,6 +53,27 @@ Docs interativas (quando rodando):
 - Swagger: `http://localhost:8000/docs`
 - ReDoc: `http://localhost:8000/redoc`
 
+## Seed de demonstração
+
+Para popular o banco PostgreSQL com dados realistas para apresentação, configure `DATABASE_URL` ou as variáveis `DB_*` apontando para PostgreSQL e rode:
+
+```powershell
+cd backend
+python scripts/seed_demo.py
+```
+
+A seed é idempotente: pode ser executada mais de uma vez sem duplicar os registros de demonstração. Ela exige PostgreSQL, usa as mesmas variáveis de ambiente do backend (`DATABASE_URL` ou `DB_*`) e cria usuários, ONG, voluntários, responsáveis, familiares, documentos, doações, estoque, pedidos, reservas e movimentos.
+
+Senha de todos os usuários demo: `Demo@12345`.
+
+Logins principais:
+
+- Coordenador: `demo.coordenador@canetas.local`
+- Triagem sênior: `demo.triagem.senior@canetas.local`
+- Triagem nova: `demo.triagem.nova@canetas.local`
+- Doador: `demo.doador.marina@canetas.local`
+- Responsável: `demo.responsavel.luciana@canetas.local`
+
 ## Estrutura e localização de responsabilidades
 
 - `app/main.py` — inicialização da aplicação e inclusão de routers.
