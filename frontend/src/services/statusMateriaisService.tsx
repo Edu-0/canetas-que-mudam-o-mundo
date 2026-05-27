@@ -18,6 +18,9 @@ export type ItemUnificado = {
   updated_at: string;
   prazo_retirada_limite?: string; // o prazo de retirada
   itens: any[];
+  
+  doador_nome?: string; // para pegar o nome do doador
+  responsavel_nome?: string; // para pegar o nome do responsável pelo pedido
 };
 
 // Para listar os itens de doações e pedidos que estão com status "PRE_APROVADO" ou "AGUARDANDO_RETIRADA" (ou seja, que estão pendentes de coleta ou retirada)

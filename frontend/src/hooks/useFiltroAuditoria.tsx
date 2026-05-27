@@ -1,5 +1,5 @@
 type StatusAvaliacao = "todos" | "PRE_APROVADO" | "INAPTO";
-type StatusFiltro = "todos" | "PRE_APROVADO" | "INAPTO" | "INCOMPLETO";
+type StatusFiltro = "todos" | "PRE_APROVADO" | "INAPTO" | "INCOMPLETO" | "EM_QUARENTENA";
 
 export function useFiltroAuditoria(
   analises: any[],
