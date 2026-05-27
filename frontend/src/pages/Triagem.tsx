@@ -254,9 +254,11 @@ function Triagem() {
         const observacaoItem = observacaoPorItem[item.id];
 
         // se já tiver avaliação de triagem para esse item, não cria outra, 
-        if (avaliacoes[item.id]?.length > 0) {
-
-           continue; // pula só esse item que já foi triado
+        if (
+          item.status !== "AGUARDANDO_TRIAGEM" &&
+          item.status !== "AGUARDANDO_NOVA_TRIAGEM"
+        ) {
+          continue;
         }
 
         try {   

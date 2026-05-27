@@ -380,6 +380,7 @@ def avaliar_item_doacao(
         )
 
     agora = datetime.now()
+    
     avaliacao = AvaliacaoTriagemDoacao(
         item_doacao_id=item.id,
         voluntario_triagem_id=voluntario.id,
@@ -392,14 +393,23 @@ def avaliar_item_doacao(
     item.triado_por_id = voluntario.id
     item.triado_em = agora
 
-    vinculo = obter_vinculo_voluntario(db,voluntario.id,item.doacao.ong_id)
+    vinculo = obter_vinculo_voluntario(db, voluntario.id, item.doacao.ong_id)
 
     if vinculo.nivel_confianca < 10:
-        if dados.resultado == ResultadoTriagemDoacao.PRE_APROVADO or dados.resultado == ResultadoTriagemDoacao.AGUARDANDO_NOVA_TRIAGEM:
-            avaliacao.em_quarentena = True
-            avaliacao.resultado = ResultadoTriagemDoacao.EM_QUARENTENA
-            item.status = StatusDoacao.EM_QUARENTENA
-            item.doacao.status = StatusDoacao.EM_QUARENTENA
+        avaliacao.em_quarentena = True 
+        
+        if dados.resultado == ResultadoTriagemDoacao.PRE_APROVADO:
+            item.status = StatusDoacao.PRE_APROVADO
+            item.pre_aprovado_em = agora
+            item.motivo_inaptidao = None
+            
+        elif dados.resultado == ResultadoTriagemDoacao.INAPTO:
+            item.status = StatusDoacao.INAPTO
+            item.motivo_inaptidao = dados.motivo_inaptidao
+            
+        elif dados.resultado == ResultadoTriagemDoacao.AGUARDANDO_NOVA_TRIAGEM:
+            item.status = StatusDoacao.AGUARDANDO_NOVA_TRIAGEM
+            item.motivo_inaptidao = None
     else:    
         if dados.resultado == ResultadoTriagemDoacao.PRE_APROVADO:
             item.status = StatusDoacao.PRE_APROVADO
@@ -424,7 +434,6 @@ def avaliar_item_doacao(
             detail=f"Erro ao registrar avaliação de triagem: {str(exc)}",
         ) from exc
 
-
 def avaliar_analise_de_doacao(
     db: Session,
     coordenador: Usuario,
@@ -441,18 +450,20 @@ def avaliar_analise_de_doacao(
     vinculo_voluntario = obter_vinculo_voluntario(db, analise.voluntario_triagem_id,item.doacao.ong_id)
     
     if dados.resultado_validado:
-        analise.resultado_validado = dados.resultado_validado
+        analise.resultado_validado = True
         analise.em_quarentena = False
         agora = datetime.now()
         analise.validado_em = agora
 
         if vinculo_voluntario.nivel_confianca < 10:
             vinculo_voluntario.nivel_confianca += 1
-        
-        analise.resultado = ResultadoTriagemDoacao.PRE_APROVADO
-        analise.item_doacao.status = StatusDoacao.PRE_APROVADO
-        analise.item_doacao.doacao.status = StatusDoacao.PRE_APROVADO
-        analise.item_doacao.pre_aprovado_em = agora
+
+        if analise.resultado == ResultadoTriagemDoacao.PRE_APROVADO:
+            item.status = StatusDoacao.PRE_APROVADO
+            item.pre_aprovado_em = agora
+        elif analise.resultado == ResultadoTriagemDoacao.INAPTO:
+            item.status = StatusDoacao.INAPTO
+            item.motivo_inaptidao = analise.motivo_inaptidao
     
     else:
         if hasattr(dados, 'comentario_coordenador') and dados.comentario_coordenador:
@@ -460,9 +471,8 @@ def avaliar_analise_de_doacao(
 
         analise.resultado_validado = False
         analise.em_quarentena = False
-        analise.resultado = ResultadoTriagemDoacao.AGUARDANDO_NOVA_TRIAGEM
+
         analise.item_doacao.status = StatusDoacao.AGUARDANDO_NOVA_TRIAGEM
-        analise.item_doacao.doacao.status = StatusDoacao.AGUARDANDO_NOVA_TRIAGEM
 
         if vinculo_voluntario.nivel_confianca > 0:
             vinculo_voluntario.nivel_confianca -= 1
