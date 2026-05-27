@@ -458,6 +458,11 @@ def avaliar_analise_de_doacao(
         if vinculo_voluntario.nivel_confianca < 10:
             vinculo_voluntario.nivel_confianca += 1
 
+            db.query(VoluntarioOng).filter(
+                VoluntarioOng.usuario_id == vinculo_voluntario.usuario_id,
+                VoluntarioOng.ong_id == vinculo_voluntario.ong_id
+            ).update({"nivel_confianca": vinculo_voluntario.nivel_confianca})
+
         if analise.resultado == ResultadoTriagemDoacao.PRE_APROVADO:
             item.status = StatusDoacao.PRE_APROVADO
             item.pre_aprovado_em = agora
@@ -476,10 +481,16 @@ def avaliar_analise_de_doacao(
 
         if vinculo_voluntario.nivel_confianca > 0:
             vinculo_voluntario.nivel_confianca -= 1
+            
+            db.query(VoluntarioOng).filter(
+                VoluntarioOng.usuario_id == vinculo_voluntario.usuario_id,
+                VoluntarioOng.ong_id == vinculo_voluntario.ong_id
+            ).update({"nivel_confianca": vinculo_voluntario.nivel_confianca})
 
     sincronizar_status_doacao(item.doacao)
 
     try:
+        db.add(vinculo_voluntario)
         db.commit() 
         db.refresh(analise)
         return analise
