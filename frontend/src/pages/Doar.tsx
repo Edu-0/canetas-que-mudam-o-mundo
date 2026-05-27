@@ -52,10 +52,11 @@ function Doar() {
     async function carregar() {
       try {
         const dados: Doacao = await obterDoacao(idEdicao!);
-        setTipoMaterial(dados.tipo_material);
-        setDescricao(dados.descricao);
-        setPossiveisDefeitos(dados.possiveis_defeitos || "");
-        setQuantidade(String(dados.quantidade));
+        const item = dados.itens?.[0];
+        setTipoMaterial(item?.tipo_material || "");
+        setDescricao(item?.descricao || "");
+        setPossiveisDefeitos(item?.possiveis_defeitos || "");
+        setQuantidade(item?.quantidade ? String(item.quantidade) : "");
       } catch (erro: any) {
         const status = erro?.response?.status;
         if (status === 403) {
