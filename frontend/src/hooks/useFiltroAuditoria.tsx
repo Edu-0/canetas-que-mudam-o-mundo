@@ -1,6 +1,10 @@
 type StatusAvaliacao = "todos" | "PRE_APROVADO" | "INAPTO";
 type StatusFiltro = "todos" | "PRE_APROVADO" | "INAPTO" | "INCOMPLETO" | "EM_QUARENTENA";
 
+function extrairData(data: string) {
+  return data.split(" ")[0]; // pega só YYYY-MM-DD
+}
+
 export function useFiltroAuditoria(
   analises: any[],
   avaliacao: StatusAvaliacao,
@@ -24,16 +28,22 @@ export function useFiltroAuditoria(
     );
   }
 
-  // data (você precisa decidir qual usar)
+  // data 
   if (datas.dataInicio) {
+    const dataInicio = new Date(datas.dataInicio);
+    dataInicio.setHours(0, 0, 0, 0); // início do dia
+
     filtradas = filtradas.filter(
-      (a) => new Date(a.created_at) >= new Date(datas.dataInicio!)
+      (a) => extrairData(a.created_at) >= datas.dataInicio!
     );
   }
 
   if (datas.dataFim) {
+    const dataFim = new Date(datas.dataFim);
+    dataFim.setHours(23, 59, 59, 999); // final do dia
+
     filtradas = filtradas.filter(
-      (a) => new Date(a.created_at) <= new Date(datas.dataFim!)
+      (a) => extrairData(a.created_at) <= datas.dataFim!
     );
   }
 

@@ -297,6 +297,7 @@ function Triagem() {
       setMensagem("Triagem finalizada com sucesso!"); 
       setTipoMensagem("sucesso");
 
+      localStorage.setItem("toast", "Triagem finalizada com sucesso!");
       navigate("/lista-triagem");
 
     } catch (e: any) {
@@ -305,6 +306,9 @@ function Triagem() {
 
       setMensagem("Erro ao finalizar triagem.");
       setTipoMensagem("erro");
+
+      localStorage.setItem("toast", "Erro ao finalizar triagem.");
+      navigate("/lista-triagem");
     } finally {
       setCarregandoFinalizacao(false);
     }

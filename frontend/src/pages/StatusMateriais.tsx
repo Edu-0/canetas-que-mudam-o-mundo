@@ -239,6 +239,7 @@ function StatusMateriais() {
 
       // remove da lista 
       setItens(prev => prev.filter(i => i.id !== item.id));
+      await carregarItens(); // atualiza a lista
 
     } catch (err) {
       setMensagem("Erro ao finalizar processo");
@@ -263,6 +264,7 @@ function StatusMateriais() {
       }
 
       setItens(prev => prev.filter(i => i.id !== item.id));
+      await carregarItens();
 
     } catch (err) {
       setMensagem("Erro ao cancelar processo");

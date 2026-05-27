@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import logo from "../assets/logo.svg";
@@ -14,6 +14,7 @@ import { useUsuario } from "../context/UserContext";
 
 function ListaTriagem() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { ong } = useONG();
   const { usuario } = useUsuario();
   const [mostrarModal, setMostrarModal] = useState(false);
@@ -64,21 +65,21 @@ function ListaTriagem() {
   );
 
   function formatarDataHora(data?: string) {
-  if (!data) return "N/A";
+    if (!data) return "N/A";
 
-  const iso = data.replace(" ", "T");
-  const d = new Date(iso);
+    const iso = data.replace(" ", "T");
+    const d = new Date(iso);
 
-  const dataFormatada = d.toLocaleDateString("pt-BR");
-  const horaFormatada = d.toLocaleTimeString("pt-BR", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+    const dataFormatada = d.toLocaleDateString("pt-BR");
+    const horaFormatada = d.toLocaleTimeString("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
 
-  return `${dataFormatada} às ${horaFormatada}`;
-}
+    return `${dataFormatada} às ${horaFormatada}`;
+  }
 
-    function calcularTempo(data?: string) {
+  function calcularTempo(data?: string) {
     if (!data) return { meses: 0, dias: 0 };
 
     const inicio = new Date(data);
@@ -195,9 +196,19 @@ function ListaTriagem() {
   }
 
   useEffect(() => {
+    const msg = localStorage.getItem("toast");
+
+    if (msg) {
+      setMensagem(msg);
+      setTipoMensagem("sucesso");
+      localStorage.removeItem("toast");
+    }
+  }, []);
+
+  useEffect(() => {
     async function carregar() {
       if (!temPermissao) {
-        setMensagem("Voce nao tem permissao para acessar a triagem.");
+        setMensagem("Você não tem permissão para acessar a triagem.");
         setTipoMensagem("erro");
         return;
       }

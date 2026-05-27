@@ -148,9 +148,11 @@ function AuditoriaTriagensQuarentena() {
         [id]: true
       }));
 
-      // remove da lista para não precisar recarregar a página para tirar os itens auditados da quarentena 
-      setAnalises(prev => prev.filter(a => a.id !== id));
-      setPaginaAtual(1); // para evitar página vazia
+      // recarrega análises para atualizar status da quarentena
+      const res = await obterAnalisesQuarentena();
+      setAnalises(res.data);
+
+      setPaginaAtual(prev => Math.min(prev, 1)); // fica na primeira página, já que a maioria dos itens em quarentena provavelmente vai para a primeira página
     } catch (err) {
       setMensagem("Erro ao realizar auditoria");
       setTipoMensagem("erro");
@@ -308,6 +310,7 @@ function AuditoriaTriagensQuarentena() {
     const mapaStatus: Record<string, string> = {
       PRE_APROVADO: "Pré aprovado",
       AGUARDANDO_RETIRADA: "Aguardando retirada",
+      EM_QUARENTENA: "Em quarentena",
     };
 
     if (mapaStatus[status]) {
@@ -394,6 +397,7 @@ function AuditoriaTriagensQuarentena() {
                     <option value="todos">Todos</option>
                     <option value="PRE_APROVADO">Pré-Aprovado</option>
                     <option value="INAPTO">Inapto</option>
+                    <option value="EM_QUARENTENA">Em quarentena</option>
                   </select>
                 </div>
 
@@ -586,13 +590,13 @@ function AuditoriaTriagensQuarentena() {
                                         )}
                         
                                         <p className="body-muito-pequeno sm:body-pequeno">
-                                          <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Registrado em:</strong> {formatarDataHora(doacao.created_at)}
+                                          <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Registrado em:</strong> {formatarData(doacao.created_at)}
                                         </p>
             
                                         {/* Só mostrar data de atualização se a doação já foi triada */}
                                         {avaliacoes[item.id]?.length > 0 && (
                                           <p className="body-muito-pequeno sm:body-pequeno">
-                                            <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Atualizado em:</strong> {formatarDataHora(doacao.updated_at)}
+                                            <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Atualizado em:</strong> {formatarData(doacao.updated_at)}
                                           </p>
                                         )}
                                                     
@@ -619,7 +623,7 @@ function AuditoriaTriagensQuarentena() {
                                                     <div key={av.id} className="bg-gray-50 border rounded p-2 mb-2">
           
                                                       <p className="body-muito-pequeno sm:body-pequeno">
-                                                        <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Triado em:</strong> {formatarDataHora(av.created_at)}
+                                                        <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Triado em:</strong> {formatarData(av.created_at)}
                                                       </p>
           
                                                       <p className="body-muito-pequeno sm:body-pequeno">
