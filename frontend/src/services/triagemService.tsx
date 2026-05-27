@@ -13,7 +13,7 @@ export type StatusDoacao =
   | "INCOMPLETO"
   | "EM_QUARENTENA";
 
-export type ResultadoTriagem = "PRE_APROVADO" | "INAPTO";
+export type ResultadoTriagem = "PRE_APROVADO" | "INAPTO" | "AGUARDANDO_NOVA_TRIAGEM" | "EM_QUARENTENA";
 
 // Triagem
 export type CriarTriagemEnvio = {
