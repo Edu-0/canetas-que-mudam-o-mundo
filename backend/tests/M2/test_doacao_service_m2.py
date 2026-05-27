@@ -92,7 +92,7 @@ class DoacaoServiceM2Test(M2ServiceTestCase):
         self.assertIsNotNone(estoque)
         self.assertIsNone(estoque.retirado_em)
 
-    def test_comportamento_atual_coordenador_nao_disponibiliza_material_sem_perfil_triagem(self):
+    def test_comportamento_atual_coordenador_disponibiliza_material(self):
         coordenador = self.make_user(
             roles=[TipoUsuario.GENERICO, TipoUsuario.COORDENADOR_PROCESSOS],
             nome="Coordenador Status",
@@ -100,15 +100,14 @@ class DoacaoServiceM2Test(M2ServiceTestCase):
         ong = self.make_ong(coordenador=coordenador)
         item = self.make_item_doacao(ong=ong, status_item=StatusDoacao.PRE_APROVADO)
 
-        with self.assertRaises(HTTPException) as contexto:
-            doacao_service.alterar_status_item_doacao(
-                self.db,
-                coordenador,
-                item.id,
-                AtualizarStatusItemDoacao(status=StatusDoacao.DISPONIVEL),
-            )
+        item = doacao_service.alterar_status_item_doacao(
+            self.db,
+            coordenador,
+            item.id,
+            AtualizarStatusItemDoacao(status=StatusDoacao.DISPONIVEL),
+        )
 
-        self.assertEqual(contexto.exception.status_code, 403)
+        self.assertEqual(item.status, StatusDoacao.DISPONIVEL)
 
     def test_nao_permite_disponibilizar_sem_pre_aprovacao(self):
         ong = self.make_ong()

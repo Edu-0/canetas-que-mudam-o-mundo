@@ -81,16 +81,13 @@ class UsuarioOngSecurityM2Test(M2ServiceTestCase):
         self.assertIn("doacao_item:avaliar", PERMISSOES_POR_FUNCAO[TipoUsuario.TRIAGEM])
         self.assertIn("voluntario_ong:gerar-link-voluntario", PERMISSOES_POR_FUNCAO[TipoUsuario.COORDENADOR_PROCESSOS])
 
-    def test_comportamento_atual_coordenador_nao_tem_permissao_para_status_dos_materiais(self):
+    def test_comportamento_atual_coordenador_tem_permissao_para_status_dos_materiais(self):
         coordenador = self.make_user(
             roles=[TipoUsuario.GENERICO, TipoUsuario.COORDENADOR_PROCESSOS],
         )
 
-        with self.assertRaises(HTTPException) as contexto:
-            VerificarPermissao("doacao_item:alterar_status")(coordenador)
-
-        self.assertEqual(contexto.exception.status_code, 401)
-        self.assertNotIn(
+        self.assertTrue(VerificarPermissao("doacao_item:alterar_status")(coordenador))
+        self.assertIn(
             "doacao_item:alterar_status",
             PERMISSOES_POR_FUNCAO[TipoUsuario.COORDENADOR_PROCESSOS],
         )
