@@ -10,8 +10,7 @@ export type StatusDoacao =
   | "DISPONIVEL"
   | "MATERIAL_COLETADO"
   | "CANCELADO"
-  | "INCOMPLETO"
-  | "EM_QUARENTENA";
+  | "INCOMPLETO";
 
 export type ResultadoTriagem = "PRE_APROVADO" | "INAPTO" | "AGUARDANDO_NOVA_TRIAGEM" | "EM_QUARENTENA";
 
