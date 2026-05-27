@@ -111,18 +111,28 @@ function StatusMateriais() {
   async function carregarItens() {
     const res = await obterPendencias(ordem);
 
-    const doacoes: ItemUnificado[] = res.data.doacoes_pre_aprovadas.map((d: any) => ({
-      id: d.id,
-      origem: "DOACAO",
-      codigo_coleta: d.codigo_coleta,
-      status: d.status,
-      created_at: d.created_at,
-      updated_at: d.updated_at,
-      prazo_retirada_limite: d.prazo_retirada_limite,
-      itens: d.itens,
-      doador_nome: d.doador_nome, // tenta pegar o nome do doador diretamente ou via usuário
-      responsavel_nome: d.responsavel_nome, // tenta pegar o nome do responsável diretamente ou via usuário
-    }));
+    const doacoes: ItemUnificado[] = res.data.doacoes_pre_aprovadas
+      .map((d: any) => {
+        const itensVisiveis = (d.itens || []).filter((item: any) => !item.em_quarentena);
+
+        if (itensVisiveis.length === 0) {
+          return null;
+        }
+
+        return {
+          id: d.id,
+          origem: "DOACAO",
+          codigo_coleta: d.codigo_coleta,
+          status: d.status,
+          created_at: d.created_at,
+          updated_at: d.updated_at,
+          prazo_retirada_limite: d.prazo_retirada_limite,
+          itens: itensVisiveis,
+          doador_nome: d.doador_nome, // tenta pegar o nome do doador diretamente ou via usuário
+          responsavel_nome: d.responsavel_nome, // tenta pegar o nome do responsável diretamente ou via usuário
+        };
+      })
+      .filter((d: ItemUnificado | null): d is ItemUnificado => d !== null);
 
     const pedidos: ItemUnificado[] = res.data.pedidos_aguardando_retirada.map((p: any) => ({
       id: p.id,
