@@ -510,7 +510,20 @@ def alterar_status_item_doacao(
     agora = datetime.now()
 
     if novo_status == StatusDoacao.DISPONIVEL:
-        validar_voluntario_triagem(usuario_atual, item.doacao.ong_id)
+        if usuario_tem_funcao(usuario_atual, TipoUsuario.TRIAGEM):
+            validar_voluntario_triagem(usuario_atual, item.doacao.ong_id)
+        elif usuario_tem_funcao(usuario_atual, TipoUsuario.COORDENADOR_PROCESSOS):
+            ong = obter_ong_coordenador(db, usuario_atual)
+            if ong.id != item.doacao.ong_id:
+                raise HTTPException(
+                    status_code=403,
+                    detail="Coordenador não gerencia a ONG vinculada a esta doação.",
+                )
+        else:
+            raise HTTPException(
+                status_code=403,
+                detail="Apenas Voluntários da Triagem ou Coordenadores podem disponibilizar itens.",
+            )
         if item.status == StatusDoacao.AGUARDANDO_TRIAGEM:
             raise HTTPException(
                 status_code=400,
@@ -567,11 +580,21 @@ def alterar_status_item_doacao(
         item.triado_em = item.triado_em or agora
 
     elif novo_status == StatusDoacao.CANCELADO:
-        if usuario_atual.id != item.doacao.doador_id and not usuario_tem_funcao(usuario_atual, TipoUsuario.TRIAGEM):
-            raise HTTPException(
-                status_code=403,
-                detail="Apenas o Doador da doação ou Triagem podem cancelar o item.",
-            )
+        if usuario_atual.id != item.doacao.doador_id and not usuario_tem_funcao(
+            usuario_atual, TipoUsuario.TRIAGEM
+        ):
+            if usuario_tem_funcao(usuario_atual, TipoUsuario.COORDENADOR_PROCESSOS):
+                ong = obter_ong_coordenador(db, usuario_atual)
+                if ong.id != item.doacao.ong_id:
+                    raise HTTPException(
+                        status_code=403,
+                        detail="Coordenador não gerencia a ONG vinculada a esta doação.",
+                    )
+            else:
+                raise HTTPException(
+                    status_code=403,
+                    detail="Apenas o Doador da doação, Triagem ou Coordenador podem cancelar o item.",
+                )
         if item.status == StatusDoacao.MATERIAL_COLETADO:
             raise HTTPException(
                 status_code=400,

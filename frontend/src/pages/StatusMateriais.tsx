@@ -52,6 +52,16 @@ function StatusMateriais() {
     "Fotos suficientes",
   ];
 
+  function obterItensPreAprovados(itensDoacao: any[] | undefined) {
+    if (!itensDoacao) return [];
+    return itensDoacao.filter((item) => item.status === "PRE_APROVADO");
+  }
+
+  function obterItensCancelaveis(itensDoacao: any[] | undefined) {
+    if (!itensDoacao) return [];
+    return itensDoacao.filter((item) => item.status !== "MATERIAL_COLETADO");
+  }
+
   function toggleHistorico(itemId: number) {
     setHistoricoAberto(prev => ({
       ...prev,
@@ -226,8 +236,21 @@ function StatusMateriais() {
       console.log(`Processando ${item.origem} ${item.id} status ${item.status}...`);
 
       if (item.origem === "DOACAO") {
-        await atualizarStatusDoacao(item.id, "DISPONIVEL");
-        setMensagem("Doação marcada como disponível para retirada!");
+        const itensPreAprovados = obterItensPreAprovados(item.itens);
+        if (itensPreAprovados.length === 0) {
+          setMensagem("Nenhum item PRE_APROVADO disponível para disponibilizar.");
+          setTipoMensagem("erro");
+          desbloquearItem(item.id);
+          return;
+        }
+
+        await Promise.all(
+          itensPreAprovados.map((itemDoacao) =>
+            atualizarStatusDoacao(itemDoacao.id, "DISPONIVEL")
+          )
+        );
+
+        setMensagem("Itens da doação marcados como disponíveis para retirada!");
         setTipoMensagem("sucesso");   
         console.log(`Atualizado status da doação ${item.id} para DISPONIVEL`);
       } else {
@@ -254,8 +277,21 @@ function StatusMateriais() {
       bloquearItem(item.id);
 
       if (item.origem === "DOACAO") {
-        await atualizarStatusDoacao(item.id, "CANCELADO");
-        setMensagem("Doação cancelada!");
+        const itensCancelaveis = obterItensCancelaveis(item.itens);
+        if (itensCancelaveis.length === 0) {
+          setMensagem("Nenhum item disponível para cancelamento.");
+          setTipoMensagem("erro");
+          desbloquearItem(item.id);
+          return;
+        }
+
+        await Promise.all(
+          itensCancelaveis.map((itemDoacao) =>
+            atualizarStatusDoacao(itemDoacao.id, "CANCELADO")
+          )
+        );
+
+        setMensagem("Itens da doação cancelados!");
         setTipoMensagem("sucesso");
       } else {
         await atualizarStatusPedido(item.id, "CANCELADO");

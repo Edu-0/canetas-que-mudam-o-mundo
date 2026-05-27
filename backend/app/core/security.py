@@ -58,6 +58,7 @@ PERMISSOES_POR_FUNCAO = {
         "ong:deletar",
         "ong:listar",
         "doacao:listar",
+        "doacao_item:alterar_status",
         "pedido:listar",
         "pedido:alterar_status",
         "voluntario_ong:gerar-link-voluntario",
