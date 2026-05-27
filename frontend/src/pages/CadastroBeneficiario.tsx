@@ -120,7 +120,7 @@ function CadastroBeneficiario() {
       ];
 
     } else {
-      const campo = name as keyof Omit<Familiar, "documentos">;
+      const campo = name as Exclude<keyof Familiar, "documentos" | "id">;
 
       // Limites de caracteres
       const limites: Record<string, number> = {
@@ -138,12 +138,13 @@ function CadastroBeneficiario() {
       } else if (campo === "renda") {
         novos[index].renda = parseFloat(value) || 0;
       } else {
-        novos[index][campo] = valorLimitado as any;
+        // corrigir erro de tipo: atribuição para propriedade indexada pode inferir 'never'
+        (novos[index] as any)[campo] = valorLimitado;
       }
 
       // Validar e atualizar erros
       if (tocados[index]?.[campo]) {
-        const erro = validarCampoFamiliar(campo as keyof typeof novos[index], novos[index]);
+        const erro = validarCampoFamiliar(campo, novos[index]);
         setErros((prev) => ({
           ...prev,
           [index]: {
@@ -289,6 +290,7 @@ function CadastroBeneficiario() {
         data_nascimento: converterDataParaISO(f.dataNascimento),
         renda: f.renda,
         beneficiario: f.beneficiario,
+        documentos: [],
       }));
 
       let perfilUsuario: any = null;
@@ -322,7 +324,7 @@ function CadastroBeneficiario() {
             original.renda !== familiar.renda ||
             original.beneficiario !== familiar.beneficiario;
 
-          if (mudou) {
+          if (mudou && familiar.id !== undefined) {
             await atualizarFamiliar(familiar.id, {
               nome: familiar.nome,
               parentesco: familiar.parentesco,
