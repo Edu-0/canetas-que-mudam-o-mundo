@@ -26,6 +26,7 @@ function Header(){
     );
   } else {
     const tipos = usuario.tipos || [];
+    const ehVoluntarioTriagem = tipos.includes("Voluntário da triagem");
 
     // mapa de tipos
     const mapaTipos: Record<string, { id: string; texto: string; rota: string }[]> = {
@@ -64,6 +65,10 @@ function Header(){
 
       if (botoes) {
         botoes.forEach((botao) => {
+          if (ehVoluntarioTriagem && botao.id === "ongs") {
+            return;
+          }
+
           if (!adicionados.has(botao.id)) { // verifica se o botão existe para o tipo e se já não foi adicionado
             listaDeBotoes.push(botao);
             adicionados.add(botao.id);
