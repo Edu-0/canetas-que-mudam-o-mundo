@@ -455,7 +455,6 @@ def avaliar_analise_de_doacao(
         analise.item_doacao.doacao.status = StatusDoacao.PRE_APROVADO
         analise.item_doacao.pre_aprovado_em = agora
     
-        sincronizar_status_doacao(item.doacao)
     else:
         if hasattr(dados, 'comentario_coordenador') and dados.comentario_coordenador:
             analise.comentario = f"[Revisão da Coordenação]: {dados.comentario_coordenador}"
@@ -463,11 +462,12 @@ def avaliar_analise_de_doacao(
         analise.em_quarentena = False
         analise.resultado = ResultadoTriagemDoacao.AGUARDANDO_NOVA_TRIAGEM
         analise.item_doacao.status = StatusDoacao.AGUARDANDO_NOVA_TRIAGEM
-        analise.item.doacao.status = StatusDoacao.AGUARDANDO_NOVA_TRIAGEM
+        analise.item_doacao.doacao.status = StatusDoacao.AGUARDANDO_NOVA_TRIAGEM
 
         if vinculo_voluntario.nivel_confianca > 0:
             vinculo_voluntario.nivel_confianca -= 1
 
+    sincronizar_status_doacao(item.doacao)
     try:
         db.commit() 
         db.refresh(analise)
