@@ -192,7 +192,7 @@ def criar_pedido_material(db: Session, usuario: Usuario, dados: CriarPedidoMater
         responsavel_id=usuario.id,
         familiar_id=familiar.id,
         ong_id=dados.ong_id,
-        status=StatusPedidoMaterial.AGUARDANDO_APROVACAO,
+        status=StatusPedidoMaterial.AGUARDANDO_RETIRADA,
     )
 
     for item_dados in dados.itens:
