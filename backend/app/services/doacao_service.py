@@ -282,7 +282,7 @@ def listar_doacoes(
         if usuario_tem_funcao(usuario_atual, TipoUsuario.TRIAGEM) or usuario_tem_funcao(
             usuario_atual, TipoUsuario.COORDENADOR_PROCESSOS
         ):
-            status_permitidos = list(STATUS_LISTAGEM_TRIAGEM)
+            status_permitidos = [StatusDoacao.AGUARDANDO_TRIAGEM, StatusDoacao.AGUARDANDO_NOVA_TRIAGEM,]
         else:
             status_permitidos = None
     

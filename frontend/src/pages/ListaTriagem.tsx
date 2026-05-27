@@ -46,16 +46,33 @@ function ListaTriagem() {
 
   // const doacoesFiltradas = doacoes;
 
-  const doacoesFiltradas = doacoes.filter((d: any) => {
-  // remove itens em quarentena
-  if (d.itens?.some((item: any) =>
-    item.avaliacoes?.some((a: any) => a.em_quarentena === true)
-  )) {
-    return false;
-  }
+//   const doacoesFiltradas = doacoes.filter((d: any) => {
+//   // remove itens em quarentena
+//   if (d.itens?.some((item: any) =>
+//     item.avaliacoes?.some((a: any) => a.em_quarentena === true)
+//   )) {
+//     return false;
+//   }
 
-  return true;
-});
+//   return true;
+// });
+
+  const doacoesFiltradas = doacoes.filter((d: any) => {
+    // remove quarentena
+    const temQuarentena = d.itens?.some((item: any) =>
+      item.avaliacoes?.some((a: any) => a.em_quarentena === true)
+    );
+
+    if (temQuarentena) return false;
+
+    // remove itens já triados (INAPTO ou PRE_APROVADO etc)
+    const aindaPendente = d.itens?.some((item: any) =>
+      item.status === "AGUARDANDO_TRIAGEM" ||
+      item.status === "AGUARDANDO_NOVA_TRIAGEM"
+    );
+
+    return aindaPendente;
+  });
 
   const totalPaginas = Math.max(1, Math.ceil(doacoesFiltradas.length / ITENS_POR_PAGINA)); // garente pelo menos 1 página
 

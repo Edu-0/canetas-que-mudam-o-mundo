@@ -253,10 +253,9 @@ function Triagem() {
         const checklistItem = checklistPorItem[item.id] || {};
         const observacaoItem = observacaoPorItem[item.id];
 
-        // se já tiver avaliação de triagem para esse item, não cria outra, 
-        if (avaliacoes[item.id]?.length > 0) {
-
-           continue; // pula só esse item que já foi triado
+        // só tenta criar triagem para itens que estão aguardando triagem 
+        if (item.status !== "AGUARDANDO_TRIAGEM" && item.status !== "AGUARDANDO_NOVA_TRIAGEM") {
+          continue; // pula itens que não estão mais aguardando triagem 
         }
 
         try {   

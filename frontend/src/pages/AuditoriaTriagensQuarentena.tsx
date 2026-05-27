@@ -409,7 +409,6 @@ function AuditoriaTriagensQuarentena() {
                     <option value="PRE_APROVADO">Pré-Aprovado</option>
                     <option value="INAPTO">Inapto</option>
                     <option value="INCOMPLETO">Incompleto</option>
-                    <option value="EM_QUARENTENA">Em quarentena</option>
                   </select>
                 </div>
 
