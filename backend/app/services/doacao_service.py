@@ -24,8 +24,6 @@ from app.schemas.doacao import (
 )
 
 
-
-
 STATUS_LISTAGEM_TRIAGEM = {
     StatusDoacao.AGUARDANDO_TRIAGEM,
     StatusDoacao.AGUARDANDO_NOVA_TRIAGEM,
@@ -369,10 +367,10 @@ def avaliar_item_doacao(
     item = obter_item_doacao(db, item_doacao_id)
     validar_voluntario_triagem(voluntario, item.doacao.ong_id)
 
-    if item.status != StatusDoacao.AGUARDANDO_TRIAGEM:
+    if item.status not in [StatusDoacao.AGUARDANDO_TRIAGEM, StatusDoacao.AGUARDANDO_NOVA_TRIAGEM]:
         raise HTTPException(
             status_code=400,
-            detail="Apenas itens aguardando triagem podem ser avaliados.",
+            detail="Apenas itens aguardando triagem ou nova triagem podem ser avaliados.",
         )
 
     if dados.resultado == ResultadoTriagemDoacao.INAPTO and not dados.motivo_inaptidao:
@@ -411,13 +409,13 @@ def avaliar_item_doacao(
             item.status = StatusDoacao.INAPTO
             item.motivo_inaptidao = dados.motivo_inaptidao
 
-    
     sincronizar_status_doacao(item.doacao)
 
     try:
         db.add(avaliacao)
         db.commit()
         db.refresh(avaliacao)
+        db.refresh(item)
         return avaliacao
     except Exception as exc:
         db.rollback()
