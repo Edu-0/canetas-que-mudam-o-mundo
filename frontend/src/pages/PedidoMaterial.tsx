@@ -111,18 +111,28 @@ function PedidoMaterial() {
     ]);
   }
 
+  function resetarFormulario() {
+    setOngId("");
+    setFamiliarId("");
+    setMateriaisDisponiveis([]);
+    setItens([{ tipo_material: "", quantidade: 1 }]);
+  }
+
   function removerItem(index: number) {
     setItens((prevItens) => prevItens.filter((_, indice) => indice !== index));
   }
 
   function validarPedido() {
-    if (!ongId) {
-      setErro("Selecione a ONG que vai atender o pedido.");
+    const ongSelecionada = Number(ongId);
+    const familiarSelecionado = Number(familiarId);
+
+    if (!Number.isInteger(ongSelecionada) || ongSelecionada <= 0) {
+      setErro("Selecione uma ONG válida para atender o pedido.");
       return false;
     }
 
-    if (!familiarId) {
-      setErro("Selecione o familiar beneficiário.");
+    if (!Number.isInteger(familiarSelecionado) || familiarSelecionado <= 0) {
+      setErro("Selecione um familiar beneficiário válido.");
       return false;
     }
 
@@ -133,7 +143,7 @@ function PedidoMaterial() {
 
     const totalQuantidade = itens.reduce((acc, item) => acc + item.quantidade, 0);
     if (totalQuantidade > 20) {
-      setErro("O pedido não pode ultrapassar 20 itens no total.");
+      setErro("O pedido não pode ultrapassar 20 unidades no total.");
       return false;
     }
 
@@ -168,17 +178,30 @@ function PedidoMaterial() {
       return;
     }
 
+    const ongSelecionada = Number(ongId);
+    const familiarSelecionado = Number(familiarId);
+
+    if (!Number.isInteger(ongSelecionada) || ongSelecionada <= 0) {
+      setErro("Selecione uma ONG válida para atender o pedido.");
+      return;
+    }
+
+    if (!Number.isInteger(familiarSelecionado) || familiarSelecionado <= 0) {
+      setErro("Selecione um familiar beneficiário válido.");
+      return;
+    }
+
     setSubmetendo(true);
 
     try {
       await criarPedidoMaterial({
-        ong_id: Number(ongId),
-        familiar_id: Number(familiarId),
+        ong_id: ongSelecionada,
+        familiar_id: familiarSelecionado,
         itens,
       });
 
       setSucesso("Pedido de materiais enviado com sucesso.");
-      setItens([{ tipo_material: materiaisDisponiveis[0]?.tipo_material || "", quantidade: 1 }]);
+      resetarFormulario();
     } catch (error: any) {
       console.error(error);
       setErro(
@@ -211,13 +234,13 @@ function PedidoMaterial() {
               </p>
 
               {erro ? (
-                <div className="rounded-xl border border-[var(--cor-resposta-errada)] bg-[var(--cor-resposta-errada-fundo)] p-4 mb-6 text-[var(--cor-resposta-errada)]" role="alert">
+                <div className="rounded-xl border border-[var(--cor-resposta-errada)] bg-[var(--cor-resposta-errada-fundo)] p-4 mb-6 text-[var(--cor-resposta-errada)]" role="alert" aria-live="assertive">
                   {erro}
                 </div>
               ) : null}
 
               {sucesso ? (
-                <div className="rounded-xl border border-[var(--cor-resposta-correta)] bg-[var(--cor-resposta-correta-fundo)] p-4 mb-6 text-[var(--cor-resposta-correta)]" role="status">
+                <div className="rounded-xl border border-[var(--cor-resposta-correta)] bg-[var(--cor-resposta-correta-fundo)] p-4 mb-6 text-[var(--cor-resposta-correta)]" role="status" aria-live="polite">
                   {sucesso}
                 </div>
               ) : null}
@@ -229,10 +252,14 @@ function PedidoMaterial() {
                     <select
                       className="input-padrao w-full"
                       value={ongId}
-                      onChange={(event) => setOngId(event.target.value)}
+                      onChange={(event) => {
+                        setErro(null);
+                        setSucesso(null);
+                        setOngId(event.target.value);
+                      }}
                       required
                     >
-                      <option value="">Selecione uma ONG</option>
+                      <option value="">{ongs.length > 0 ? "Selecione uma ONG" : "Nenhuma ONG disponível"}</option>
                       {ongs.map((ongItem) => (
                         <option key={ongItem.id} value={ongItem.id}>
                           {ongItem.nome}
@@ -246,11 +273,17 @@ function PedidoMaterial() {
                     <select
                       className="input-padrao w-full"
                       value={familiarId}
-                      onChange={(event) => setFamiliarId(event.target.value)}
+                      onChange={(event) => {
+                        setErro(null);
+                        setSucesso(null);
+                        setFamiliarId(event.target.value);
+                      }}
                       required
                       disabled={familiares.length === 0}
                     >
-                      <option value="">Selecione um beneficiário</option>
+                      <option value="">
+                        {familiares.length > 0 ? "Selecione um beneficiário" : "Nenhum beneficiário disponível"}
+                      </option>
                       {familiares.map((familiar) => (
                         <option key={familiar.id} value={familiar.id}>
                           {familiar.nome}
@@ -353,7 +386,7 @@ function PedidoMaterial() {
                 <div className="rounded-xl border border-[var(--base-70)] bg-[var(--base-10)] p-4 body-muito-pequeno text-[var(--base-70)]">
                   <p className="body-semibold-pequeno mb-2">Resumo do pedido</p>
                   <p>
-                    Total de itens: <strong>{itens.reduce((total, item) => total + item.quantidade, 0)}</strong>
+                    Total de unidades solicitadas: <strong>{itens.reduce((total, item) => total + item.quantidade, 0)}</strong>
                   </p>
                   <p>
                     Materiais diferentes selecionados: <strong>{itens.length}</strong>
