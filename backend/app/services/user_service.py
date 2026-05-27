@@ -283,7 +283,7 @@ def processar_exclusao_conta(usuario_id: int, db: SessionDep):
     if TipoUsuario.TRIAGEM in tipos_cadastrados:
         pode_deletar = pode_deletar and aplicar_hard_delete_voluntario(db, usuario.id)
         
-    if TipoUsuario.GENERICO in tipos_cadastrados:
+    if TipoUsuario.DOADOR in tipos_cadastrados:
         pode_deletar = pode_deletar and aplicar_hard_delete_doador(db, usuario.id)
         
     if TipoUsuario.RESPONSAVEL_BENEFICIARIO in tipos_cadastrados:
