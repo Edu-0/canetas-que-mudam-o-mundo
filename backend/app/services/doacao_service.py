@@ -396,12 +396,12 @@ def avaliar_item_doacao(
 
     vinculo = obter_vinculo_voluntario(db,voluntario.id,item.doacao.ong_id)
 
-    if vinculo.nivel_confianca < 10 
+    if vinculo.nivel_confianca < 10:
         if dados.resultado == ResultadoTriagemDoacao.PRE_APROVADO or dados.resultado == ResultadoTriagemDoacao.AGUARDANDO_NOVA_TRIAGEM:
-        avaliacao.em_quarentena = True
-        avaliacao.resultado = ResultadoTriagemDoacao.EM_QUARENTENA
-        item.status = StatusDoacao.EM_QUARENTENA
-        item.doacao.status = StatusDoacao.EM_QUARENTENA
+            avaliacao.em_quarentena = True
+            avaliacao.resultado = ResultadoTriagemDoacao.EM_QUARENTENA
+            item.status = StatusDoacao.EM_QUARENTENA
+            item.doacao.status = StatusDoacao.EM_QUARENTENA
     else:    
         if dados.resultado == ResultadoTriagemDoacao.PRE_APROVADO:
             item.status = StatusDoacao.PRE_APROVADO
