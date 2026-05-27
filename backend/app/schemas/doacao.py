@@ -71,7 +71,6 @@ class RespostaItemDoacao(BaseModel):
     recebido_em: Optional[datetime] = None
     disponivel_em: Optional[datetime] = None
     coletado_em: Optional[datetime] = None
-    em_quarentena: bool = False
     created_at: datetime
     updated_at: datetime
     fotos: list[RespostaFotoItemDoacao] = []

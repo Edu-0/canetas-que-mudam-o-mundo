@@ -251,7 +251,6 @@ def listar_doacoes(
 
     query = db.query(Doacao).options(
         selectinload(Doacao.itens).selectinload(ItemDoacao.fotos),
-        selectinload(Doacao.itens).selectinload(ItemDoacao.avaliacoes_triagem),
         selectinload(Doacao.doador),
     )
 

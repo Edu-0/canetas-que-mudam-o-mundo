@@ -8,11 +8,11 @@ import Toast from "../components/Toast";
 import ModalConfirmacao from "../components/ModalConfirmacao";
 import {
   registrarDoacao,
-  atualizarDoacao,
   obterDoacao,
   type Doacao,
-  type ImagemDoacao,
 } from "../services/doacaoService";
+import { obterTodasONGs } from "../services/ongService";
+import { ONG } from "../context/OngContext";
 import { useAvisoAlteracoesNaoSalvas } from "../hooks/useAvisoAlteracoesNaoSalvas";
 
 function Doar() {
@@ -28,6 +28,8 @@ function Doar() {
   const [possiveisDefeitos, setPossiveisDefeitos] = useState("");
   const [quantidade, setQuantidade] = useState("");
   const [arquivos, setArquivos] = useState<File[]>([]);
+  const [ongs, setOngs] = useState<ONG[]>([]);
+  const [ongId, setOngId] = useState("");
   const inputArquivoRef = useRef<HTMLInputElement>(null);
 
   const [erros, setErros] = useState<Record<string, string>>({});
@@ -71,6 +73,21 @@ function Doar() {
     carregar();
   }, [idEdicao]);
 
+  useEffect(() => {
+    if (modoEdicao) return;
+
+    async function carregarOngs() {
+      try {
+        const dados = await obterTodasONGs();
+        setOngs(dados);
+      } catch (erro) {
+        console.error("Erro ao carregar ONGs:", erro);
+      }
+    }
+
+    carregarOngs();
+  }, [modoEdicao]);
+
   //  validação 
   function validar() {
     const novosErros: Record<string, string> = {};
@@ -98,6 +115,10 @@ function Doar() {
       novosErros.quantidade = "Informe um número inteiro positivo.";
     }
 
+    if (!modoEdicao && !ongId) {
+      novosErros.ongId = "Selecione uma ONG.";
+    }
+
     // imagens só obrigatórias no cadastro novo
     if (!modoEdicao && arquivos.length === 0) {
       novosErros.arquivos = "Anexe pelo menos uma imagem do material.";
@@ -111,40 +132,38 @@ function Doar() {
   async function handleSubmit() {
     if (!validar()) return;
 
+    if (modoEdicao) {
+      setErroModal("Edição de doação não disponível no momento.");
+      return;
+    }
+
     setEnviando(true);
 
     const formData = new FormData();
-    formData.append("tipo_material", tipoMaterial.trim());
-    formData.append("descricao", descricao.trim());
-    if (possiveisDefeitos.trim()) {
-      formData.append("possiveis_defeitos", possiveisDefeitos.trim());
-    }
-    formData.append("quantidade", quantidade.trim());
+    const fotosIndices = arquivos.map((_, index) => index);
+    const itensPayload = [
+      {
+        tipo_material: tipoMaterial.trim(),
+        descricao: descricao.trim(),
+        possiveis_defeitos: possiveisDefeitos.trim() || null,
+        quantidade: Number(quantidade),
+        fotos_indices: fotosIndices,
+      },
+    ];
 
-    if (!modoEdicao) {
-      // cadastro novo: campo "imagens"
-      for (const arquivo of arquivos) {
-        formData.append("imagens", arquivo);
-      }
-    } else if (arquivos.length > 0) {
-      // edição: campo "novas_imagens" (substitui as antigas)
-      for (const arquivo of arquivos) {
-        formData.append("novas_imagens", arquivo);
-      }
+    formData.append("ong_id", ongId);
+    formData.append("itens", JSON.stringify(itensPayload));
+
+    for (const arquivo of arquivos) {
+      formData.append("fotos", arquivo);
     }
 
     try {
-      if (modoEdicao) {
-        await atualizarDoacao(idEdicao!, formData);
-      } else {
-        await registrarDoacao(formData);
-      }
+      await registrarDoacao(formData);
 
       setAlterou(false);
       setMensagem(
-        modoEdicao
-          ? "Doação atualizada com sucesso!"
-          : "Doação registrada com sucesso!"
+        "Doação registrada com sucesso!"
       );
       setTipoMensagem("sucesso");
 
@@ -216,6 +235,51 @@ function Doar() {
                 </p>
               ) : (
                 <div className="flex flex-col gap-5">
+
+                  {!modoEdicao && (
+                    <div className="flex flex-col sm:flex-row sm:items-start gap-2">
+                      <label
+                        htmlFor="ong"
+                        className="body-semibold-pequeno sm:w-52 sm:text-right sm:pt-2 flex-shrink-0"
+                      >
+                        ONG atendente:{" "}
+                        <span className="text-[var(--cor-resposta-errada)]">*</span>
+                      </label>
+                      <div className="flex-1">
+                        <select
+                          id="ong"
+                          value={ongId}
+                          onChange={(e) => {
+                            setOngId(e.target.value);
+                            setAlterou(true);
+                            setErros((prev) => ({ ...prev, ongId: "" }));
+                          }}
+                          className={`input-padrao w-full ${
+                            erros.ongId
+                              ? "border-[var(--cor-resposta-errada)] focus:ring-[var(--cor-resposta-errada)]"
+                              : "hover:border-2 border-[var(--base-70)] focus-acessivel"
+                          }`}
+                          aria-invalid={!!erros.ongId}
+                        >
+                          <option value="">
+                            {ongs.length > 0
+                              ? "Selecione uma ONG"
+                              : "Nenhuma ONG disponível"}
+                          </option>
+                          {ongs.map((ong) => (
+                            <option key={ong.id} value={ong.id}>
+                              {ong.nome}
+                            </option>
+                          ))}
+                        </select>
+                        {erros.ongId && (
+                          <span className="text-[var(--cor-resposta-errada)] text-sm mt-1 block">
+                            {erros.ongId}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Tipo de material */}
                   <div className="flex flex-col sm:flex-row sm:items-start gap-2">
@@ -443,13 +507,7 @@ function Doar() {
                       desabilitado={enviando}
                       aoClicar={handleSubmit}
                     >
-                      {enviando
-                        ? modoEdicao
-                          ? "Salvando..."
-                          : "Registrando..."
-                        : modoEdicao
-                        ? "Salvar alterações"
-                        : "Confirmar registro"}
+                      {enviando ? "Registrando..." : "Confirmar registro"}
                     </Botao>
                   </div>
                 </div>

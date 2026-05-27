@@ -139,17 +139,6 @@ class ItemDoacao(Base):
     recebido_por = relationship("Usuario", foreign_keys=[recebido_por_id])
     coletado_por = relationship("Usuario", foreign_keys=[coletado_por_id])
 
-    @property
-    def em_quarentena(self) -> bool:
-        if not self.avaliacoes_triagem:
-            return False
-
-        ultima_avaliacao = max(
-            self.avaliacoes_triagem,
-            key=lambda avaliacao: avaliacao.created_at or datetime.min,
-        )
-        return bool(ultima_avaliacao.em_quarentena)
-
 
 class FotoItemDoacao(Base):
     __tablename__ = "foto_item_doacao"

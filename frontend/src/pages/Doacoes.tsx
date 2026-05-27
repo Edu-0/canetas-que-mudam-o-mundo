@@ -26,7 +26,7 @@ function useFiltroDoacao(doacoes: Doacao[], status: StatusDoacao | "todos", peri
   if (periodo !== "todos") {
     filtradas = filtradas.filter(d => {
       const dataAtual = new Date();
-      const dataCriacao = new Date(d.data_criacao?.replace(" ", "T") || "");
+      const dataCriacao = new Date(d.created_at?.replace(" ", "T") || "");
       const diffMeses = (dataAtual.getFullYear() - dataCriacao.getFullYear()) * 12 + (dataAtual.getMonth() - dataCriacao.getMonth());
       
       if (periodo === "0-1") return diffMeses <= 1;
@@ -43,9 +43,9 @@ function useFiltroDoacao(doacoes: Doacao[], status: StatusDoacao | "todos", peri
   }
 
   if (ordem === "data-asc") {
-    filtradas.sort((a, b) => new Date(a.data_criacao?.replace(" ", "T") || "").getTime() - new Date(b.data_criacao?.replace(" ", "T") || "").getTime());
+    filtradas.sort((a, b) => new Date(a.created_at?.replace(" ", "T") || "").getTime() - new Date(b.created_at?.replace(" ", "T") || "").getTime());
   } else {
-    filtradas.sort((a, b) => new Date(b.data_criacao?.replace(" ", "T") || "").getTime() - new Date(a.data_criacao?.replace(" ", "T") || "").getTime());
+    filtradas.sort((a, b) => new Date(b.created_at?.replace(" ", "T") || "").getTime() - new Date(a.created_at?.replace(" ", "T") || "").getTime());
   }
 
   return filtradas;
@@ -56,25 +56,37 @@ const STATUS_CONFIG: Record<
   StatusDoacao,
   { label: string; className: string }
 > = {
-  aguardando_triagem: {
+  AGUARDANDO_TRIAGEM: {
     label: "Aguardando triagem",
     className: "bg-yellow-100 text-yellow-800",
   },
-  pre_aprovado: {
+  PRE_APROVADO: {
     label: "Pré-aprovado",
     className: "bg-green-100 text-green-800",
   },
-  inapto: {
+  INAPTO: {
     label: "Inapto",
     className: "bg-red-100 text-red-800",
   },
-  incompleta: {
+  INCOMPLETO: {
     label: "Incompleta",
     className: "bg-orange-100 text-orange-800",
   },
-  aguardando_nova_triagem: {
+  AGUARDANDO_NOVA_TRIAGEM: {
     label: "Aguardando nova triagem",
     className: "bg-blue-100 text-blue-800",
+  },
+  DISPONIVEL: {
+    label: "Disponível",
+    className: "bg-emerald-100 text-emerald-800",
+  },
+  MATERIAL_COLETADO: {
+    label: "Material coletado",
+    className: "bg-gray-200 text-gray-800",
+  },
+  CANCELADO: {
+    label: "Cancelado",
+    className: "bg-gray-100 text-gray-600",
   },
 };
 
@@ -187,7 +199,7 @@ function Doacoes() {
 
               {/* botão nova doação */}
               <div className="flex justify-center mb-6">
-                <Botao variante="confirmar" aoClicar={() => navigate("/doar")}>
+                <Botao variante="confirmar" aoClicar={() => navigate("/doacoes/doar")}> 
                   Fazer nova doação
                 </Botao>
               </div>
@@ -210,11 +222,11 @@ function Doacoes() {
                     aria-label="Filtrar por status"
                   >
                     <option value="todos">Status</option>
-                    <option value="aguardando_triagem">Aguardando triagem</option>
-                    <option value="pre_aprovado">Pré-aprovado</option>
-                    <option value="inapto">Inapto</option>
-                    <option value="incompleta">Incompleta</option>
-                    <option value="aguardando_nova_triagem">
+                    <option value="AGUARDANDO_TRIAGEM">Aguardando triagem</option>
+                    <option value="PRE_APROVADO">Pré-aprovado</option>
+                    <option value="INAPTO">Inapto</option>
+                    <option value="INCOMPLETO">Incompleto</option>
+                    <option value="AGUARDANDO_NOVA_TRIAGEM">
                       Aguardando nova triagem
                     </option>
                   </select>
@@ -287,11 +299,13 @@ function Doacoes() {
                           {String(
                             (paginaAtual - 1) * ITENS_POR_PAGINA + index + 1
                           ).padStart(3, "0")}{" "}
-                          — {d.tipo_material}
+                          — {d.itens?.length
+                            ? d.itens.map((item) => item.tipo_material).join(", ")
+                            : "Sem itens"}
                         </span>
 
                         <span className="body-muito-pequeno text-gray-500 mt-[2px]">
-                          {formatarData(d.data_criacao)}
+                          {formatarData(d.created_at)}
                         </span>
 
                         <div className="mt-1">
@@ -308,10 +322,10 @@ function Doacoes() {
                           Ver
                         </Botao>
 
-                        {d.status === "incompleta" && (
+                        {d.status === "INCOMPLETO" && (
                           <Botao
                             variante="botao-pequeno-desativar"
-                            aoClicar={() => navigate(`/doar?id=${d.id}`)}
+                            aoClicar={() => navigate(`/doacoes/doar?id=${d.id}`)}
                           >
                             Editar
                           </Botao>
@@ -334,7 +348,7 @@ function Doacoes() {
                 titulo="Detalhes da doação"
                 descricao={
                   doacaoVer
-                    ? `Tipo: ${doacaoVer.tipo_material} · Qtd: ${doacaoVer.quantidade} · Status: ${STATUS_CONFIG[doacaoVer.status]?.label ?? doacaoVer.status} · Data: ${formatarData(doacaoVer.data_criacao)} · Descrição: ${doacaoVer.descricao}${doacaoVer.possiveis_defeitos ? ` · Possíveis defeitos: ${doacaoVer.possiveis_defeitos}` : ""}`
+                    ? `Itens: ${doacaoVer.itens?.map((item) => `${item.tipo_material} (Qtd: ${item.quantidade})`).join(", ") || "Sem itens"} · Status: ${STATUS_CONFIG[doacaoVer.status]?.label ?? doacaoVer.status} · Data: ${formatarData(doacaoVer.created_at)}`
                     : ""
                 }
                 varianteCancelar="cancelar"
