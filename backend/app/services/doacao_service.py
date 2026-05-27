@@ -459,6 +459,7 @@ def avaliar_analise_de_doacao(
         if hasattr(dados, 'comentario_coordenador') and dados.comentario_coordenador:
             analise.comentario = f"[Revisão da Coordenação]: {dados.comentario_coordenador}"
 
+        analise.resultado_validado = False
         analise.em_quarentena = False
         analise.resultado = ResultadoTriagemDoacao.AGUARDANDO_NOVA_TRIAGEM
         analise.item_doacao.status = StatusDoacao.AGUARDANDO_NOVA_TRIAGEM
@@ -468,6 +469,7 @@ def avaliar_analise_de_doacao(
             vinculo_voluntario.nivel_confianca -= 1
 
     sincronizar_status_doacao(item.doacao)
+
     try:
         db.commit() 
         db.refresh(analise)
