@@ -501,9 +501,15 @@ function AuditoriaTriagensQuarentena() {
                                 {/* status */}
                                 <p className="body-muito-pequeno w-full">
                                   <strong className="body-semibold-muito-pequeno">Status da triagem: </strong>
-                                  <span className={`tag ${corStatus(analise.resultado || "")}`}>
-                                    {formatarStatus(analise.resultado || "Sem Avaliação")}
-                                  </span>
+                                  {analise.em_quarentena ? (
+                                    <span className={`tag ${corStatus("EM_QUARENTENA")}`}>
+                                      {formatarStatus("EM_QUARENTENA")}
+                                    </span>
+                                  ) : (
+                                    <span className={`tag ${corStatus(analise.resultado || "")}`}>
+                                      {formatarStatus(analise.resultado || "Sem Avaliação")}
+                                    </span>
+                                  )}
                                 </p>
                             
                                 <p className="body-muito-pequeno w-full text-left sm:text-right">
