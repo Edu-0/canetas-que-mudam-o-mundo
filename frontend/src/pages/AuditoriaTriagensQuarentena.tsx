@@ -33,7 +33,7 @@ function AuditoriaTriagensQuarentena() {
   const [buscaNome, setBuscaNome] = useState("");
   const [ordem, setOrdem] = useState<"asc" | "desc">("desc");
   const [statusAvaliacao, setStatusAvaliacao] = useState<"todos" | "PRE_APROVADO" | "INAPTO">("todos");
-  const [statusFiltro, setStatusFiltro] = useState<"todos" | "PRE_APROVADO" | "INAPTO" | "INCOMPLETO">("todos");
+  const [statusFiltro, setStatusFiltro] = useState<"todos" | "PRE_APROVADO" | "INAPTO" | "INCOMPLETO" | "EM_QUARENTENA">("todos");
   const [dataInicio, setDataInicio] = useState("");
   const [dataFim, setDataFim] = useState("");
   const [erroBusca, setErroBusca] = useState("");
@@ -149,7 +149,8 @@ function AuditoriaTriagensQuarentena() {
       }));
 
       // remove da lista para não precisar recarregar a página para tirar os itens auditados da quarentena 
-      setAnalises(prev => prev.filter(a => a.id !== id) );
+      setAnalises(prev => prev.filter(a => a.id !== id));
+      setPaginaAtual(1); // para evitar página vazia
     } catch (err) {
       setMensagem("Erro ao realizar auditoria");
       setTipoMensagem("erro");
@@ -333,6 +334,9 @@ function AuditoriaTriagensQuarentena() {
       case "INCOMPLETO":
         return "bg-gray-100 text-black";
 
+      case "EM_QUARENTENA":
+        return "bg-blue-100 text-blue-800";
+
       default:
         return "bg-gray-100 text-black";
     }
@@ -401,6 +405,7 @@ function AuditoriaTriagensQuarentena() {
                     <option value="PRE_APROVADO">Pré-Aprovado</option>
                     <option value="INAPTO">Inapto</option>
                     <option value="INCOMPLETO">Incompleto</option>
+                    <option value="EM_QUARENTENA">Em quarentena</option>
                   </select>
                 </div>
 

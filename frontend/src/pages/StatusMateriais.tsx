@@ -110,8 +110,8 @@ function StatusMateriais() {
       updated_at: d.updated_at,
       prazo_retirada_limite: d.prazo_retirada_limite,
       itens: d.itens,
-      doador_nome: d.doador?.nome || d.doador?.usuario?.nome, // tenta pegar o nome do doador diretamente ou via usuário
-      responsavel_nome: d.responsavel?.nome || d.responsavel?.usuario?.nome, // tenta pegar o nome do responsável diretamente ou via usuário
+      doador_nome: d.doador_nome, // tenta pegar o nome do doador diretamente ou via usuário
+      responsavel_nome: d.responsavel_nome, // tenta pegar o nome do responsável diretamente ou via usuário
     }));
 
     const pedidos: ItemUnificado[] = res.data.pedidos_aguardando_retirada.map((p: any) => ({
@@ -123,8 +123,8 @@ function StatusMateriais() {
       updated_at: p.updated_at,
       prazo_retirada_limite: p.prazo_retirada_limite,
       itens: p.itens,
-      doador_nome: p.doador?.nome || p.doador?.usuario?.nome, // tenta pegar o nome do doador diretamente ou via usuário
-      responsavel_nome: p.responsavel?.nome || p.responsavel?.usuario?.nome, // tenta pegar o nome do responsável diretamente ou via usuário
+      doador_nome: p.doador_nome, // tenta pegar o nome do doador diretamente ou via usuário
+      responsavel_nome: p.responsavel_nome, // tenta pegar o nome do responsável diretamente ou via usuário
     }));
 
     setItens([...doacoes, ...pedidos]);
@@ -146,8 +146,8 @@ function StatusMateriais() {
   //         status: d.status,
   //         created_at: d.created_at,
   //         itens: d.itens,
-  //         doador_nome: d.doador?.nome || d.doador?.usuario?.nome, // tenta pegar o nome do doador diretamente ou via usuário
-  //         responsavel_nome: d.responsavel?.nome || d.responsavel?.usuario?.nome, // tenta pegar o nome do responsável diretamente ou via usuário
+  //         doador_nome: d.doador_nome, // tenta pegar o nome do doador diretamente ou via usuário
+  //         responsavel_nome: d.responsavel_nome, // tenta pegar o nome do responsável diretamente ou via usuário
   //       })
   //     );
 
@@ -159,8 +159,8 @@ function StatusMateriais() {
   //         status: p.status,
   //         created_at: p.created_at,
   //         itens: p.itens,
-  //         doador_nome: p.doador?.nome || p.doador?.usuario?.nome, // tenta pegar o nome do doador diretamente ou via usuário
-  //         responsavel_nome: p.responsavel?.nome || p.responsavel?.usuario?.nome, // tenta pegar o nome do responsável diretamente ou via usuário
+  //         doador_nome: p.doador_nome, // tenta pegar o nome do doador diretamente ou via usuário
+  //         responsavel_nome: p.responsavel_nome, // tenta pegar o nome do responsável diretamente ou via usuário
   //       })
   //     );
 
@@ -224,8 +224,6 @@ function StatusMateriais() {
     try {
       bloquearItem(item.id);
       console.log(`Processando ${item.origem} ${item.id} status ${item.status}...`);
-
-      console.log(`Nomes antes da atualização: doador=${item.doador_nome}, responsável=${item.responsavel_nome}`);
 
       if (item.origem === "DOACAO") {
         await atualizarStatusDoacao(item.id, "DISPONIVEL");
@@ -499,47 +497,52 @@ function StatusMateriais() {
                           </div>
 
                           {i.codigo_coleta && (
-                            <span className="body-muito-pequeno">
-                              <strong className="body-semibold-muito-pequeno">Código: </strong>{i.codigo_coleta}
-                            </span>
+                            <div>
+                              <span className="body-muito-pequeno">
+                                <strong className="body-semibold-muito-pequeno">Código: </strong>{i.codigo_coleta}
+                              </span>
+                            </div>
                           )}
 
                           {i.doador_nome && (
-                            <span className="body-muito-pequeno">
-                              <strong className="body-semibold-muito-pequeno">Nome do Doador: </strong>{i.doador_nome} {/* pega o nome do doador */}
-                            </span>
+                            <div>
+                              <span className="body-muito-pequeno">
+                                <strong className="body-semibold-muito-pequeno">Nome do Doador: </strong>{i.doador_nome} {/* pega o nome do doador */}
+                              </span>
+                            </div>
                           )}
 
                           {i.responsavel_nome && (
-                            <span className="body-muito-pequeno">
-                              <strong className="body-semibold-muito-pequeno">Nome do Responsável: </strong>{i.responsavel_nome} {/* pega o nome do responsável pela triagem */}
-                            </span>
+                            <div>
+                              <span className="body-muito-pequeno">
+                                <strong className="body-semibold-muito-pequeno">Nome do Responsável: </strong>{i.responsavel_nome} {/* pega o nome do responsável pela triagem */}
+                              </span>
+                            </div>
                           )}
 
                           <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                            <div className="mt-1">
+                            <div>
                               <span className="body-muito-pequeno">
                                 <strong className="body-semibold-muito-pequeno">Registrado em: </strong>{formatarData(i.created_at)}
                               </span>
                             </div>
 
-                            <div className="mt-1">
-                              <span className="body-muito-pequeno">
-                                {i.prazo_retirada_limite && (
-                                  <>
-                                    <strong className="body-semibold-muito-pequeno">Prazo para retirada: </strong>
-                                    {formatarDataHora(i.prazo_retirada_limite)}
-                                  </>
-                                )}
-                              </span>
-                            </div>
+                            {i.prazo_retirada_limite && (
+                              <div>
+                                <span className="body-muito-pequeno">
+                                  <strong className="body-semibold-muito-pequeno">Prazo para retirada: </strong>{formatarData(i.prazo_retirada_limite)}
+                                </span>
+                              </div>
+                            )}
+                            
+                            {i.updated_at && (
+                              <div>
+                                <span className="body-muito-pequeno">
+                                  <strong className="body-semibold-muito-pequeno">Última atualização: </strong>{formatarData(i.updated_at)}
+                                </span>
+                              </div>
+                            )}
                           </div>
-                          
-                          {i.updated_at && (
-                            <>
-                            <div className="text-sm mt-1">Última atualização: {formatarDataHora(i.updated_at)}</div>
-                            </>
-                          )}
 
                           {/* EXPANDIR */}
                           {expandido[i.id] && (
