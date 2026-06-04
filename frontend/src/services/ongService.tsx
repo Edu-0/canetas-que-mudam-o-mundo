@@ -52,7 +52,7 @@ export async function obterONG(): Promise<ONG> {
 
 // Obter todas as ONGs (para a página de listagem)
 export async function obterTodasONGs() {
-  const response = await api.get("/ong");
+  const response = await api.get("/ong/");
   return response.data; 
 }
 

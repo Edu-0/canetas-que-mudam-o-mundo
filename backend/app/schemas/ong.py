@@ -13,7 +13,7 @@ class CriarOng(BaseModel):
     bairro: str = Field (max_length = 255)
     cidade: str = Field (max_length = 255)
     estado: str = Field (max_length = 255)
-    numero: str = Field (max_length = 20)
+    numero: str | None = Field(default=None, max_length = 20)
     complemento: str | None = Field(default=None, max_length=255)
     telefone: str  | None = Field(default=None, pattern=r"^\d{10,11}$")
     email: EmailStr = Field (max_length = 255)
@@ -27,6 +27,16 @@ class CriarOng(BaseModel):
     
 
 class RespostaOng(CriarOng):
+    cnpj: str
+    cep: str | None = None
+    numero: str | None = None
+    telefone: str | None = None
+    email: str
+    sobre: str
+    instagram: str | None = None
+    facebook: str | None = None
+    site: str | None = None
+
     id:int
     data_cadastro: datetime
     data_edicao: Optional[datetime] = None 

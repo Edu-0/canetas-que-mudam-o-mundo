@@ -14,6 +14,7 @@ function ListarONGs() {
   const [ordem, setOrdem] = useState<"nome-asc" | "nome-desc">("nome-asc");
   const [estadoSelecionado, setEstadoSelecionado] = useState("");
   const [erroBusca, setErroBusca] = useState("");
+  const [erroCarregamento, setErroCarregamento] = useState("");
   const [tocadoBusca, setTocadoBusca] = useState(false);
   const [carregando, setCarregando] = useState(true);
 
@@ -42,6 +43,17 @@ function ListarONGs() {
       try {
         const dados = await obterTodasONGs();
         setOngs(dados);
+        setErroCarregamento("");
+      } catch (erro: any) {
+        console.error("Erro ao carregar ONGs:", erro);
+
+        const status = erro?.response?.status;
+
+        if (status === 401 || status === 403) {
+          setErroCarregamento("Não foi possível carregar as ONGs por falta de permissão.");
+        } else {
+          setErroCarregamento("Não foi possível carregar as ONGs no momento.");
+        }
       } finally {
         setCarregando(false);
       }
@@ -86,19 +98,22 @@ function ListarONGs() {
 
               <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch gap-3 mb-6 border rounded-lg bg-[var(--base-20)] border-[var(--base-70)] p-2">
   
-                <div className="text-black text-2xl font-extrabold font-['Nunito']">Filtros:</div>
+                <div className="text-black text-2xl font-extrabold font-['Nunito'] flex items-center self-stretch">Filtros:</div>
 
-                <div className="flex-1 min-w-0">
+                <div className="justify-start w-full sm:w-72 flex flex-col">
+                  <label className="body-muito-pequeno" htmlFor="busca-tipo">Buscar por nome ou CNPJ</label>
                   
                   {/* busca por nome */}
                   <input id="busca" type="text" maxLength={100} placeholder="Buscar por nome ou CNPJ (ex: 12.345.678/0001-90)..." value={busca} onChange={(e) => { const valor = e.target.value; setBusca(valor); setPaginaAtual(1); const erro = validarBusca(valor); setErroBusca(erro);}}
-                    onBlur={() => setTocadoBusca(true)} className={`input-padrao w-full ${ tocadoBusca && erroBusca ? "border-[var(--cor-resposta-errada)] focus:ring-[var(--cor-resposta-errada)]" : "hover:border-2 border-[var(--base-70)] focus-acessivel"}`} aria-invalid={!!erroBusca} aria-label="Pesquisar por nome ou CNPJ"/>
+                    onBlur={() => setTocadoBusca(true)} className={`input-padrao w-full h-9 ${ tocadoBusca && erroBusca ? "border-[var(--cor-resposta-errada)] focus:ring-[var(--cor-resposta-errada)]" : "hover:border-2 border-[var(--base-70)] focus-acessivel"}`} aria-invalid={!!erroBusca} aria-label="Pesquisar por nome ou CNPJ"/>
                   
                   {tocadoBusca && erroBusca && <div className="text-[var(--cor-resposta-errada)] mt-1 text-sm">{erroBusca}</div>}
                 </div>
 
-                <div className="w-full sm:w-48">
-                  <select id="estados" value={estadoSelecionado} onChange={(e) => { setEstadoSelecionado(e.target.value); setPaginaAtual(1);}} className="input-padrao w-full hover:border-2 border-[var(--base-70)] focus-acessivel">
+                <div className="justify-start w-full sm:w-56 flex flex-col">
+                  <label className="body-muito-pequeno" htmlFor="estados">Estado</label>
+
+                  <select id="estados" value={estadoSelecionado} onChange={(e) => { setEstadoSelecionado(e.target.value); setPaginaAtual(1);}} className="input-padrao w-full h-9 hover:border-2 border-[var(--base-70)] focus-acessivel">
                     <option value="">Todos os estados</option>
                     <option value="AL">Alagoas</option>
                     <option value="AP">Amapá</option>
@@ -129,8 +144,10 @@ function ListarONGs() {
                   </select>
                 </div>
 
-                <div>
-                  <select id="ordem" value={ordem} onChange={(e) => { setOrdem(e.target.value as any); setPaginaAtual(1);}} className="input-padrao w-full sm:w-48 hover:border-2 border-[var(--base-70)] focus-acessivel">
+                <div className="justify-start w-full sm:w-48 flex flex-col">
+                  <label className="body-muito-pequeno" htmlFor="ordem">Ordem de exibição</label>
+
+                  <select id="ordem" value={ordem} onChange={(e) => { setOrdem(e.target.value as any); setPaginaAtual(1);}} className="input-padrao w-full h-9 sm:w-48 hover:border-2 border-[var(--base-70)] focus-acessivel">
                     <option value="nome-asc">Nome A-Z</option>
                     <option value="nome-desc">Nome Z-A</option>
                   </select>
@@ -140,6 +157,11 @@ function ListarONGs() {
 
               {carregando ? (
                 <p className="text-center body-semibold-pequeno py-6">Carregando ONGs...</p>
+
+              ) : erroCarregamento ? (
+                <p className="text-center body-semibold-pequeno py-6">
+                  {erroCarregamento}
+                </p>
 
               ) : ongs.length === 0 ? (
                 <p className="text-center body-semibold-pequeno py-6">

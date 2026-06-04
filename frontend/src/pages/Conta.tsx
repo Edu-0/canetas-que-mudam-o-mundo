@@ -103,6 +103,12 @@ function Conta() {
   const dadosNormalizados = perfil
     ? normalizarUsuario(perfil)
     : usuario;
+
+  const tiposExibidosNaConta = dadosNormalizados?.tipos
+    ? dadosNormalizados.tipos.length > 1
+      ? dadosNormalizados.tipos.filter(tipo => tipo !== "Genérico")
+      : dadosNormalizados.tipos
+    : [];
   
   const naoPodeAdicionarTipo = dadosNormalizados?.tipos?.includes("Coordenador de Processos") ||
                                dadosNormalizados?.tipos?.includes("Voluntário da triagem");
@@ -241,11 +247,11 @@ function Conta() {
                       <dd className="body-muito-pequeno sm:body-pequeno break-words">{formatarDataHora(dadosNormalizados?.data_edicao_conta) || "A conta nunca foi editada"}</dd>
                     </div>
 
-                    {dadosNormalizados?.tipos && dadosNormalizados.tipos.length > 0 && (
+                    {tiposExibidosNaConta.length > 0 && (
                       <>
                         <div className="flex flex-col sm:flex-row sm:items-start sm:gap-2">
                           <dt className="body-semibold-muito-pequeno sm:body-semibold-pequeno whitespace-nowrap">Tipo de conta:</dt>
-                          <dd className="body-muito-pequeno sm:body-pequeno break-words">{dadosNormalizados.tipos.join(", ")}</dd>
+                          <dd className="body-muito-pequeno sm:body-pequeno break-words">{tiposExibidosNaConta.join(", ")}</dd>
                         </div>
                       </>
                     )}

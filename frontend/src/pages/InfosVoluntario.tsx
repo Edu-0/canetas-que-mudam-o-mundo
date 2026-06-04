@@ -7,19 +7,23 @@ import Botao from "../components/Botao";
 import Toast from "../components/Toast";
 import ModalConfirmacao from "../components/ModalConfirmacao";
 import { AnaliseQuarentena } from "../services/triagemService";
-import { DadosUsuario, deletarVoluntarioONG } from "../services/usuarioService";
+import { deletarVoluntarioONG } from "../services/usuarioService";
 import { obterVoluntarioONG } from "../services/usuarioService";
+import { obterONG } from "../services/ongService";
 import { useONG } from "../context/OngContext";
 
 function AuditoriaVoluntario() {
   const { id } = useParams();
-  const { ong } = useONG();
+  const { ong, definirONG } = useONG();
   const voluntarioId = Number(id); // converte o id para número, já que os ids dos voluntários são numéricos
+  const temIdValido = Number.isFinite(voluntarioId); // verifica se o id é um número válido (não é NaN, infinito, etc)
 
   const [voluntarioSelecionado, setVoluntarioSelecionado] = useState<number | null>(null);
   const navigate = useNavigate();
   const [voluntario, setVoluntario] = useState<any>(null);
   const [analises, setAnalises] = useState<AnaliseQuarentena[]>([]);
+  const [carregando, setCarregando] = useState(true);
+  const [erroCarregamento, setErroCarregamento] = useState("");
   
   const [carregandoExclusao, setCarregandoExclusao] = useState(false);
   
@@ -51,18 +55,53 @@ function AuditoriaVoluntario() {
 
   useEffect(() => {
     async function carregarVoluntario() {
-      if (!ong?.id || !voluntarioId) return;
+      if (!temIdValido) {
+        setCarregando(false);
+        return;
+      }
+
+      setCarregando(true);
+      setErroCarregamento("");
 
       try {
-        const voluntario = await obterVoluntarioONG(ong.id, voluntarioId);
+        // Sempre recarrega a ONG do usuário logado para evitar usar um valor antigo salvo no contexto/localStorage.
+        const ongAtual = await obterONG();
+
+        if (!ongAtual?.id) {
+          setErroCarregamento("Não foi possível identificar a ONG do usuário logado.");
+          return;
+        }
+
+        if (!ong || ong.id !== ongAtual.id) {
+          definirONG(ongAtual);
+        }
+
+        const voluntario = await obterVoluntarioONG(ongAtual.id, voluntarioId);
         setVoluntario(voluntario);
       } catch (err) {
         console.error("Erro ao carregar voluntário:", err);
+
+        const status = (err as any)?.response?.status;
+
+        if (status === 403) {
+          setErroCarregamento("Você não tem permissão para acessar os voluntários desta ONG.");
+        } else if (status === 404) {
+          setErroCarregamento("Voluntário não encontrado ou não pertence a esta ONG.");
+        } else {
+          setErroCarregamento("Não foi possível carregar os dados do voluntário.");
+        }
+      } finally {
+        setCarregando(false);
       }
     }
 
     carregarVoluntario();
-  }, [ong?.id, voluntarioId]);
+  }, [ong, definirONG, temIdValido, voluntarioId]);
+
+  const nivelConfianca = voluntario?.nivel_confianca;
+  const statusConfianca = nivelConfianca !== undefined && nivelConfianca < 10
+    ? "Voluntário novato (Em quarentena)"
+    : "Voluntário experiente";
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--base-5)]">
@@ -93,8 +132,28 @@ function AuditoriaVoluntario() {
                 AUDITORIA DO VOLUNTÁRIO
               </h2>
 
+              {!temIdValido && (
+                <div className="border rounded p-4 mb-6 bg-white">
+                  <p className="body-pequeno">
+                    Nenhum voluntário foi selecionado.
+                  </p>
+                </div>
+              )}
+
+              {carregando && temIdValido && (
+                <div className="border rounded p-4 mb-6 bg-white">
+                  <p className="body-pequeno">Carregando dados do voluntário...</p>
+                </div>
+              )}
+
+              {erroCarregamento && (
+                <div className="border rounded p-4 mb-6 bg-white">
+                  <p className="body-pequeno">{erroCarregamento}</p>
+                </div>
+              )}
+
               {/* Informação do voluntário selecionado */}
-              {voluntario && (
+              {!carregando && voluntario && (
                 <>
                   {emQuarentena && (
                     <div className="mb-4 p-3 bg-yellow-100 rounded">
@@ -110,7 +169,11 @@ function AuditoriaVoluntario() {
                     <p><strong>Registrado em:</strong> {formatarDataHora(voluntario.data_cadastro)}</p>
 
                     <p><strong>Nível de confiança:</strong>{" "}
-                      {voluntario.nivel_confianca < 10 ? "Voluntário novato (Em quarentena)" : "Voluntário experiente"}
+                      {nivelConfianca !== undefined ? nivelConfianca : "N/A"}
+                    </p>
+
+                    <p><strong>Classificação:</strong>{" "}
+                      {statusConfianca}
                     </p>
                   </div>
 

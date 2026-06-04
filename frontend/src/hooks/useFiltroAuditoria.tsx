@@ -1,8 +1,32 @@
 type StatusAvaliacao = "todos" | "PRE_APROVADO" | "INAPTO";
 type StatusFiltro = "todos" | "PRE_APROVADO" | "INAPTO" | "INCOMPLETO" | "EM_QUARENTENA";
 
-function extrairData(data: string) {
-  return data.split(" ")[0]; // pega só YYYY-MM-DD
+function converterDataParaTimestamp(data: string, fimDoDia = false) {
+  const dataParte = data.trim().slice(0, 10);
+  const [ano, mes, dia] = dataParte.split("-").map(Number);
+
+  const dataNormalizada = new Date(ano, mes - 1, dia);
+
+  if (fimDoDia) {
+    dataNormalizada.setHours(23, 59, 59, 999);
+  } else {
+    dataNormalizada.setHours(0, 0, 0, 0);
+  }
+
+  return dataNormalizada.getTime();
+}
+
+function converterFiltroParaTimestamp(data: string, fimDoDia = false) {
+  const [ano, mes, dia] = data.split("-").map(Number);
+  const dataNormalizada = new Date(ano, mes - 1, dia);
+
+  if (fimDoDia) {
+    dataNormalizada.setHours(23, 59, 59, 999);
+  } else {
+    dataNormalizada.setHours(0, 0, 0, 0);
+  }
+
+  return dataNormalizada.getTime();
 }
 
 export function useFiltroAuditoria(
@@ -30,20 +54,18 @@ export function useFiltroAuditoria(
 
   // data 
   if (datas.dataInicio) {
-    const dataInicio = new Date(datas.dataInicio);
-    dataInicio.setHours(0, 0, 0, 0); // início do dia
+    const dataInicio = converterFiltroParaTimestamp(datas.dataInicio);
 
     filtradas = filtradas.filter(
-      (a) => extrairData(a.created_at) >= datas.dataInicio!
+      (a) => converterDataParaTimestamp(a.created_at) >= dataInicio
     );
   }
 
   if (datas.dataFim) {
-    const dataFim = new Date(datas.dataFim);
-    dataFim.setHours(23, 59, 59, 999); // final do dia
+    const dataFim = converterFiltroParaTimestamp(datas.dataFim, true);
 
     filtradas = filtradas.filter(
-      (a) => extrairData(a.created_at) <= datas.dataFim!
+      (a) => converterDataParaTimestamp(a.created_at) <= dataFim
     );
   }
 
