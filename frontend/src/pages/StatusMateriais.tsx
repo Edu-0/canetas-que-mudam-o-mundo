@@ -623,11 +623,12 @@ function StatusMateriais() {
                 
                                                 <div className="flex flex-wrap gap-2">
                                                   {item.fotos.map((foto: any, index: number) => (
-                                                    <img key={foto.id} src={foto.url} alt={`Foto ${index + 1} do item`} tabIndex={0} role="button" onClick={() => abrirImagem(item.fotos.map((f: any) => f.url), index)} 
-                                                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); abrirImagem(item.fotos.map((f: any) => f.url), index);}}}
+                                                    <img key={foto.id} src={foto.url} alt={`Foto ${index + 1} do item`} tabIndex={0} role="button" onClick={() => abrirImagem(item.fotos?.map((f: any) => f?.url), index)} 
+                                                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); abrirImagem(item.fotos?.map((f: any) => f?.url), index);}}} 
                                                     className=" w-24 h-24 object-cover rounded-md border cursor-pointer hover:scale-110 hover:shadow-md transition focus:outline-none focus:ring-2 focus:ring-[var(--base-50)]"/>
                                                   ))}
                                                 </div>
+
                                               </div>
                                             )}
                 
@@ -656,10 +657,6 @@ function StatusMateriais() {
                                             <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Item {idx + 1} - Tipo:</strong> {item.tipo_material}
                                           </p>
 
-                                          <p className="body-muito-pequeno sm:body-pequeno">
-                                            <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Descrição:</strong> {item.descricao}
-                                          </p>
-              
                                           <p className="body-muito-pequeno sm:body-pequeno">
                                             <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Quantidade:</strong> {item.quantidade}
                                           </p>
