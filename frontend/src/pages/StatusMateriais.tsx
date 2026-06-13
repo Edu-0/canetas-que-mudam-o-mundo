@@ -644,7 +644,7 @@ function StatusMateriais() {
                                 <>
                                   <div className="w-full max-w-4xl bg-white rounded-2xl shadow-md p-4 sm:p-6 border border-[var(--base-40)] flex flex-col gap-4">
                                     {/* Itens do Pedido */}
-                                    <div className="border-t pt-3">
+                                    <div>
                                       <h4 className="body-bold-muito-pequeno sm:body-bold-pequeno mb-3 text-center">
                                         Itens do Pedido #{i.id}
                                       </h4>
