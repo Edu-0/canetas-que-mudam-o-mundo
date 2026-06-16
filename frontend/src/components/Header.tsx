@@ -43,7 +43,7 @@ function Header(){
       ],
 
       "Responsável pelo beneficiário": [
-        { id: "pedido", texto: "Pedido", rota: "/pedido" }
+        { id: "lista-pedidos", texto: "Pedidos", rota: "/lista-pedidos" }
       ],
 
       "Coordenador de Processos": [

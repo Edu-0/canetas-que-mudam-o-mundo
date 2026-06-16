@@ -22,6 +22,7 @@ import EditarONG from "./pages/EditarONG";
 import ListarONGs from "./pages/ListaONGs";
 import ListaTriagem from "./pages/ListaTriagem";
 import StatusMateriais from "./pages/StatusMateriais";
+import ListaPedidos from "./pages/ListaPedidos";
 
 function App() {
   return (
@@ -37,7 +38,8 @@ function App() {
         <Route path="/conta/cadastro-beneficiario" element={<CadastroBeneficiario />} />
         <Route path="/doacoes" element={<Doacoes />} />
         <Route path="/doacoes/doar" element={<Doar />} />
-        <Route path="/pedido" element={<Pedido />} />
+        <Route path="/lista-pedidos" element={<ListaPedidos />} />
+        <Route path="/lista-pedidos/pedido" element={<Pedido />} />
         <Route path="/relatorio" element={<Relatorio />} />
         <Route path="/analise-voluntarios" element={<AnaliseVoluntarios />} />
         <Route path="/analise-voluntarios/auditoria" element={<Auditoria />} />
