@@ -246,20 +246,23 @@ def remover_dados_familiares(usuario_id: int, db: SessionDep) -> None:
             detail=f"Erro ao remover dados dependentes: {str(e)}"
         )
 
-def aplicar_hard_delete_voluntario(db:Session, voluntario_id):
-    tem_historico = db.query(AvaliacaoTriagemDoacao).filter(AvaliacaoTriagemDoacao.voluntario_id == voluntario_id).fisrt()
-
+def aplicar_hard_delete_voluntario(db: Session, voluntario_id: int) -> bool:
+    tem_historico = db.query(AvaliacaoTriagemDoacao).filter(
+        AvaliacaoTriagemDoacao.voluntario_triagem_id == voluntario_id
+    ).first()
     return tem_historico is None
 
-def aplicar_hard_delete_doador(db:Session, doador_id):
-    tem_historico = db.query(Doacao).filter(Doacao.doador_id == doacao_id).first()
+def aplicar_hard_delete_doador(db: Session, doador_id: int) -> bool:
+    tem_historico = db.query(Doacao).filter(
+        Doacao.doador_id == doador_id
+    ).first()
     return tem_historico is None
 
-def aplicar_hard_delete_responsavel(db:Session, responsavel_id):
-    tem_historico = db.query(PedidoMaterial).filter(PedidoMaterial.responsavel_id == responsavel_id)
+def aplicar_hard_delete_responsavel(db: Session, responsavel_id: int) -> bool:
+    tem_historico = db.query(PedidoMaterial).filter(
+        PedidoMaterial.responsavel_id == responsavel_id
+    ).first()
     return tem_historico is None
-
-#def processar_historico_transacional(usuario):
 
 
 def processar_exclusao_conta(usuario_id: int, db: SessionDep):
@@ -272,19 +275,39 @@ def processar_exclusao_conta(usuario_id: int, db: SessionDep):
 
     if TipoUsuario.COORDENADOR_PROCESSOS in tipos_cadastrados:
         from app.services.ong_service import apagar_ong_e_vinculos
-        
         apagar_ong_e_vinculos(ong_id=usuario.ong.id, usuario_atual=usuario, db=db)
         return {"mensagem": "Conta de Coordenador e ONG excluídas com sucesso."}
         
-    elif TipoUsuario.RESPONSAVEL_BENEFICIARIO in tipos_cadastrados: 
-        anonimizar_responsavel(usuario_id=usuario.id, db=db)
+    pode_deletar = True
+    
+    if TipoUsuario.TRIAGEM in tipos_cadastrados:
+        pode_deletar = pode_deletar and aplicar_hard_delete_voluntario(db, usuario.id)
         
-    else:
+    if TipoUsuario.DOADOR in tipos_cadastrados:
+        pode_deletar = pode_deletar and aplicar_hard_delete_doador(db, usuario.id)
+        
+    if TipoUsuario.RESPONSAVEL_BENEFICIARIO in tipos_cadastrados:
+        pode_deletar = pode_deletar and aplicar_hard_delete_responsavel(db, usuario.id)
+
+    if pode_deletar:
         db.query(m.UsuarioFuncao).filter(m.UsuarioFuncao.usuario_id == usuario_id).delete()
         db.delete(usuario)
-
-    db.commit() 
-    return {"mensagem": "Conta processada (anonimizada/excluída) com sucesso conforme a LGPD."}
+        db.commit()
+        return {"mensagem": "Conta excluída permanentemente com sucesso (sem histórico associado)."}
+        
+    else:
+        if TipoUsuario.RESPONSAVEL_BENEFICIARIO in tipos_cadastrados: 
+            return anonimizar_responsavel(usuario_id=usuario.id, db=db)
+            
+        else:
+            anonimizar_usuario(usuario)
+            
+            db.query(m.UsuarioFuncao).filter(
+                m.UsuarioFuncao.usuario_id == usuario_id
+            ).delete(synchronize_session=False)
+            
+            db.commit()
+            return {"mensagem": "Conta anonimizada com sucesso conforme a LGPD (histórico preservado)."}
 
 def criar_voluntario(usuario_id,token, db):
     info_token = db.query(o.TokenOng).filter(o.TokenOng.token == token).first()

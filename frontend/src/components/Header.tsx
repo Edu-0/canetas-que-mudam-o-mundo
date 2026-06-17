@@ -26,6 +26,7 @@ function Header(){
     );
   } else {
     const tipos = usuario.tipos || [];
+    const ehVoluntarioTriagem = tipos.includes("Voluntário da triagem");
 
     // mapa de tipos
     const mapaTipos: Record<string, { id: string; texto: string; rota: string }[]> = {
@@ -49,7 +50,9 @@ function Header(){
       "Coordenador de Processos": [
         { id: "relatorio", texto: "Relatório", rota: "/relatorio" },
         { id: "links_para_voluntarios", texto: "Links", rota: "/links-para-voluntarios" },
-        { id: "analise_voluntarios", texto: "Voluntários", rota: "/analise-voluntarios" }
+        { id: "analise_voluntarios", texto: "Voluntários", rota: "/analise-voluntarios" },
+        { id: "auditoria_triangens", texto: "Auditoria", rota: "/auditoria-triagens" },
+        { id: "status-materiais", texto: "Materiais", rota: "/status-materiais" }
       ]
     };
 
@@ -62,6 +65,10 @@ function Header(){
 
       if (botoes) {
         botoes.forEach((botao) => {
+          if (ehVoluntarioTriagem && botao.id === "ongs") {
+            return;
+          }
+
           if (!adicionados.has(botao.id)) { // verifica se o botão existe para o tipo e se já não foi adicionado
             listaDeBotoes.push(botao);
             adicionados.add(botao.id);

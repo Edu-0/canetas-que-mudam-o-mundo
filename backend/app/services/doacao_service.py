@@ -24,8 +24,6 @@ from app.schemas.doacao import (
 )
 
 
-
-
 STATUS_LISTAGEM_TRIAGEM = {
     StatusDoacao.AGUARDANDO_TRIAGEM,
     StatusDoacao.AGUARDANDO_NOVA_TRIAGEM,
@@ -50,7 +48,7 @@ def validar_usuario_coordenador(usuario:Usuario, ong_id) -> None:
             detail="Apenas usuários com perfil Coordenador de Processos podem avaliar análises.",
         )
 
-    if not usuario.ong or usuario.ong.ong_id != ong_id:
+    if not usuario.ong or usuario.ong.id != ong_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Coordenador não gerencia a ONG vinculada a esta análise.",
@@ -129,6 +127,10 @@ def sincronizar_status_doacao(doacao: Doacao) -> None:
     if not statuses:
         return
 
+    if StatusDoacao.INCOMPLETO in statuses:
+        doacao.status = StatusDoacao.INCOMPLETO
+        return
+
     if len(statuses) == 1:
         doacao.status = next(iter(statuses))
         return
@@ -145,8 +147,6 @@ def sincronizar_status_doacao(doacao: Doacao) -> None:
         doacao.status = StatusDoacao.MATERIAL_COLETADO
     elif StatusDoacao.INAPTO in statuses:
         doacao.status = StatusDoacao.INAPTO
-    elif StatusDoacao.INCOMPLETO in statuses:
-        doacao.status = StatusDoacao.INCOMPLETO
     else:
         doacao.status = StatusDoacao.CANCELADO
 
@@ -251,6 +251,7 @@ def listar_doacoes(
 
     query = db.query(Doacao).options(
         selectinload(Doacao.itens).selectinload(ItemDoacao.fotos),
+        selectinload(Doacao.doador),
     )
 
     if usuario_tem_funcao(usuario_atual, TipoUsuario.TRIAGEM):
@@ -281,7 +282,7 @@ def listar_doacoes(
         if usuario_tem_funcao(usuario_atual, TipoUsuario.TRIAGEM) or usuario_tem_funcao(
             usuario_atual, TipoUsuario.COORDENADOR_PROCESSOS
         ):
-            status_permitidos = list(STATUS_LISTAGEM_TRIAGEM)
+            status_permitidos = [StatusDoacao.AGUARDANDO_TRIAGEM, StatusDoacao.AGUARDANDO_NOVA_TRIAGEM,]
         else:
             status_permitidos = None
     
@@ -345,7 +346,11 @@ def listar_analises_quarentena(db: Session, ong_id: int):
     analises = db.query(AvaliacaoTriagemDoacao)\
         .join(ItemDoacao, AvaliacaoTriagemDoacao.item_doacao_id == ItemDoacao.id)\
         .join(Doacao, ItemDoacao.doacao_id == Doacao.id)\
-        .options(joinedload(AvaliacaoTriagemDoacao.voluntario_triagem))\
+        .options(
+            joinedload(AvaliacaoTriagemDoacao.voluntario_triagem).joinedload(Usuario.vinculo_voluntario),            
+            joinedload(AvaliacaoTriagemDoacao.item_doacao).joinedload(ItemDoacao.doacao),
+            joinedload(AvaliacaoTriagemDoacao.item_doacao).joinedload(ItemDoacao.fotos)
+        )\
         .filter(
             AvaliacaoTriagemDoacao.em_quarentena == True, 
             Doacao.ong_id == ong_id                       
@@ -362,10 +367,10 @@ def avaliar_item_doacao(
     item = obter_item_doacao(db, item_doacao_id)
     validar_voluntario_triagem(voluntario, item.doacao.ong_id)
 
-    if item.status != StatusDoacao.AGUARDANDO_TRIAGEM:
+    if item.status not in [StatusDoacao.AGUARDANDO_TRIAGEM, StatusDoacao.AGUARDANDO_NOVA_TRIAGEM]:
         raise HTTPException(
             status_code=400,
-            detail="Apenas itens aguardando triagem podem ser avaliados.",
+            detail="Apenas itens aguardando triagem ou nova triagem podem ser avaliados.",
         )
 
     if dados.resultado == ResultadoTriagemDoacao.INAPTO and not dados.motivo_inaptidao:
@@ -375,6 +380,7 @@ def avaliar_item_doacao(
         )
 
     agora = datetime.now()
+    
     avaliacao = AvaliacaoTriagemDoacao(
         item_doacao_id=item.id,
         voluntario_triagem_id=voluntario.id,
@@ -387,10 +393,23 @@ def avaliar_item_doacao(
     item.triado_por_id = voluntario.id
     item.triado_em = agora
 
-    vinculo = obter_vinculo_voluntario(db,voluntario.id,item.doacao.ong_id)
+    vinculo = obter_vinculo_voluntario(db, voluntario.id, item.doacao.ong_id)
 
     if vinculo.nivel_confianca < 10:
-        avaliacao.em_quarentena = True
+        avaliacao.em_quarentena = True 
+        
+        if dados.resultado == ResultadoTriagemDoacao.PRE_APROVADO:
+            item.status = StatusDoacao.PRE_APROVADO
+            item.pre_aprovado_em = agora
+            item.motivo_inaptidao = None
+            
+        elif dados.resultado == ResultadoTriagemDoacao.INAPTO:
+            item.status = StatusDoacao.INAPTO
+            item.motivo_inaptidao = dados.motivo_inaptidao
+            
+        elif dados.resultado == ResultadoTriagemDoacao.AGUARDANDO_NOVA_TRIAGEM:
+            item.status = StatusDoacao.AGUARDANDO_NOVA_TRIAGEM
+            item.motivo_inaptidao = None
     else:    
         if dados.resultado == ResultadoTriagemDoacao.PRE_APROVADO:
             item.status = StatusDoacao.PRE_APROVADO
@@ -400,12 +419,13 @@ def avaliar_item_doacao(
             item.status = StatusDoacao.INAPTO
             item.motivo_inaptidao = dados.motivo_inaptidao
 
-        sincronizar_status_doacao(item.doacao)
+    sincronizar_status_doacao(item.doacao)
 
     try:
         db.add(avaliacao)
         db.commit()
         db.refresh(avaliacao)
+        db.refresh(item)
         return avaliacao
     except Exception as exc:
         db.rollback()
@@ -413,7 +433,6 @@ def avaliar_item_doacao(
             status_code=400,
             detail=f"Erro ao registrar avaliação de triagem: {str(exc)}",
         ) from exc
-
 
 def avaliar_analise_de_doacao(
     db: Session,
@@ -431,29 +450,47 @@ def avaliar_analise_de_doacao(
     vinculo_voluntario = obter_vinculo_voluntario(db, analise.voluntario_triagem_id,item.doacao.ong_id)
     
     if dados.resultado_validado:
-        analise.resultado_validado = dados.resultado_validado
+        analise.resultado_validado = True
         analise.em_quarentena = False
         agora = datetime.now()
         analise.validado_em = agora
 
         if vinculo_voluntario.nivel_confianca < 10:
             vinculo_voluntario.nivel_confianca += 1
-        
-        if analise.resultado == ResultadoTriagemDoacao.PRE_APROVADO:
-            analise.item_doacao.status = StatusDoacao.PRE_APROVADO
-            analise.item_doacao.pre_aprovado_em = agora
-        else:
-            analise.item_doacao.status = StatusDoacao.INAPTO        
 
-        sincronizar_status_doacao(item.doacao)
+            db.query(VoluntarioOng).filter(
+                VoluntarioOng.usuario_id == vinculo_voluntario.usuario_id,
+                VoluntarioOng.ong_id == vinculo_voluntario.ong_id
+            ).update({"nivel_confianca": vinculo_voluntario.nivel_confianca})
+
+        if analise.resultado == ResultadoTriagemDoacao.PRE_APROVADO:
+            item.status = StatusDoacao.PRE_APROVADO
+            item.pre_aprovado_em = agora
+        elif analise.resultado == ResultadoTriagemDoacao.INAPTO:
+            item.status = StatusDoacao.INAPTO
+            item.motivo_inaptidao = analise.motivo_inaptidao
+    
     else:
         if hasattr(dados, 'comentario_coordenador') and dados.comentario_coordenador:
             analise.comentario = f"[Revisão da Coordenação]: {dados.comentario_coordenador}"
-        
+
+        analise.resultado_validado = False
+        analise.em_quarentena = False
+
+        analise.item_doacao.status = StatusDoacao.AGUARDANDO_NOVA_TRIAGEM
+
         if vinculo_voluntario.nivel_confianca > 0:
             vinculo_voluntario.nivel_confianca -= 1
+            
+            db.query(VoluntarioOng).filter(
+                VoluntarioOng.usuario_id == vinculo_voluntario.usuario_id,
+                VoluntarioOng.ong_id == vinculo_voluntario.ong_id
+            ).update({"nivel_confianca": vinculo_voluntario.nivel_confianca})
+
+    sincronizar_status_doacao(item.doacao)
 
     try:
+        db.add(vinculo_voluntario)
         db.commit() 
         db.refresh(analise)
         return analise
@@ -473,7 +510,20 @@ def alterar_status_item_doacao(
     agora = datetime.now()
 
     if novo_status == StatusDoacao.DISPONIVEL:
-        validar_voluntario_triagem(usuario_atual, item.doacao.ong_id)
+        if usuario_tem_funcao(usuario_atual, TipoUsuario.TRIAGEM):
+            validar_voluntario_triagem(usuario_atual, item.doacao.ong_id)
+        elif usuario_tem_funcao(usuario_atual, TipoUsuario.COORDENADOR_PROCESSOS):
+            ong = obter_ong_coordenador(db, usuario_atual)
+            if ong.id != item.doacao.ong_id:
+                raise HTTPException(
+                    status_code=403,
+                    detail="Coordenador não gerencia a ONG vinculada a esta doação.",
+                )
+        else:
+            raise HTTPException(
+                status_code=403,
+                detail="Apenas Voluntários da Triagem ou Coordenadores podem disponibilizar itens.",
+            )
         if item.status == StatusDoacao.AGUARDANDO_TRIAGEM:
             raise HTTPException(
                 status_code=400,
@@ -530,11 +580,21 @@ def alterar_status_item_doacao(
         item.triado_em = item.triado_em or agora
 
     elif novo_status == StatusDoacao.CANCELADO:
-        if usuario_atual.id != item.doacao.doador_id and not usuario_tem_funcao(usuario_atual, TipoUsuario.TRIAGEM):
-            raise HTTPException(
-                status_code=403,
-                detail="Apenas o Doador da doação ou Triagem podem cancelar o item.",
-            )
+        if usuario_atual.id != item.doacao.doador_id and not usuario_tem_funcao(
+            usuario_atual, TipoUsuario.TRIAGEM
+        ):
+            if usuario_tem_funcao(usuario_atual, TipoUsuario.COORDENADOR_PROCESSOS):
+                ong = obter_ong_coordenador(db, usuario_atual)
+                if ong.id != item.doacao.ong_id:
+                    raise HTTPException(
+                        status_code=403,
+                        detail="Coordenador não gerencia a ONG vinculada a esta doação.",
+                    )
+            else:
+                raise HTTPException(
+                    status_code=403,
+                    detail="Apenas o Doador da doação, Triagem ou Coordenador podem cancelar o item.",
+                )
         if item.status == StatusDoacao.MATERIAL_COLETADO:
             raise HTTPException(
                 status_code=400,

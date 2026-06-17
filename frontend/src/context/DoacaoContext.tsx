@@ -2,7 +2,7 @@ import { createContext, useContext, useState, ReactNode } from "react";
 import type { Doacao } from "../services/doacaoService";
 
 // contexto
-type ContextoDoacao = {
+type ContextoDoacaoType = {
   doacoes: Doacao[];
   setDoacoes: (d: Doacao[]) => void;
 
@@ -10,8 +10,36 @@ type ContextoDoacao = {
   doacaoSelecionada: Doacao | null;
 };
 
+// Tipos baseados no backend
+export type FotoItem = {
+  id: number;
+  url: string;
+};
+
+export type ItemDoacao = {
+  id: number;
+  tipo_material: string;
+  descricao: string;
+  possiveis_defeitos?: string;
+  quantidade: number;
+  status: string;
+  motivo_inaptidao?: string;
+  fotos: FotoItem[];
+};
+
+export type DoacaoContextType = {
+  id: number;
+  ong_id: number;
+  status: string;
+  observacao_doador?: string;
+  itens: ItemDoacao[];
+
+  created_at: string;
+  updated_at?: string;
+};
+
 // criação
-const ContextoDoacao = createContext<ContextoDoacao | undefined>(undefined);
+const ContextoDoacao = createContext<ContextoDoacaoType | undefined>(undefined);
 
 // provider
 export function ProvedorDoacao({ children }: { children: ReactNode }) {

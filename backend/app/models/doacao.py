@@ -52,6 +52,10 @@ class Doacao(Base):
     )
 
     @property
+    def doador_nome(self) -> str | None:
+        return self.doador.nome_completo if self.doador else None
+    
+    @property
     def tempo_cadastrada_dias(self) -> int:
         if not self.created_at:
             return 0

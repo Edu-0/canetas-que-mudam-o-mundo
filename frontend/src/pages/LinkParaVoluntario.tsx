@@ -183,19 +183,22 @@ function LinkParaVoluntario() {
 
               <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch gap-3 mb-6 border rounded-lg bg-[var(--base-20)] border-[var(--base-70)] p-2">
    
-                <div className="text-black text-2xl font-extrabold font-['Nunito']">Filtros:</div>
+                <div className="text-black text-2xl font-extrabold font-['Nunito'] flex items-center self-stretch">Filtros:</div>
 
-                <div className="flex-1 min-w-0">
+                <div className="justify-start w-full sm:w-96 flex flex-col">
+                  <label className="body-muito-pequeno" htmlFor="busca">Buscar por link</label>
                   {/* busca */}
                   <input id="busca" type="text" maxLength={100} placeholder="Pesquisar por link..." value={busca} onChange={(e) => { const valor = e.target.value; setBusca(valor); setPaginaAtual(1); const erro = validarBusca(valor); setErroBusca(erro);}}
-                    onBlur={() => setTocadoBusca(true)} className={`input-padrao w-full ${ tocadoBusca && erroBusca ? "border-[var(--cor-resposta-errada)] focus:ring-[var(--cor-resposta-errada)]" : "hover:border-2 border-[var(--base-70)] focus-acessivel"}`} aria-invalid={!!erroBusca} aria-label="Pesquisar por link"/>
+                    onBlur={() => setTocadoBusca(true)} className={`input-padrao w-full h-9 ${ tocadoBusca && erroBusca ? "border-[var(--cor-resposta-errada)] focus:ring-[var(--cor-resposta-errada)]" : "hover:border-2 border-[var(--base-70)] focus-acessivel"}`} aria-invalid={!!erroBusca} aria-label="Pesquisar por link"/>
                   
                   {tocadoBusca && erroBusca && <div className="text-[var(--cor-resposta-errada)] mt-1 text-sm">{erroBusca}</div>}
                 </div>
 
-                <div>
+                <div className="justify-start w-full sm:w-80 flex flex-col">
+                  <label className="body-muito-pequeno" htmlFor="busca-ordem">Ordem de exibição</label>
+              
                   {/* ordem */}
-                  <select id="busca-ordem" value={ordem} onChange={(e) => { setOrdem(e.target.value as any); setPaginaAtual(1);}} className="input-padrao w-full sm:w-58 hover:border-2 border-[var(--base-70)] focus-acessivel" aria-label="Selcionar a ordem de exibição dos links">
+                  <select id="busca-ordem" value={ordem} onChange={(e) => { setOrdem(e.target.value as any); setPaginaAtual(1);}} className="input-padrao w-full h-9 hover:border-2 border-[var(--base-70)] focus-acessivel" aria-label="Selcionar a ordem de exibição dos links">
                     <option value="novo">Links mais recentes primeiro</option>
                     <option value="antigo">Links mais antigos primeiro</option>
                   </select>

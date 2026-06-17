@@ -96,12 +96,12 @@ function AnaliseVoluntarios() {
 
     // menos de 24h
     if (diffHoras < 24) {
-      return { texto: "Últimas 24h (quarentena)", tipo: "novo" };
+      return { texto: "Últimas 24h", tipo: "novo" };
     }
 
     // menos de 1 mês
     if (meses < 1) {
-      return { texto: `${dias} dia${dias === 1 ? "" : "s"} (quarentena)`, tipo: "recente" };
+      return { texto: `${dias} dia${dias === 1 ? "" : "s"}`, tipo: "recente" };
     }
 
     // mais de 1 mês
@@ -201,7 +201,7 @@ function AnaliseVoluntarios() {
                   {/* período */}
                   <select id="busca-periodo" value={periodo} onChange={(e) => { setPeriodo(e.target.value as PeriodoFiltro); setPaginaAtual(1); }} className="input-padrao h-9 w-full sm:w-48 hover:border-2 hover:border-[var(--base-70)] focus-acessivel" aria-label="Filtrar por período de cadastro">
                     <option value="todos">Todos</option>
-                    <option value="0-1">Até 1 mês (quarentena)</option>
+                    <option value="0-1">Até 1 mês</option>
                     <option value="2-3">2 a 3 meses</option>
                     <option value="4-5">4 a 5 meses</option>
                     <option value="6-7">6 a 7 meses</option>
@@ -265,13 +265,19 @@ function AnaliseVoluntarios() {
                             }`}>
                             {tempo.texto}
                           </span> 
+
+                          <span className="
+                            text-[10px] sm-text-[12px] px-1 py-[2px] text-center leading-none rounded-sm w-fit mt-1 bg-[var(--secundario-100)] text-black">
+                            
+                            {v.nivel_confianca !== undefined && v.nivel_confianca < 10 ? "Em quarentena" : "Voluntário experiente"}
+                          </span> 
                         
                         </div>
 
                         {/* Direita */}
                         <div className="flex flex-row items-center justify-between gap-2 mt-2 sm:mt-0 w-full sm:w-auto">
 
-                          <Botao variante="botao-pequeno-editar" aoClicar={() => navigate(`/analise-voluntarios/auditoria/${v.id}`)}>Analisar</Botao>
+                          <Botao variante="botao-pequeno-editar" aoClicar={() => navigate(`/analise-voluntarios/voluntario/${v.id}`)}>Analisar</Botao>
 
                           <Botao variante="botao-pequeno-desativar" desabilitado={carregandoExclusao} aoClicar={() => {setVoluntarioSelecionado(v.id); setMostrarModal(true)}}>Desativar</Botao>
 

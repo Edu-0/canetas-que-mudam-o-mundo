@@ -11,33 +11,53 @@ function headersAutenticados() {
 }
 
 export type StatusDoacao =
-  | "aguardando_triagem"
-  | "pre_aprovado"
-  | "inapto"
-  | "incompleta"
-  | "aguardando_nova_triagem";
+  | "AGUARDANDO_TRIAGEM"
+  | "PRE_APROVADO"
+  | "INAPTO"
+  | "DISPONIVEL"
+  | "MATERIAL_COLETADO"
+  | "CANCELADO"
+  | "INCOMPLETO"
+  | "AGUARDANDO_NOVA_TRIAGEM";
 
-export interface ImagemDoacao {
+export interface FotoItemDoacao {
   id: number;
-  caminho_arquivo: string;
-  nome_original: string;
+  url: string;
+  nome_original?: string;
+  content_type?: string;
+  tamanho_bytes?: number;
+  created_at?: string;
 }
 
-export interface Doacao {
+export interface ItemDoacao {
   id: number;
-  usuario_id: number;
+  doacao_id: number;
   tipo_material: string;
   descricao: string;
   possiveis_defeitos?: string;
   quantidade: number;
   status: StatusDoacao;
-  data_criacao: string;
-  data_atualizacao: string;
-  imagens: ImagemDoacao[];
+  motivo_inaptidao?: string;
+  created_at: string;
+  updated_at: string;
+  fotos: FotoItemDoacao[];
+}
+
+export interface Doacao {
+  id: number;
+  doador_id: number;
+  ong_id: number;
+  status: StatusDoacao;
+  codigo_coleta: string;
+  observacao_doador?: string;
+  email_status_enviado_em?: string;
+  created_at: string;
+  updated_at: string;
+  itens: ItemDoacao[];
 }
 
 export async function registrarDoacao(formData: FormData): Promise<Doacao> {
-  const resposta = await axios.post(`${BASE_URL}/doacao/`, formData, {
+  const resposta = await axios.post(`${BASE_URL}/doacoes/formulario`, formData, {
     headers: {
       ...headersAutenticados(),
       "Content-Type": "multipart/form-data",
@@ -47,14 +67,14 @@ export async function registrarDoacao(formData: FormData): Promise<Doacao> {
 }
 
 export async function listarMinhasDoacoes(): Promise<Doacao[]> {
-  const resposta = await axios.get(`${BASE_URL}/doacao/minhas`, {
+  const resposta = await axios.get(`${BASE_URL}/doacoes`, {
     headers: headersAutenticados(),
   });
   return resposta.data;
 }
 
 export async function obterDoacao(id: number): Promise<Doacao> {
-  const resposta = await axios.get(`${BASE_URL}/doacao/${id}`, {
+  const resposta = await axios.get(`${BASE_URL}/doacoes/${id}`, {
     headers: headersAutenticados(),
   });
   return resposta.data;
@@ -64,11 +84,5 @@ export async function atualizarDoacao(
   id: number,
   formData: FormData
 ): Promise<Doacao> {
-  const resposta = await axios.put(`${BASE_URL}/doacao/${id}`, formData, {
-    headers: {
-      ...headersAutenticados(),
-      "Content-Type": "multipart/form-data",
-    },
-  });
-  return resposta.data;
+  throw new Error("Atualizacao de doacao nao suportada no backend.");
 }

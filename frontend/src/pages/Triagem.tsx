@@ -3,19 +3,19 @@ import { useParams, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import logo from "../assets/logo.svg";
-import { Doacao } from "../context/DoacaoContext";
+import { DoacaoContextType } from "../context/DoacaoContext";
 import Toast from "../components/Toast";
 import ModalConfirmacao from "../components/ModalConfirmacao";
 import icon_check from "../assets/icon_check.png";
 import Botao from "../components/Botao";
-import { obterDoacao, criarTriagem, ResultadoTriagem, StatusDoacao, obterAvaliacoes, AvaliacaoTriagem  } from "../services/triagemService";
+import { obterDoacao, criarTriagem, ResultadoTriagem, StatusDoacao, atualizarStatusDoacao, obterAvaliacoes, AvaliacaoTriagem  } from "../services/triagemService";
 import ModalImagem from "../components/ModalImagem";
 
 function Triagem() {
 
   const { id } = useParams();
   const navigate = useNavigate();
-  const [doacao, setDoacao] = useState<Doacao | null>(null);
+  const [doacao, setDoacao] = useState<DoacaoContextType | null>(null);
   const [carregando, setCarregando] = useState(true);
 
   const [mensagem, setMensagem] = useState("");
@@ -25,16 +25,27 @@ function Triagem() {
   const [mostrarModalCancelar, setMostrarModalCancelar] = useState(false);
   const [carregandoFinalizacao, setCarregandoFinalizacao] = useState(false);
 
-  const [checklist, setChecklist] = useState<Record<number, boolean>>({});
+  const [checklistPorItem, setChecklistPorItem] = useState<Record<number, Record<number, boolean>>>({});
+  const [observacaoPorItem, setObservacaoPorItem] = useState<Record<number, string>>({});
+  const [comentarioOpcionalPorItem, setComentarioOpcionalPorItem] = useState<Record<number, string>>({});
 
-  const [statusDoacao, setStatusDoacao] = useState<StatusDoacao | null>(null);
+  const [statusPorItem, setStatusPorItem] = useState<Record<number, StatusDoacao | null>>({});
   const [statusTriagem, setStatusTriagem] = useState<ResultadoTriagem | null>(null);
 
+  const resultadoGeral: ResultadoTriagem =
+    Object.values(statusPorItem).includes("INAPTO") ||
+    Object.values(statusPorItem).includes("INCOMPLETO")
+      ? "INAPTO"
+      : "PRE_APROVADO";
+
   const [historicoAberto, setHistoricoAberto] = useState<Record<number, boolean>>({});
-  const [observacaoTriagem, setObservacaoTriagem] = useState("");
-  const [comentarioOpcional, setComentarioOpcional] = useState("");
   const [avaliacoes, setAvaliacoes] = useState<Record<number, AvaliacaoTriagem[]>>({});
   const jaFoiTriada = Object.values(avaliacoes).some(arr => arr.length > 0); // verifica se algum item já tem avaliação de triagem
+
+  
+  const quantidadeItens = doacao?.itens.length; // contagem total de itens da doação
+  let contagemItens = 0; // contador para exibir o número do item (Item 1, Item 2, etc.)
+  let contagemModalItens = 0;
 
   const itensChecklist = [
     "Material em boas condições",
@@ -43,10 +54,13 @@ function Triagem() {
     "Fotos suficientes",
   ];
 
-  function toggleChecklist(index: number) {
-    setChecklist((prev) => ({
+  function toggleChecklist(itemId: number, index: number) {
+    setChecklistPorItem((prev) => ({
       ...prev,
-      [index]: !prev[index],
+      [itemId]: {
+        ...prev[itemId],
+        [index]: !prev[itemId]?.[index],
+      },
     }));
   }
 
@@ -57,15 +71,46 @@ function Triagem() {
     }));
   }
 
-  function selecionarStatusDoacao(status: StatusDoacao) {
-    setStatusDoacao((prev) => (prev === status ? null : status));
+  function selecionarStatusDoacao(itemId: number, status: StatusDoacao) {
+    setStatusPorItem(prev => ({
+      ...prev,
+      [itemId]: prev[itemId] === status ? null : status
+    }));
   }
 
   function selecionarStatusTriagem(status: ResultadoTriagem) {
     setStatusTriagem((prev) => (prev === status ? null : status));
   }
 
-  const checklistCompleto = itensChecklist.length > 0 && itensChecklist.every((_, index) => checklist[index]);
+  function checklistCompleto(itemId: number) {
+    const checklistItem = checklistPorItem[itemId] || {};
+    return itensChecklist.every((_, index) => checklistItem[index]);
+  }
+
+  function setObservacao(itemId: number, valor: string) {
+      setObservacaoPorItem((prev) => ({
+        ...prev,
+        [itemId]: valor,
+      }));
+    }
+
+  // Para liberar o botão de finalizar triagem todos os itens tem que ter um status selecionado
+  const todosItensValidos = doacao?.itens.every(item => {
+    const status = statusPorItem[item.id];
+    const obs = (observacaoPorItem[item.id] || "").trim();
+
+    if (!status) return false;
+
+    if (status === "PRE_APROVADO" && !checklistCompleto(item.id)) {
+      return false;
+    }
+
+    if ((status === "INAPTO" || status === "INCOMPLETO") && obs.length < 20) {
+      return false;
+    }
+
+    return true;
+  }) ?? false;
 
   const [modalImagemAberto, setModalImagemAberto] = useState(false);
   const [imagemSelecionadaIndex, setImagemSelecionadaIndex] = useState<number | null>(null);
@@ -197,28 +242,61 @@ function Triagem() {
   }, [id]);
 
   async function finalizarTriagem() {
-    if (!doacao || !statusDoacao) return;
+    if (!doacao || !statusPorItem) return;
 
     setCarregandoFinalizacao(true);
 
     try {
-      const resultadoTriagem: ResultadoTriagem = statusDoacao === "PRE_APROVADO" ? "PRE_APROVADO" : "INAPTO";
-
+      
       for (const item of doacao.itens) {
-        console.log(`Criando triagem item ${item.id}`);
+        const status = statusPorItem[item.id];
+        const checklistItem = checklistPorItem[item.id] || {};
+        const observacaoItem = observacaoPorItem[item.id];
 
-        await criarTriagem(item.id, {
-          resultado: resultadoTriagem,
-          checklist: checklist, 
-          motivo_inaptidao: observacaoTriagem,
-          comentario: comentarioOpcional || undefined, // enviar comentário apenas se tiver sido preenchido
-          em_quarentena: false,
-        });
+        // só tenta criar triagem para itens que estão aguardando triagem 
+        if (item.status !== "AGUARDANDO_TRIAGEM" && item.status !== "AGUARDANDO_NOVA_TRIAGEM") {
+          continue; // pula itens que não estão mais aguardando triagem 
+        }
+
+        try {   
+          await criarTriagem(item.id, {
+            resultado: status === "PRE_APROVADO" ? "PRE_APROVADO" : "INAPTO", // se o status do item for "INCOMPLETO" a triagem geral é "INAPTO"
+            checklist: checklistItem,
+            motivo_inaptidao: observacaoItem,
+            comentario: comentarioOpcionalPorItem[item.id] || undefined, // enviar comentário apenas se tiver sido preenchido
+          });       
+          
+          console.log(`Triagem criada para item ${item.id} com status ${status}`);
+          
+          const atualizado = await obterDoacao(Number(id));
+          console.log(atualizado.data.itens.map(i => ({
+            id: i.id,
+            status: i.status,
+          })));
+        } catch (e) {
+          console.error(`Erro ao criar triagem para item ${item.id}:`, e);
+        }
+        
+        try {
+          // se o status do item for "INCOMPLETO" manda para o backend como "INCOMPLETO" mesmo 
+          if (status === "INCOMPLETO") {
+            await atualizarStatusDoacao(item.id, {
+              status: statusPorItem[item.id]!, // atualiza o status do item para "INCOMPLETO" no frontend também
+              motivo_inaptidao: observacaoItem,
+            });
+          }
+
+          console.log(`Status atualizado para item ${item.id} com status ${status}`);
+        } catch (e) {
+          console.error(`Erro ao atualizar status para item ${item.id}:`, e);
+        }
+
       }
 
-      setMensagem("Triagem finalizada com sucesso!");
+      setMensagem("Triagem finalizada com sucesso!"); 
       setTipoMensagem("sucesso");
 
+      localStorage.setItem("toast", "Triagem finalizada com sucesso!");
       navigate("/lista-triagem");
 
     } catch (e: any) {
@@ -227,6 +305,9 @@ function Triagem() {
 
       setMensagem("Erro ao finalizar triagem.");
       setTipoMensagem("erro");
+
+      localStorage.setItem("toast", "Erro ao finalizar triagem.");
+      navigate("/lista-triagem");
     } finally {
       setCarregandoFinalizacao(false);
     }
@@ -300,8 +381,9 @@ function Triagem() {
                       <div className="flex flex-col gap-4">
                         {doacao.itens.map((item) => (
                           <div key={item.id} className="relative border rounded-lg p-3 bg-[var(--base-10)] flex flex-col gap-2" >
-                            <p className="body-muito-pequeno sm:body-pequeno">
-                              <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Tipo:</strong> {item.tipo_material}
+
+                            <p className="body-muito-pequeno sm:body-pequeno mt-8 sm:mt-4 text-center">
+                              <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Item {contagemItens = contagemItens + 1} - Tipo:</strong> {item.tipo_material}
                             </p>
 
                             <p className="body-muito-pequeno sm:body-pequeno">
@@ -337,162 +419,183 @@ function Triagem() {
                               <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Registrado em:</strong> {formatarDataHora(doacao.created_at)}
                             </p>
 
+                            <div className="border-t pt-4">
+                              <h4 className="body-bold-muito-pequeno sm:body-bold-pequeno mb-3 text-center"> Checklist de Triagem </h4>
+
+                              <div className="flex flex-col gap-3">
+                                {itensChecklist.map((itemChecklist, index) => (
+                                  <label id="check" key={index} className="flex items-center gap-2 cursor-pointer focus-within:ring-2 focus-within:ring-[var(--base-50)] rounded px-1" >
+                                    <input type="checkbox" checked={!!checklistPorItem[item.id]?.[index]} onChange={() => toggleChecklist(item.id, index)} tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleChecklist(item.id, index);}}} className="sr-only"/>
+                                      <div className={`w-5 h-5 flex items-center justify-center rounded border-2 transition hover:scale-110 ${checklistPorItem[item.id]?.[index]  ? "bg-[var(--base-40)] border-black"  : "bg-white border-gray-400"} `}>
+                                          {checklistPorItem[item.id]?.[index] && (
+                                              <img src={icon_check} alt="Check" className="w-4 h-4" />
+                                          )}
+                                      </div>
+                                    <span className="body-muito-pequeno sm:body-pequeno">{itemChecklist}</span>
+                                  </label>
+                                  
+                                ))}
+                              </div>
+                            </div>
+
                             {/* Só mostrar data de atualização se a doação já foi triada */}
                             {jaFoiTriada && (
                               <p className="body-muito-pequeno sm:body-pequeno">
                                 <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Atualizado em:</strong> {formatarDataHora(doacao.updated_at)}
                               </p>
                             )}
-
                             
                             {avaliacoes[item.id]?.length > 0 && (
-                              <div className="border-t pt-3">
 
-                                {/* ultima triagem */}
-                                {(() => {
-                                  const ultima = avaliacoes[item.id][0];
+                              <div>
 
-                                  return (
-                                    <div className="bg-white border rounded p-2 mb-2">
-                                      <p className="body-muito-pequeno sm:body-pequeno">
-                                        <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Última triagem:</strong> {ultima.resultado}
-                                      </p>
-
-                                      <p className="body-muito-pequeno sm:body-pequeno">
-                                        <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Data:</strong> {formatarDataHora(ultima.created_at)}
-                                      </p>
-
-                                      <p className="body-muito-pequeno sm:body-pequeno">
-                                        <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Triado por: </strong>{" "} {ultima.voluntario_triagem?.nome_completo} (ID: {ultima.voluntario_triagem_id})
-                                      </p>
-                                    </div>
-                                  );
-                                })()}
-
-                                <button onClick={() => toggleHistorico(item.id)} aria-label="Botão para expandir ou recolher histórico da doação" className="absolute top-2 right-2 text-xs sm:text-sm text-black body-semibold-muito-pequeno sm:body-semibold-pequeno p-2 rounded-full bg-[var(--base-10)] hover:bg-[var(--base-20)] transition">
+                                <button onClick={() => toggleHistorico(item.id)} aria-label="Botão para expandir ou recolher histórico da doação" className="absolute top-2 right-2 text-xs sm:text-sm text-black body-semibold-muito-pequeno sm:body-semibold-pequeno px-2 py-1 rounded-full bg-[var(--base-30)] hover:bg-[var(--base-40)] transition">
                                   {historicoAberto[item.id] ? "Ocultar histórico" : "Ver histórico"}
                                 </button>
 
                                 {/* histórico */}
                                 {historicoAberto[item.id] && (
-                                  <div className="mt-2">
-                                    {avaliacoes[item.id].map((av) => (                                      
-                                      
-                                        <div key={av.id} className="bg-gray-50 border rounded p-2 mb-2">
+                                  <>
+                                    <div className="border-t pt-3"></div>
 
-                                          <p className="body-muito-pequeno sm:body-pequeno">
-                                            <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Resultado:</strong> {av.resultado}
-                                          </p>
+                                    <div>
+                                      <h4 className="body-bold-muito-pequeno sm:body-bold-pequeno mb-3 text-center"> Histórico de Triagem desse Item </h4>
+                                    </div>
 
-                                          <p className="body-muito-pequeno sm:body-pequeno">
-                                            <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Triado em:</strong> {formatarDataHora(av.created_at)}
-                                          </p>
+                                    <div className="mt-2">
+                                      {avaliacoes[item.id].map((av) => (      
+                    
+                                          <div key={av.id} className="bg-gray-50 border rounded p-2 mb-2">
 
-                                          <p className="body-muito-pequeno sm:body-pequeno">
-                                            <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Triado por:</strong> {av.voluntario_triagem?.nome_completo} (ID: {av.voluntario_triagem_id})
-                                          </p>
-
-                                          {av.comentario && (
                                             <p className="body-muito-pequeno sm:body-pequeno">
-                                              <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Comentário:</strong> {av.comentario}
+                                              <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Triado em:</strong> {formatarDataHora(av.created_at)}
                                             </p>
-                                          )}
 
-                                          {av.motivo_inaptidao && (
                                             <p className="body-muito-pequeno sm:body-pequeno">
-                                              <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Motivo:</strong> {av.motivo_inaptidao}
+                                              <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Triado por:</strong> {av.voluntario_triagem?.nome_completo}
                                             </p>
-                                          )}
 
-                                        </div>
-                                    ))}
-                                  </div>
+                                            <p className="body-muito-pequeno sm:body-pequeno">
+                                              <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Voluntário estava em quarentena:</strong> {av.em_quarentena ? "Sim" : "Não"}
+                                            </p>
+
+                                            <p className="body-muito-pequeno sm:body-pequeno">
+                                              <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Resultado da Triagem:</strong> {av.resultado}
+                                            </p>
+
+                                            <div className="mt-2 mb-2">
+                                              <p className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Checklist:</p>
+
+                                              <ul className="mt-1 flex flex-col gap-1">
+                                                {itensChecklist.map((texto, index) => {
+                                                  const valor = av.checklist?.[index] === true;
+
+                                                  return (
+                                                    <li key={index} className="body-muito-pequeno sm:body-pequeno flex items-center gap-2">
+                                                      <span className={valor ? "text-[var(--cor-resposta-correta)]" : "text-[var(--cor-resposta-errada)]"}>
+                                                        {valor ? "✔" : "✖"}
+                                                      </span>
+                                                      <span>{texto}</span>
+                                                    </li>
+                                                  );
+                                                })}
+                                              </ul>
+                                            </div>
+
+                                            {av.comentario && (
+                                              <p className="body-muito-pequeno sm:body-pequeno">
+                                                <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Comentário:</strong> {av.comentario}
+                                              </p>
+                                            )}
+
+                                            {av.motivo_inaptidao && (
+                                              <p className="body-muito-pequeno sm:body-pequeno">
+                                                <strong className="body-semibold-muito-pequeno sm:body-semibold-pequeno">Motivo de ser inapto:</strong> {av.motivo_inaptidao}
+                                              </p>
+                                            )}
+
+                                          </div>
+                                      ))}
+                                    </div>
+                                  </>
                                 )}
 
                               </div>
                             )}
 
+                            <div className="body-muito-pequeno sm:text-[13px]">O botão para selecionar o status da triagem como 'Pré-aprovado' permanece bloqueado enquanto houver itens pendentes no checklist.</div>
+
+                            <div className="border-t pt-4 flex flex-col gap-2">
+                              <h4 className="body-bold-muito-pequeno sm:body-bold-pequeno text-center">
+                                Comentário adicional (opcional)
+                              </h4>
+
+                              <textarea value={comentarioOpcionalPorItem[item.id] || ""} onChange={(e) => setComentarioOpcionalPorItem({ ...comentarioOpcionalPorItem, [item.id]: e.target.value })} className="border rounded p-2 w-full" placeholder="Escreva algo adicional sobre a triagem (opcional)..."/>
+                            </div>
+
+                            {(statusPorItem[item.id] === "INAPTO" || statusPorItem[item.id] === "INCOMPLETO") && (
+                              <div className="border-t pt-4 flex flex-col gap-2">
+
+                                <h4 className="body-bold-muito-pequeno sm:body-bold-pequeno text-center">
+                                  Observação obrigatória
+                                </h4>
+
+                                <textarea value={observacaoPorItem[item.id] || ""} onChange={(e) => setObservacaoPorItem({ ...observacaoPorItem, [item.id]: e.target.value })} className="border rounded p-2 w-full" placeholder="Descreva o que falta ou o problema encontrado..."/>
+
+                                {(() => {
+                                  const obs = (observacaoPorItem[item.id] || "").trim();
+
+                                  if (obs === "") {
+                                    return (
+                                      <p className="text-[var(--cor-resposta-obrigatoria)] text-sm text-center">
+                                        Observação obrigatória para este status
+                                      </p>
+                                    );
+                                  }
+
+                                  if (obs.length < 20) {
+                                    return (
+                                      <p className="text-[var(--cor-resposta-obrigatoria)] text-sm text-center">
+                                        A observação deve conter pelo menos 20 caracteres
+                                      </p>
+                                    );
+                                  }
+
+                                  return null;
+                                })()}
+                              
+                              </div>
+                            )}
+                            
+                            {/* Parte de dar o status do item (se em todos os itens for selecionado um status, libera o botão de finalizar triagem) */}
+                            <div className="border-t pt-4 flex flex-col gap-3">
+
+                              <h4 className="body-bold-muito-pequeno sm:body-bold-pequeno text-center">
+                                Resultado da Doação
+                              </h4>
+
+                              <div className="flex gap-3 justify-center flex-wrap">
+
+                                {/* // Quero que os botoes estejam cinzas e se selecionado fiquem com a cor do que sao, ex apto_selecioando. E se outro boto for selecioando o que estava selecionado volta a cor cinza e o novo selecionado fica com a cor do status. E se clicar no mesmo botão selecionado ele desmarca e volta para cinza e o status fica nulo. E só pode selecionar um status por vez. */}
+                                <div className="flex-1">
+                                  <Botao variante={statusPorItem[item.id] === "PRE_APROVADO" ? "apto_selecionado" : "status-neutro"} className={statusPorItem[item.id] === "PRE_APROVADO" ? "" : "btn-status-neutro btn-hover-apto"}  desabilitado={!checklistCompleto(item.id)} aoClicar={() => {if (!checklistCompleto(item.id)) return; selecionarStatusDoacao(item.id, "PRE_APROVADO");}}>Pré-aprovado</Botao>
+                                </div>
+                              
+                                <div className="flex-1">
+                                  <Botao variante={`${statusPorItem[item.id] === "INAPTO" ? "inapto_selecionado" : "status-neutro"}`} className={statusPorItem[item.id] === "INAPTO" ? "" : "btn-status-neutro btn-hover-inapto"} aoClicar={() => selecionarStatusDoacao(item.id, "INAPTO")}>Inapto</Botao>
+                                </div>
+
+                                <div className="flex-1">
+                                  <Botao variante={`${statusPorItem[item.id] === "INCOMPLETO" ? "incompleto_selecionado" : "status-neutro"}`} className={statusPorItem[item.id] === "INCOMPLETO" ? "" : "btn-status-neutro btn-hover-incompleto"} aoClicar={() => selecionarStatusDoacao(item.id, "INCOMPLETO")}>Incompleto</Botao>
+                                </div>
+
+                              </div>
+                            </div>
 
                           </div>
                         ))}
                       </div>
                     </div>
-
-                    <div className="border-t pt-4">
-                      <h4 className="body-bold-muito-pequeno sm:body-bold-pequeno mb-3 text-center"> Checklist de Triagem </h4>
-
-                      <div className="flex flex-col gap-3">
-                        {itensChecklist.map((item, index) => (
-                          <label key={index} className="flex items-center gap-2 cursor-pointer focus-within:ring-2 focus-within:ring-[var(--base-50)] rounded px-1" >
-                            <input type="checkbox" checked={!!checklist[index]} onChange={() => toggleChecklist(index)} tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleChecklist(index);}}} className="sr-only"/>
-                              <div className={`w-5 h-5 flex items-center justify-center rounded border-2 transition hover:scale-110 ${checklist[index]  ? "bg-[var(--base-40)] border-black"  : "bg-white border-gray-400"} `}>
-                                  {checklist[index] && (
-                                      <img src={icon_check} alt="Check" className="w-4 h-4" />
-                                  )}
-                              </div>
-                            <span className="body-muito-pequeno sm:body-pequeno">{item}</span>
-                          </label>
-                          
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="body-muito-pequeno sm:text-[13px]">O botão para selecionar o status da triagem como 'Pré-aprovado' permanece bloqueado enquanto houver itens pendentes no checklist.</div>
-
-
-                    <div className="border-t pt-4 flex flex-col gap-2">
-                      <h4 className="body-bold-muito-pequeno sm:body-bold-pequeno text-center">
-                        Comentário adicional (opcional)
-                      </h4>
-
-                      <textarea value={comentarioOpcional} onChange={(e) => setComentarioOpcional(e.target.value)} className="border rounded p-2 w-full" placeholder="Escreva algo adicional sobre a triagem (opcional)..."/>
-                    </div>
-
-                    <div className="border-t pt-4 flex flex-col gap-3">
-
-                      <h4 className="body-bold-muito-pequeno sm:body-bold-pequeno text-center">
-                        Resultado da Doação
-                      </h4>
-
-                      <div className="flex gap-3 justify-center flex-wrap">
-
-                        {/* // Quero que os botoes estejam cinzas e se selecionado fiquem com a cor do que sao, ex apto_selecioando. E se outro boto for selecioando o que estava selecionado volta a cor cinza e o novo selecionado fica com a cor do status. E se clicar no mesmo botão selecionado ele desmarca e volta para cinza e o status fica nulo. E só pode selecionar um status por vez. */}
-                        <div className="flex-1">
-                          <Botao variante={statusDoacao === "PRE_APROVADO" ? "apto_selecionado" : "status-neutro"} className={statusDoacao === "PRE_APROVADO" ? "" : "btn-status-neutro btn-hover-apto"}  desabilitado={!checklistCompleto} aoClicar={() => {if (!checklistCompleto) return; selecionarStatusDoacao("PRE_APROVADO");}}>Pré-aprovado</Botao>
-                        </div>
-                      
-                        <div className="flex-1">
-                          <Botao variante={`${statusDoacao === "INAPTO" ? "inapto_selecionado" : "status-neutro"}`} className={statusDoacao === "INAPTO" ? "" : "btn-status-neutro btn-hover-inapto"} aoClicar={() => selecionarStatusDoacao("INAPTO")}>Inapto</Botao>
-                        </div>
-
-                        <div className="flex-1">
-                          <Botao variante={`${statusDoacao === "INCOMPLETO" ? "incompleto_selecionado" : "status-neutro"}`} className={statusDoacao === "INCOMPLETO" ? "" : "btn-status-neutro btn-hover-incompleto"} aoClicar={() => selecionarStatusDoacao("INCOMPLETO")}>Incompleto</Botao>
-                        </div>
-
-                      </div>
-                    </div>
-
-                    {(statusDoacao === "INAPTO" || statusDoacao === "INCOMPLETO") && (
-                      <div className="border-t pt-4 flex flex-col gap-2">
-
-                        <h4 className="body-bold-muito-pequeno sm:body-bold-pequeno text-center">
-                          Observação obrigatória
-                        </h4>
-
-                        <textarea value={observacaoTriagem} onChange={(e) => setObservacaoTriagem(e.target.value)} className="border rounded p-2 w-full" placeholder="Descreva o que falta ou o problema encontrado..."/>
-
-                        {observacaoTriagem.trim() === "" ? (
-                          <p className="text-[var(--cor-resposta-obrigatoria)] text-sm text-center">
-                            Observação obrigatória para este status
-                          </p>
-                        ) : observacaoTriagem.trim().length > 0 && observacaoTriagem.trim().length < 20 ? (
-                          <p className="text-[var(--cor-resposta-obrigatoria)] text-sm text-center">
-                            A observação deve conter pelo menos 20 caracteres
-                          </p>
-                        ) : null}
-
-                      </div>
-                    )}
 
                     <div className="flex gap-3 justify-center flex-wrap mt-4">
                       <div className="flex-1">
@@ -502,8 +605,7 @@ function Triagem() {
                       </div>
 
                       <div className="flex-1">
-                        <Botao variante="confirmar" desabilitado={!statusDoacao || ((statusDoacao === "INAPTO" || statusDoacao === "INCOMPLETO") && observacaoTriagem.trim() === "")}
-                          className="w-full" aoClicar={() => setMostrarModalFinal(true)}>  
+                        <Botao variante="confirmar" desabilitado={!todosItensValidos} className="w-full" aoClicar={() => setMostrarModalFinal(true)}>  
                           Finalizar Triagem
                         </Botao>
                       </div>
@@ -517,9 +619,10 @@ function Triagem() {
                 titulo="Finalizar triagem"
                 descricao={
                   `Resumo:\n` +
-                  `• Status da doação: ${statusDoacao ?? "nenhum"}\n` +
-                  `• Resultado triagem: ${statusDoacao === "PRE_APROVADO" ? "PRE_APROVADO" : "INAPTO"
-                  }\n` +
+                  Object.entries(statusPorItem)
+                    .map(([id, status]) => `• Item ${contagemModalItens = contagemModalItens + 1}: ${status}`)
+                    .join("\n") +
+                  `\n\nResultado geral: ${resultadoGeral}\n` +
                   `\nGostaria de finalizar a triagem?`
                 }
                 botaoCancelar="Cancelar"

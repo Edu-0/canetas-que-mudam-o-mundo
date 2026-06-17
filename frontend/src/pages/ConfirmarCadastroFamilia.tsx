@@ -5,6 +5,8 @@ import Botao from "../components/Botao";
 import Toast from "../components/Toast";
 import { useState } from "react";
 import { Familiar } from "../types/Familiar";
+import { atualizarTiposUsuario } from "../services/usuarioService";
+import { useUsuario, type TipoUsuario } from "../context/UserContext";
 
 function ConfirmarFamiliares() {
   const navigate = useNavigate();
@@ -17,6 +19,8 @@ function ConfirmarFamiliares() {
 
   const dadosResponsavel = location.state?.dadosResponsavel;
 
+  const { usuario, definirUsuario } = useUsuario();
+
   function voltar() {
     //retorna para a página anterior.
     navigate("/cadastro-beneficiario", {
@@ -26,10 +30,35 @@ function ConfirmarFamiliares() {
     });
   }
 
-  function confirmarCadastro() {
+  async function confirmarCadastro() {
     setCarregando(true);
-    setMensagem("Cadastro confirmado com sucesso!");
-    setTimeout(() => navigate("/conta"), 1200);
+
+    try {
+      const tipo: TipoUsuario = "Responsável pelo beneficiário";
+
+      if (!usuario?.id) return;
+
+      const tiposAtuais = usuario.tipos || [];
+
+      const novosTipos: TipoUsuario[] = tiposAtuais.includes(tipo)
+        ? tiposAtuais
+        : [...tiposAtuais, tipo];
+
+      await atualizarTiposUsuario(usuario.id, novosTipos);
+
+      definirUsuario({
+        ...usuario,
+        tipos: novosTipos,
+      });
+
+      setMensagem("Cadastro confirmado com sucesso!");
+      setTimeout(() => navigate("/conta"), 1200);
+
+    } catch (error) {
+      console.error("Erro ao atualizar tipo:", error);
+    } finally {
+      setCarregando(false);
+    }
   }
 
   return (
@@ -138,14 +167,14 @@ function ConfirmarFamiliares() {
 }
 
 /* 🔹 componente auxiliar */
-function Info({ label, valor }: { label: string; valor: string }) {
+function Info({ label, valor }: { label: string; valor: string | number }) {
   return (
     <div className="flex flex-col">
       <span className="body-semibold-pequeno text-[var(--base-70)]">
         {label}
       </span>
       <span className="body-pequeno text-[var(--base-80)]">
-        {valor || "-"}
+        {valor !== undefined && valor !== null && valor !== "" ? String(valor) : "-"}
       </span>
     </div>
   );

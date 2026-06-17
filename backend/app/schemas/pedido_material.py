@@ -44,6 +44,7 @@ class RespostaPedidoMaterial(BaseModel):
     created_at: datetime
     updated_at: datetime
     itens: list[RespostaItemPedidoMaterial] = []
+    responsavel_nome: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 

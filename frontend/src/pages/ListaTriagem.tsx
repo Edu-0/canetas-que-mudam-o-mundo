@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import logo from "../assets/logo.svg";
@@ -8,12 +8,13 @@ import { obterDoacoes } from "../services/triagemService";
 import Botao from "../components/Botao";
 import Toast from "../components/Toast";
 import { useONG } from "../context/OngContext";
-import { Doacao } from "../context/DoacaoContext";
+import { DoacaoContextType } from "../context/DoacaoContext";
 import { dataNaoFutura, dataValida, intervaloDataValido } from "../utils/validacoesTriagem";
 import { useUsuario } from "../context/UserContext";
 
 function ListaTriagem() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { ong } = useONG();
   const { usuario } = useUsuario();
   const [mostrarModal, setMostrarModal] = useState(false);
@@ -30,7 +31,7 @@ function ListaTriagem() {
   const ITENS_POR_PAGINA = 5;
   const [paginaAtual, setPaginaAtual] = useState(1);
 
-  const [doacoes, setDoacoes] = useState<Doacao[]>([]);
+  const [doacoes, setDoacoes] = useState<DoacaoContextType[]>([]);
 
   const [ordem, setOrdem] = useState<"asc" | "desc">("desc");
   
@@ -43,7 +44,35 @@ function ListaTriagem() {
 
   const temPermissao = Boolean(usuario?.tipos?.includes("Voluntário da triagem"));
 
-  const doacoesFiltradas = doacoes;
+  // const doacoesFiltradas = doacoes;
+
+//   const doacoesFiltradas = doacoes.filter((d: any) => {
+//   // remove itens em quarentena
+//   if (d.itens?.some((item: any) =>
+//     item.avaliacoes?.some((a: any) => a.em_quarentena === true)
+//   )) {
+//     return false;
+//   }
+
+//   return true;
+// });
+
+  const doacoesFiltradas = doacoes.filter((d: any) => {
+    // remove quarentena
+    const temQuarentena = d.itens?.some((item: any) =>
+      item.avaliacoes?.some((a: any) => a.em_quarentena === true)
+    );
+
+    if (temQuarentena) return false;
+
+    // remove itens já triados (INAPTO ou PRE_APROVADO etc)
+    const aindaPendente = d.itens?.some((item: any) =>
+      item.status === "AGUARDANDO_TRIAGEM" ||
+      item.status === "AGUARDANDO_NOVA_TRIAGEM"
+    );
+
+    return aindaPendente;
+  });
 
   const totalPaginas = Math.max(1, Math.ceil(doacoesFiltradas.length / ITENS_POR_PAGINA)); // garente pelo menos 1 página
 
@@ -53,21 +82,21 @@ function ListaTriagem() {
   );
 
   function formatarDataHora(data?: string) {
-  if (!data) return "N/A";
+    if (!data) return "N/A";
 
-  const iso = data.replace(" ", "T");
-  const d = new Date(iso);
+    const iso = data.replace(" ", "T");
+    const d = new Date(iso);
 
-  const dataFormatada = d.toLocaleDateString("pt-BR");
-  const horaFormatada = d.toLocaleTimeString("pt-BR", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+    const dataFormatada = d.toLocaleDateString("pt-BR");
+    const horaFormatada = d.toLocaleTimeString("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
 
-  return `${dataFormatada} às ${horaFormatada}`;
-}
+    return `${dataFormatada} às ${horaFormatada}`;
+  }
 
-    function calcularTempo(data?: string) {
+  function calcularTempo(data?: string) {
     if (!data) return { meses: 0, dias: 0 };
 
     const inicio = new Date(data);
@@ -184,9 +213,19 @@ function ListaTriagem() {
   }
 
   useEffect(() => {
+    const msg = localStorage.getItem("toast");
+
+    if (msg) {
+      setMensagem(msg);
+      setTipoMensagem("sucesso");
+      localStorage.removeItem("toast");
+    }
+  }, []);
+
+  useEffect(() => {
     async function carregar() {
       if (!temPermissao) {
-        setMensagem("Voce nao tem permissao para acessar a triagem.");
+        setMensagem("Você não tem permissão para acessar a triagem.");
         setTipoMensagem("erro");
         return;
       }
@@ -205,7 +244,7 @@ function ListaTriagem() {
           ordem,
         });
 
-        setDoacoes(resposta.data as Doacao[]); // resposta já vem filtrada do backend
+        setDoacoes(resposta.data as DoacaoContextType[]); // resposta já vem filtrada do backend
 
       } catch (erro: any) {
         console.error("Erro ao carregar doações:", erro);

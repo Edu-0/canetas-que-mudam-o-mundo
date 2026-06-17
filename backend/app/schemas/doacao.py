@@ -97,6 +97,7 @@ class RespostaListagemDoacao(RespostaDoacao):
     tempo_cadastrada_dias: int
     tempo_cadastrada_tag: str
     status_tag: str
+    doador_nome: Optional[str] = None
 
 
 class AtualizarStatusItemDoacao(BaseModel):
@@ -135,11 +136,48 @@ class RespostaAvaliacaoTriagemDoacao(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+class DoacaoResumoQuarentena(BaseModel):
+    id: int
+    observacao_doador: Optional[str] = None
+    status: StatusDoacao 
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+class FotoResumoQuarentena(BaseModel):
+    id: int
+    url: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+class ItemDoacaoResumoQuarentena(BaseModel):
+    id: int
+    tipo_material: str
+    descricao: str
+    quantidade: int
+    
+    possiveis_defeitos: Optional[str] = None
+    motivo_inaptidao: Optional[str] = None
+
+    status: StatusDoacao
+
+    doacao: DoacaoResumoQuarentena  
+    fotos: list[FotoResumoQuarentena] = []
+
+    model_config = ConfigDict(from_attributes=True)
+
 class RespostaListagemQuarentena(BaseModel):
     id: int
-    resultado: str
+    resultado: ResultadoTriagemDoacao  
+    checklist: Optional[dict[str, Any]] = None  
+    comentario: Optional[str] = None
+    em_quarentena: bool
     created_at: datetime
-    voluntario_triagem: ResumoVoluntario 
+    motivo_inaptidao: Optional[str] = None
+    
+    voluntario_triagem: ResumoVoluntario  
+    item_doacao: ItemDoacaoResumoQuarentena  
 
     model_config = ConfigDict(from_attributes=True)
 

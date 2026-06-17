@@ -62,7 +62,23 @@ function Logar() {
       // Redirecionar para a página de escolha de cadastro
       navigate("/conta");
     } catch (err: any) {
-      setErro(err.response?.data?.detail || "Erro ao fazer login. Tente novamente.");
+      const detalhe = err.response?.data?.detail;
+      let mensagemErro = "Erro ao fazer login. Tente novamente.";
+
+      if (typeof detalhe === "string") {
+        mensagemErro = detalhe;
+      } else if (Array.isArray(detalhe)) {
+        const mensagens = detalhe
+          .map((item) => (typeof item?.msg === "string" ? item.msg : ""))
+          .filter(Boolean);
+        if (mensagens.length) {
+          mensagemErro = mensagens.join(" | ");
+        }
+      } else if (typeof detalhe?.msg === "string") {
+        mensagemErro = detalhe.msg;
+      }
+
+      setErro(mensagemErro);
     } finally {
       setCarregando(false);
     }
