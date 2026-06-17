@@ -60,6 +60,20 @@ function CadastroResponsavel() {
     if (e.target instanceof HTMLInputElement && e.target.type === "file") {
       const file = e.target.files?.[0] || null;
 
+      if (file) {
+        const LIMITE_MB = 10;
+        const tamanhoMB = file.size / (1024 * 1024);
+
+        if (tamanhoMB > LIMITE_MB) {
+          setMensagem(`O arquivo "${file.name}" excede o limite de 10MB.`);
+          e.target.value = ""; 
+          
+          setErros((prev) => ({ ...prev, documentos: "Arquivo muito grande (Máx: 10MB)" }));
+          setTocados((prev) => ({ ...prev, documentos: true }));
+          return; 
+        }
+      }
+
       setFormData((prev) => ({
         ...prev,
         [name]: file,
@@ -69,6 +83,10 @@ function CadastroResponsavel() {
         ...prev,
         documentos: true,
       }));
+      
+      if (file) {
+          setErros((prev) => ({ ...prev, documentos: "" }));
+      }
 
     } else {
       setFormData((prev) => ({
@@ -171,6 +189,11 @@ function CadastroResponsavel() {
         console.error(error);
         const erroAxios = error as AxiosError<{ detail?: string }>;
         const detalhe = erroAxios.response?.data?.detail;
+
+        if (erroAxios.response?.status === 413) {
+          setMensagem(typeof detalhe === "string" ? detalhe : "O arquivo excede o tamanho máximo permitido de 10MB.");
+          return;
+        }
 
         if (erroAxios.response?.status === 401) {
           if (typeof detalhe === "string" && detalhe.includes("permissão necessária")) {

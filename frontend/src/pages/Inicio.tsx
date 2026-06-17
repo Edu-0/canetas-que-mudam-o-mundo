@@ -5,11 +5,26 @@ import Carrossel from "../components/Carrossel";
 import logo from "../assets/logo.svg";
 import { loadCarrosselImages } from "../services/carrosselImages";
 import type { CarrosselImage } from "../components/Carrossel";
+import Toast from "../components/Toast";
 
 function Inicio() {
-   const [carrosselImages, setCarrosselImages] = useState<CarrosselImage[]>([]);
+  const [carrosselImages, setCarrosselImages] = useState<CarrosselImage[]>([]);
+  const [mensagem, setMensagem] = useState("");
+  const [tipoMensagem, setTipoMensagem] = useState<"sucesso" | "erro">("sucesso");
 
   useEffect(() => {
+    const toast = localStorage.getItem("toast");
+
+    if (toast) {
+      try {
+        const { mensagem, tipo } = JSON.parse(toast);
+        setMensagem(mensagem);
+        setTipoMensagem(tipo);
+      } catch {}
+
+      localStorage.removeItem("toast");
+    }
+
     loadCarrosselImages().then(setCarrosselImages);
   }, []);
 
@@ -22,6 +37,7 @@ function Inicio() {
       {/* body */}
       <main className="flex-1 pt-24 pb-10">
         <div className="w-full px-6 md:px-20 flex flex-col gap-10">
+          <Toast mensagem={mensagem} tipo={tipoMensagem} />
 
           <section aria-label="Apresentação do projeto">
             {/* título e logo da caneta */}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
@@ -108,6 +108,20 @@ function Logar() {
       setTipoMensagem("erro");
     }
   };
+
+  useEffect(() => {
+    const toast = localStorage.getItem("toast");
+
+    if (toast) {
+      try {
+        const { mensagem, tipo } = JSON.parse(toast);
+        setMensagem(mensagem);
+        setTipoMensagem(tipo);
+      } catch {}
+
+      localStorage.removeItem("toast");
+    }
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--base-5)]">

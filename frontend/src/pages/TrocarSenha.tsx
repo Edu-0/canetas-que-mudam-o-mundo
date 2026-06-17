@@ -133,15 +133,6 @@ function TrocarSenha() {
                       mensagem: error.response?.data?.detail || "Erro ao redefinir senha"
                     });
                   }
-
-                  setAlterou(false);
-                  setMensagem("Redefinição de senha salva com sucesso!");
-                  setTipoMensagem("sucesso");
-
-                  setTimeout(() => {
-                    setMensagem("");
-                    navigate("/logar");
-                  }, 2000);
                 }}
               />
 

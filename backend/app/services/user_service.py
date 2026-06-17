@@ -16,6 +16,7 @@ from app.models.doacao import AvaliacaoTriagemDoacao, Doacao
 from app.models.pedido_material import PedidoMaterial
 from app.services.firebase_storage import FirebaseStorageService
 from app.utils.funcoes import gerar_codigo_numerico, gerar_email_anonimo
+from fastapi import HTTPException, UploadFile, status
 
 
 # As conversões para hash e aleatoriedade servem para manter a privacidades dos dados e conformidade com a LGPD, garantindo que as informações originais não possam ser recuperadas.
@@ -339,3 +340,17 @@ def criar_voluntario(usuario_id,token, db):
     info_token.usado = True
     info_token.usado_em = datetime.now()
 
+
+def validar_tamanho_arquivo(file: UploadFile, limite_mb: int = 10):
+    tamanho_maximo_bytes = limite_mb * 1024 * 1024
+    
+    file.file.seek(0, 2)
+    tamanho_arquivo = file.file.tell()
+    
+    file.file.seek(0)
+    
+    if tamanho_arquivo > tamanho_maximo_bytes:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, 
+            detail=f"O arquivo excede o tamanho máximo permitido de {limite_mb}MB."
+        )

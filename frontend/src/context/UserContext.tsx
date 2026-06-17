@@ -25,6 +25,8 @@ export type Usuario = {
 type ContextoUsuarioType = {
   usuario: Usuario | null;
   definirUsuario: (usuario: Usuario | null) => void;
+  acabouDeAutenticar: boolean;            
+  setAcabouDeAutenticar: (v: boolean) => void; 
 };
 
 // cria o contexto
@@ -56,6 +58,16 @@ export const BeneficiosUsuario = {
 
 export type TipoBeneficio = keyof typeof BeneficiosUsuario;
 
+function normalizarTiposUsuario(tipos?: TipoUsuario[]) {
+  const tiposNormalizados = tipos ? [...new Set(tipos)] : [];
+
+  if (!tiposNormalizados.includes("Genérico")) {
+    tiposNormalizados.unshift("Genérico");
+  }
+
+  return tiposNormalizados;
+}
+
 // provider
 export function ProvedorUsuario({ children }: { children: ReactNode }) {
 
@@ -66,19 +78,33 @@ export function ProvedorUsuario({ children }: { children: ReactNode }) {
     if (!salvo) return null;
 
     try {
-      return JSON.parse(salvo);
+      const usuarioSalvo = JSON.parse(salvo);
+
+      return {
+        ...usuarioSalvo,
+        tipos: normalizarTiposUsuario(usuarioSalvo.tipos),
+      };
     } catch {
       localStorage.removeItem("usuario");
       return null;
     }
   });
 
+  const [acabouDeAutenticar, setAcabouDeAutenticar] = useState(false);
+
   // função para salvar
   function definirUsuario(usuario: Usuario | null) {
-    setUsuario(usuario);
+    const usuarioNormalizado = usuario
+      ? {
+          ...usuario,
+          tipos: normalizarTiposUsuario(usuario.tipos),
+        }
+      : null;
 
-    if (usuario) {
-      localStorage.setItem("usuario", JSON.stringify(usuario));
+    setUsuario(usuarioNormalizado);
+
+    if (usuarioNormalizado) {
+      localStorage.setItem("usuario", JSON.stringify(usuarioNormalizado));
     } else {
       localStorage.removeItem("usuario");
       localStorage.removeItem("access_token");
@@ -87,7 +113,7 @@ export function ProvedorUsuario({ children }: { children: ReactNode }) {
   }
 
   return (
-    <ContextoUsuario.Provider value={{ usuario, definirUsuario }}>
+    <ContextoUsuario.Provider value={{ usuario, definirUsuario, acabouDeAutenticar, setAcabouDeAutenticar }}>
       {children}
     </ContextoUsuario.Provider>
   );
