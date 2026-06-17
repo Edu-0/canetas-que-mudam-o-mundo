@@ -16,7 +16,7 @@ import logging
 from app.core.deps_auth import VerificarPermissao, get_current_user
 from app.core.enums import TipoUsuario
 import json
-from app.services.user_service import criar_voluntario
+from app.services.user_service import criar_voluntario, validar_tamanho_arquivo
 
 
 router = APIRouter(prefix="/usuario", tags=["usuario"])
@@ -270,6 +270,8 @@ def upload_documento_responsavel(
     permissao = Depends(VerificarPermissao("documento_usuario:criar"))
     ):
 
+    validar_tamanho_arquivo(file, limite_mb=10)
+
     url = FirebaseStorageService.upload_file(file)
 
     documentacao = m.DocumentoUsuario(
@@ -459,6 +461,7 @@ def upload_documento_familiar(
     permissao = Depends(VerificarPermissao("documento_familia:criar"))
     ):
 
+    validar_tamanho_arquivo(file, limite_mb=10)
     url = FirebaseStorageService.upload_file(file)
     documentacao = m.DocumentoFamilia(
 
