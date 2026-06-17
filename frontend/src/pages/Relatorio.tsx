@@ -38,13 +38,29 @@ const STATUS_META: Record<string, { label: string; className: string }> = {
 
 function formatarData(data?: string) {
   if (!data) return "—";
+
+  const dataParaFormatar = data.includes("T") ? data.split("T")[0] : data.split(" ")[0];
+  const [ano, mes, dia] = dataParaFormatar.split("-").map(Number);
+
+  if ([ano, mes, dia].every(Number.isFinite)) {
+    const dataNormalizada = new Date(ano, mes - 1, dia);
+    return new Intl.DateTimeFormat("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    }).format(dataNormalizada);
+  }
+
+  const dataDate = new Date(data);
+  if (Number.isNaN(dataDate.getTime())) {
+    return "—";
+  }
+
   return new Intl.DateTimeFormat("pt-BR", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(data));
+  }).format(dataDate);
 }
 
 function Relatorio() {
