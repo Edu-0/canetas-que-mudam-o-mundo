@@ -102,6 +102,15 @@ function ListaPedidos() {
   );
 
   useEffect(() => {
+    const mensagemSalva = localStorage.getItem("toast");
+    if (mensagemSalva) {
+      setMensagem(mensagemSalva);
+      setTipoMensagem("sucesso");
+      localStorage.removeItem("toast");
+    }
+  }, []);
+
+  useEffect(() => {
     async function carregar() {
       try {
         const dados = await listarMeusPedidos();

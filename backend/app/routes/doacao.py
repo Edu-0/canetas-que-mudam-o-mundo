@@ -118,7 +118,17 @@ async def criar_doacao_formulario(
     try:
         for indice, foto in enumerate(fotos):
             tamanho = await _validar_tamanho_upload(foto)
-            url = FirebaseStorageService.upload_file(foto, folder="doacoes")
+            try:
+                url = FirebaseStorageService.upload_file(foto, folder="doacoes")
+            except Exception as exc:
+                raise HTTPException(
+                    status_code=503,
+                    detail=(
+                        "Não foi possível fazer o upload das fotos. "
+                        "Verifique a configuração do armazenamento."
+                    ),
+                ) from exc
+
             urls_enviadas.append(url)
             fotos_por_indice[indice] = s.CriarFotoItemDoacao(
                 url=url,
@@ -155,6 +165,8 @@ async def criar_doacao_formulario(
         )
         return service.criar_doacao(db=db, doador=usuario_atual, dados=dados)
 
+    except HTTPException:
+        raise
     except Exception:
         for url in urls_enviadas:
             try:

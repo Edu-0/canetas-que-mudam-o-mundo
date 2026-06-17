@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import logo from "../assets/logo.svg";
@@ -13,6 +14,7 @@ import {
 } from "../services/pedidoService";
 
 function PedidoMaterial() {
+  const navigate = useNavigate();
   const [ongs, setOngs] = useState<any[]>([]);
   const [familiares, setFamiliares] = useState<FamiliarRetorno[]>([]);
   const [materiaisDisponiveis, setMateriaisDisponiveis] = useState<MaterialDisponivel[]>([]);
@@ -200,8 +202,9 @@ function PedidoMaterial() {
         itens,
       });
 
-      setSucesso("Pedido de materiais enviado com sucesso.");
+      localStorage.setItem("toast", "Pedido de materiais enviado com sucesso.");
       resetarFormulario();
+      navigate("/lista-pedidos");
     } catch (error: any) {
       console.error(error);
       setErro(
