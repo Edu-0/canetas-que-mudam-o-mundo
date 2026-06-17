@@ -5,6 +5,7 @@ import { obterPerfil, DadosUsuario, atualizarTiposUsuario, gerarLinkVoluntario, 
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Botao from "../components/Botao";
+import Toast from "../components/Toast";
 import logo from "../assets/logo.svg";
 import ModalConfirmacao from "../components/ModalConfirmacao";
 import {formatarCPF, formatarCEP, formatarTelefone} from "../utils/formatarMascaraConta";
@@ -15,6 +16,9 @@ function Conta() {
   const [carregandoExclusao, setCarregandoExclusao] = useState(false);
   const navigate = useNavigate();
   const [perfil, setPerfil] = useState<DadosUsuario | null>(null);
+
+  const [mensagem, setMensagem] = useState("");
+  const [tipoMensagem, setTipoMensagem] = useState<"sucesso" | "erro">("sucesso");
 
   const tiposValidos: TipoUsuario[] = ["Genérico", "Coordenador de Processos", "Responsável pelo beneficiário", "Doador", "Voluntário da triagem"];
   
@@ -174,6 +178,15 @@ function Conta() {
     carregarPerfil();
   }, [usuario?.id]); // para não precisar rondar o perfil toda vez que o usuário for atualizado, só quando o id do usuário mudar (ex: login, logout, troca de conta)
 
+  useEffect(() => {
+    if (location.state?.toast) {
+      setMensagem(location.state.toast.mensagem);
+      setTipoMensagem(location.state.toast.tipo);
+
+      navigate(location.pathname, { replace: true });
+    }
+  }, [location.state]);
+
   return (
     <div className="min-h-screen flex flex-col overflow-x-hidden bg-[var(--base-5)]">
 
@@ -181,6 +194,7 @@ function Conta() {
 
       <main className="flex-1 pt-24 pb-10 flex flex-col items-center gap-6">
         <div className="w-full px-6 md:px-20 flex flex-col gap-10">
+          <Toast mensagem={mensagem} tipo={tipoMensagem} />
 
           {/* título e logo da caneta */}
           <div className="flex items-center justify-center gap-4 flex-wrap text-center">

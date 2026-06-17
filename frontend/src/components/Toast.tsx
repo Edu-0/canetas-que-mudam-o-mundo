@@ -15,7 +15,7 @@ function Toast({ mensagem, tipo = "sucesso" }: ToastProps) {
 
     const timer = setTimeout(() => {
       setVisivel(false);
-    }, 3000); // 3 segundos
+    }, 4000); // 3 segundos
 
     return () => clearTimeout(timer);
   }, [mensagem]);

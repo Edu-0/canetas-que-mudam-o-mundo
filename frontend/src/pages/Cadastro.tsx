@@ -11,9 +11,10 @@ import ModalConfirmacao from "../components/ModalConfirmacao";
 import { validarTokenConvite } from "../services/usuarioService";
 
 function Cadastro() {
-  const { definirUsuario } = useUsuario();
+  const { definirUsuario, setAcabouDeAutenticar } = useUsuario();
   const navigate = useNavigate();
   const [mensagem, setMensagem] = useState("");
+
 
   const {setAlterou, tentarSair, mostrarModal, setMostrarModal, } = useAvisoAlteracoesNaoSalvas({
     mensagem: "Você começou o cadastro. Deseja sair mesmo?",});
@@ -168,12 +169,22 @@ function Cadastro() {
                       data_cadastro: new Date().toISOString()
                     });
 
+                    setAcabouDeAutenticar(true);
+
                     setAlterou(false); // reseta o estado de alteração para evitar alerta ao sair depois de cadastrar
-                    setMensagem("Cadastro realizado com sucesso!");
-                    setTipoMensagem("sucesso");
 
                     setTimeout(() => {
-                      navigate("/conta");
+                      navigate("/conta", {
+                        state: {
+                          veioDoCadastro: true,
+                          toast: {
+                            mensagem: "Cadastro realizado com sucesso!",
+                            tipo: "sucesso"
+                          }
+                        }
+                      });
+
+                      setAcabouDeAutenticar(false);
                     }, 2000);
                   }}
                 />

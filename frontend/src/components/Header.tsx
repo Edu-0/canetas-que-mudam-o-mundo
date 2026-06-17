@@ -26,7 +26,10 @@ function Header(){
     );
   } else {
     const tipos = usuario.tipos || [];
-    const ehVoluntarioTriagem = tipos.includes("Voluntário da triagem");
+    const tiposComGenerico = tipos.includes("Genérico")
+      ? tipos
+      : ["Genérico", ...tipos];
+    const ehVoluntarioTriagem = tiposComGenerico.includes("Voluntário da triagem");
 
     // mapa de tipos
     const mapaTipos: Record<string, { id: string; texto: string; rota: string }[]> = {
@@ -58,14 +61,19 @@ function Header(){
 
     const adicionados = new Set();
 
-    tipos.forEach((tipo) => {
+    tiposComGenerico.forEach((tipo) => {
       // console.log("Tipo individual:", tipo);
 
       const botoes = mapaTipos[tipo];
 
       if (botoes) {
         botoes.forEach((botao) => {
-          if (ehVoluntarioTriagem && botao.id === "ongs") {
+          // if (ehVoluntarioTriagem && botao.id === "ongs") {
+          //   return;
+          // }
+
+          // bloqueia ONGs completamente para voluntário da triagem
+          if (botao.id === "ongs" && tipos.includes("Voluntário da triagem")) {
             return;
           }
 

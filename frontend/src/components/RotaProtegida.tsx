@@ -17,5 +17,15 @@ export default function RotaProtegida({ permissoes }: Props) {
     permissoes.includes(tipo)
   );
 
-  return temPermissao ? <Outlet /> : <Navigate to="/" replace />;
+  if (!temPermissao) {
+    // mensagem de erro para o usuário
+    localStorage.setItem("toast", JSON.stringify({
+      mensagem: "Você não tem permissão de acessar essa página!",
+      tipo: "erro"
+    }));
+    
+    return <Navigate to="/" replace />;
+  }
+
+  return <Outlet />;
 }
